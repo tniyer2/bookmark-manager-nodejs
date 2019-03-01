@@ -1,0 +1,33 @@
+{
+	"name": "Tagger Plus",
+	"version": "0.5.0",
+	"manifest_version": 2,
+
+	"icons": 
+	{
+		"16": "icons/icon16.png",
+		"48": "icons/icon48.png",
+		"128": "icons/icon128.png"
+	},
+
+	"permissions": ["tabs", "storage", "contextMenus", "activeTab", "http://localhost/"],
+	"background": 
+	{
+		"scripts": ["js/ratio.js", "js/query.js", "js/storage.js", "js/background.js"],
+		"persistent": false
+	},
+	"content_scripts": [{
+     	"matches": ["<all_urls>"],
+    	"js": ["js/boot.js"]
+   	}],
+    "browser_action":
+    {
+
+    },
+    "web_accessible_resources": 
+    [
+    	"html/popup.html",
+    	"css/content.css"
+    ],
+    "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'"
+}

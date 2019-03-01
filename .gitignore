@@ -1,0 +1,5 @@
+*.class
+todo.txt
+specs/
+back_end/**/extrn
+back_end/**/resources/*

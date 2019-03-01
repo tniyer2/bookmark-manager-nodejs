@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Gallery</title>
+	<style>
+		.contentBlock
+		{
+			width:300px;
+			height:335px;
+			margin: 10px;
+			float: left;
+			background-color: #3399ff;
+		}
+		.imageBlock
+		{
+			display: block;
+			width: 300px;
+			height: 300px;
+			margin-right: 1px;
+			background-color: #ffffff;
+			border:1px solid #000;
+		}
+		.contentImage
+		{	
+			display: block;
+			max-width: 100%;
+			max-height: 100%;
+			vertical-align: middle;
+		}
+		.contentTitle
+		{
+			display: inline;
+			text-align: center;
+			font-size: 15px;
+		}
+	</style>
+</head>
+<body>
+	<Input id="search" type="text" value="">
+	<form>
+		search by name
+		<input id="search_by_name" name="searchby" type="radio" checked>
+		search by tag
+		<input id="search_by_tag" name="searchby" type="radio">
+	</form>
+	<div id="feed">
+	</div>
+	<script src="../js/gallery.js"></script>
+</body>
+</html>
