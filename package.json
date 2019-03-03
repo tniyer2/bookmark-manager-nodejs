@@ -2,21 +2,25 @@
   "name": "tagger-plus",
   "version": "1.0.0",
   "description": "My chrome extension and desktop application for bookmarking, saving, and tagging, photos and videos.",
-  "main": "index.js",
+  "main": "back_end/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tniyer2/tagger-plus.git"
   },
   "author": "Tanishq Iyer",
-  "license": "ISC",
+  "license": "UNLICENSED",
+  "private": true,
   "bugs": {
     "url": "https://github.com/tniyer2/tagger-plus/issues"
   },
   "homepage": "https://github.com/tniyer2/tagger-plus#readme",
   "devDependencies": {
     "eslint": "^5.15.0"
+  },
+  "dependencies": {
+    "node-ipc": "^9.1.1"
   }
 }
