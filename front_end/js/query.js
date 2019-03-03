@@ -163,7 +163,7 @@ function getTagFilter(key, value)
 
 function getStringFilter(key, value)
 {
-	let f = value.substring(0, 1) === "!" ? 
+	let f = value.substring(0, 1) === "!" ?
 			obj => obj[key] != value.substring(1) :
 			obj => obj[key] == value;
 

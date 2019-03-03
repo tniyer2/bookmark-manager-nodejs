@@ -79,7 +79,6 @@
 		"no-trailing-spaces": 2,
 		"no-unneeded-ternary": 2,
 		"no-whitespace-before-property": 2,
-		"operator-linebreak": [2, "after", { "overrides": { "?": "none", ":": "after", "=": "after"} }],
 		"semi": [2, "always"],
 		"wrap-regex": 2
 	}

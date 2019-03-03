@@ -3,4 +3,4 @@ todo.txt
 specs/
 back_end/**/extrn
 back_end/**/resources/*
-front_end/**/node_modules
+node_modules
