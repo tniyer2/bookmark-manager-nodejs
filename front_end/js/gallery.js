@@ -5,7 +5,7 @@ let glb_feed = document.getElementById("feed");
 let glb_searchField = document.getElementById("search");
 
 chrome.runtime.sendMessage({request: "get-meta", query: "all"}, (response) => {
-	
+
 	if (chrome.runtime.lastError)
 	{
 		console.warn(chrome.runtime.lastError.message);

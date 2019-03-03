@@ -53,7 +53,7 @@ glb_deleteButton.onclick = () => {
 		{
 			console.warn("Requesting delete should not return an outOfMemory error.");
 		}
-		else 
+		else
 		{
 			console.warn("Could not handle response:");
 			console.warn(response);

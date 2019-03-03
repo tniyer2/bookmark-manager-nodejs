@@ -10,7 +10,7 @@ async function deleteMetaLocally(metaId, callback)
 		glb_meta = await loadWrapper().catch(error => console.warn(error));
 
 	let i;
-	for (let j = 0; j < glb_meta.length; j++)
+	for (let j = 0; j < glb_meta.length; j+=1)
 	{
 		if (glb_meta[j].id == metaId)
 		{
@@ -81,7 +81,7 @@ async function load(successCallback, errorCallback)
 function loadWrapper()
 {
 	return new Promise((resolve, reject) => {
-		load(response => resolve(response), 
+		load(response => resolve(response),
 			 error => reject(error));
 	});
 }
@@ -114,7 +114,7 @@ async function save(successCallback, errorCallback)
 function saveWrapper()
 {
 	return new Promise((resolve, reject) => {
-		save(success => resolve(success), 
+		save(success => resolve(success),
 			 error => reject(error));
 	});
 }
@@ -136,7 +136,7 @@ function getRandomString(length)
 	const alphaNumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 	let s = "";
-	for (let i = 0; i < length; i++)
+	for (let i = 0; i < length; i+=1)
 	{
 		let rand = Math.floor(Math.random() * alphaNumeric.length);
 		s += alphaNumeric.charAt(rand);

@@ -22,12 +22,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	}
 });
 
-function scanPage(html) 
+function scanPage(html)
 {
 	let url = document.location.href;
 	let scanInfo = { linkUrls: [], externUrls: [], videoUrls: [] };
 
-	for (let j = 0; j < 3; j++) 
+	for (let j = 0; j < 3; j+=1)
 	{
 	    for (let i = 0; ;)
 	    {
@@ -39,67 +39,67 @@ function scanPage(html)
 	    }
 	}
 
-	for (let link of document.links) 
+	for (let link of document.links)
 	{
 	    let u = isSupportedUrl(link.href);
-		if (u) 
+		if (u)
 		{
 			let title = '';
-			if (link.hasAttribute('title')) 
+			if (link.hasAttribute('title'))
 				title = myTrim(link.getAttribute('title'));
-			if (!title && link.hasAttribute('alt')) 
+			if (!title && link.hasAttribute('alt'))
 				title = myTrim(link.getAttribute('alt'));
 			if (!title)
 				title = myTrim(link.innerText);
-	        if (!title) 
+	        if (!title)
 	            title=document.title;
 
 			let cl = "";
-			if (link.hasAttribute('class')) 
+			if (link.hasAttribute('class'))
 				cl = myTrim(link.getAttribute('class'));
 			scanInfo.externUrls.push({'url': u,'title': title,'class': cl,'id': (link.id ? link.id : ""),'value': '','type': 'extern'});
-		}			
+		}
     }
-			
+
     type="video";
     a = document.getElementsByTagName('video');
-    for (let link of a) 
+    for (let link of a)
     {
         let u = false;
-	    if (link.src) 
+	    if (link.src)
 	        u = link.src;
 	    if (!u && link.hasAttribute('data-thumb'))
 	    {
 		    u = myTrim(link.getAttribute('data-thumb'));
-		    if (u.indexOf("http") == -1) 
+		    if (u.indexOf("http") == -1)
 		        u = "http:" + u;
-	    }	
+	    }
 
 	    u = isSupportedUrl(u);
-	    if ( u) 
+	    if ( u)
 	    {
 		    let title = '';
-		    if (link.hasAttribute('alt')) 
+		    if (link.hasAttribute('alt'))
 			    title = myTrim(link.getAttribute('alt'));
-		    else if (link.hasAttribute('title')) 
+		    else if (link.hasAttribute('title'))
 			    title = myTrim(link.getAttribute('title'));
-			if (!title) 
+			if (!title)
 	            title=document.title;
 		    let cl = "";
-		    if (link.hasAttribute('class')) 
+		    if (link.hasAttribute('class'))
 			    cl = myTrim(link.getAttribute('class'));
-			    
+
 		    scanInfo.videoUrls.push({'url': u,'title': title, 'type': type});
-	    }			
+	    }
 	}
 
 	return scanInfo;
 }
 
-function FindFirstUrl(html, ext, start) 
+function FindFirstUrl(html, ext, start)
 {
     for (; ;) {
-        var i = html.indexOf(ext, start)
+        var i = html.indexOf(ext, start);
         if (i < 0)
             return false;
         start = i + ext.length;
@@ -139,7 +139,7 @@ function FindFirstUrl(html, ext, start)
     }
 }
 
-function isSupportedUrl( url) 
+function isSupportedUrl( url)
 {
     if (!url || !url.toLowerCase)
         return false;
@@ -147,7 +147,7 @@ function isSupportedUrl( url)
 	    return false;
 	if ((url.toLowerCase().indexOf('mailto:') != -1) || (url.toLowerCase().indexOf('mailto :') != -1) )
 	    return false;
-	if (url.indexOf("data:image") != -1)  
+	if (url.indexOf("data:image") != -1)
 	    return false;
     if ((url.indexOf(".mp4") == -1) && (url.indexOf(".flv") == -1) && (url.indexOf(".mov") == -1))
         return false;
@@ -155,7 +155,7 @@ function isSupportedUrl( url)
 	return url;
 }
 
-function myTrim(txt) 
+function myTrim(txt)
 {
 	let trimmed = !txt ? "" : txt.replace(/^[\s_]+|[\s_]+$/gi, '').replace(/(_){2,}/g, "_");
 	return trimmed;

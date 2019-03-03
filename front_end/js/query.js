@@ -3,7 +3,7 @@ const STRING_KEYS = ["id", "title", "category", "srcUrl", "docUrl"];
 const NUMBER_KEYS = ["date", "bytes"];
 
 const SEND_RAW = "all";
-const SEARCH_TOLERANCE = 70; 
+const SEARCH_TOLERANCE = 70;
 
 function query(meta, q)
 {
@@ -15,10 +15,10 @@ function query(meta, q)
 		let map = parseQuery(q);
 		let filters = generateFilters(map);
 		let sortInfo = generateComparator(map);
-		
+
 		for (let f of filters)
 			meta = meta.filter(f);
-		
+
 		if (map.title)
 			meta = search(meta, map.title[0]);
 
@@ -71,7 +71,7 @@ function generateFilters(map)
 						NUMBER_KEYS.find(element => key == element) ? getNumberFilter :
 						null;
 
-		if(!getFilter) 
+		if(!getFilter)
 		{
 			throw "key '" + key + "' is unsupported.";
 		}
@@ -90,7 +90,7 @@ function generateFilters(map)
 					return false;
 			}
 			return true;
-		}
+		};
 		filters.push(combined);
 	}
 
@@ -100,12 +100,12 @@ function generateFilters(map)
 function generateComparator(map)
 {
 	let sortInfo = {};
-	let sortKey = map.asc ? map.asc : map.dsc
+	let sortKey = map.asc ? map.asc : map.dsc;
 
 	if (!sortKey || (sortKey === "title" && map[sortKey]))
 		return null;
 
-	sortInfo.reverse = map.dsc ? true : false;
+	sortInfo.reverse = Boolean(map.dsc);
 
 	if (STRING_KEYS.find(element => sortKey == element))
 	{
@@ -154,7 +154,7 @@ function getTagFilter(key, value)
 		value = value.substring(1);
 	}
 
-	let f1 = obj => obj[key].find(tag => tag == value) ? true : false;
+	let f1 = obj => Boolean(obj[key].find(tag => tag == value));
 
 	let f2 = obj => not ? !f1(obj) : f1(obj);
 
@@ -163,16 +163,16 @@ function getTagFilter(key, value)
 
 function getStringFilter(key, value)
 {
-	let f = 
-	value.substring(0, 1) === "!" ? obj => obj[key] != value.substring(1) :
-	obj => obj[key] == value;
+	let f = value.substring(0, 1) === "!" ? 
+			obj => obj[key] != value.substring(1) :
+			obj => obj[key] == value;
 
 	return f;
 }
 
 function getNumberFilter(key, value)
 {
-	let f = 
+	let f =
 	value.substring(0, 1) === "!"  ? obj => obj[key] != Number(value.substring(1)) :
 	value.substring(0, 1) === ">"  ? obj => obj[key] > Number(value.substring(1)) :
 	value.substring(0, 1) === "<"  ? obj => obj[key] < Number(value.substring(1)) :

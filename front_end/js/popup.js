@@ -7,10 +7,10 @@ let glb_srcUrl;
 let glb_docUrl;
 let glb_tabId;
 
-let glb_mask	 = document.getElementById("mask");
-let glb_title 	 = document.getElementById("title");
-let glb_save1    = document.getElementById("save1");
-let glb_save2    = document.getElementById("save2");
+let glb_mask  = document.getElementById("mask");
+let glb_title = document.getElementById("title");
+let glb_save1 = document.getElementById("save1");
+let glb_save2 = document.getElementById("save2");
 
 chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 
@@ -28,7 +28,7 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 	if (glb_docUrl.indexOf("www.youtube.com") > 0)
 	{
 		let matches = glb_docUrl.match(YOUTUBE_REGEX);
-		
+
 		glb_srcUrl = YOUTUBE_EMBED_URL + matches[1];
 		glb_category = "video";
 		glb_save2.style.display = "none";
@@ -39,8 +39,7 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 		glb_category = response.mediaType;
 	}
 	else
-	{
-		if (response.scanInfo.linkUrls.length > 0)
+	if (response.scanInfo.linkUrls.length > 0)
 		{
 			console.log("Source was found in a link in the document.");
 			glb_srcUrl = response.scanInfo.linkUrls[0].url;
@@ -58,7 +57,6 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 		{
 			console.warn("No source was found.");
 		}
-	}
 });
 
 $(function(){
@@ -98,7 +96,7 @@ async function saveMeta(download)
 
 	let msg = { from: "popup.js",
 				request: "upload-meta",
-				command: command, 
+				command: command,
 				meta: meta };
 
 	chrome.runtime.sendMessage(msg, (response) => {
@@ -121,7 +119,7 @@ async function saveMeta(download)
 		{
 			console.warn("Not Implemented: xhrError");
 		}
-		else 
+		else
 		{
 			console.warn("Could not handle response:");
 			console.warn(response);

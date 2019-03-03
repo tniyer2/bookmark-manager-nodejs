@@ -84,38 +84,41 @@ function isInside (x, y)
 	}
 
 	let i = x.indexOf(y);
+	let score;
 	if (i === -1)
 	{
-		return false;
+		score = false;
 	}
 	else if (i === 0 || i + y.length === x.length)
 	{
-		return (x.length - y.length) * FOUND_AT_END_WEIGHT;
+		score = (x.length - y.length) * FOUND_AT_END_WEIGHT;
 	}
 	else
 	{
-		return (x.length - y.length) * FOUND_IN_MIDDLE_WEIGHT;
+		score = (x.length - y.length) * FOUND_IN_MIDDLE_WEIGHT;
 	}
+
+	return score;
 }
 
 function calcDistance(x, y)
 {
     let table = [];
- 
-    for (let i = 0; i <= x.length + 1; i++) 
+
+    for (let i = 0; i <= x.length + 1; i+=1)
 	{
 		table[i] = [];
-        for (let j = 0; j <= y.length + 1; j++) 
+        for (let j = 0; j <= y.length + 1; j+=1)
         {
             if (i === 0)
                 table[i][j] = j;
-            else if (j === 0) 
+            else if (j === 0)
                 table[i][j] = i;
             else
             {
-                table[i][j] = min(table[i - 1][j - 1] 
-                 + cost(x.charAt(i - 1), y.charAt(j - 1)), 
-                  table[i - 1][j] + 1, 
+                table[i][j] = min(table[i - 1][j - 1]
+                 + cost(x.charAt(i - 1), y.charAt(j - 1)),
+                  table[i - 1][j] + 1,
                   table[i][j - 1] + 1);
             }
         }

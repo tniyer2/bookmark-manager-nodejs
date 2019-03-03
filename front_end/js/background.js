@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 	if (msg.request === "get-popupInfo")
 	{
-		response = {};
+		let response = {};
 
 		response.srcUrl = glb_popupInfo.srcUrl;
 		response.docUrl = sender.tab.url === glb_popupInfo.srcUrl ? "src" : sender.tab.url ;
@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	{
 		let sendMeta = (meta) => {
 			meta = query(meta, msg.query);
-			let response = {meta: meta, path: resolve(glb_port)};
+			let response = {meta: meta, path: catUrl(glb_port)};
 			sendResponse(response);
 		};
 
@@ -159,7 +159,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
 chrome.contextMenus.removeAll(() => {
 	let saveInfo = {
 		title: "Save",
-		id:"Save", 
+		id:"Save",
 		contexts:["all"],
 		documentUrlPatterns: ["http://*/*", "https://*/*", "data:image/*", "file://*"]
 	};
@@ -170,7 +170,7 @@ chrome.contextMenus.removeAll(() => {
 // Activates popup when context menu item "Save" is clicked.
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 
-	glb_popupInfo = { srcUrl: info.srcUrl, 
+	glb_popupInfo = { srcUrl: info.srcUrl,
 					  mediaType: info.mediaType };
 
 	chrome.tabs.sendMessage(tab.id, {to: "boot.js", script: "js/boot.js", getClickedElementInfo: true}, (html) => {
@@ -187,13 +187,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 async function getMeta(q, callback)
 {
 	let port = await getPortWrapper().catch(error => {
-		console.warn(error)
-		callback(false)
-	}); 
-	if (port === undefined)
+		console.warn(error);
+		callback(false);
+	});
+	if (typeof port === "undefined")
 		return;
 
-	let url = resolve(port, META_CONTEXT, q);
+	let url = catUrl(port, META_CONTEXT, q);
 
 	let xhr = new XMLHttpRequest();
 	xhr.open("GET", url);
@@ -221,7 +221,7 @@ async function getMeta(q, callback)
 				console.warn("Could not get meta from the server.");
 			}
 		}
-	}
+	};
 	xhr.send();
 }
 
@@ -233,13 +233,13 @@ async function uploadMeta(command, meta, method, callback)
 	let request 	= commandJSON + "\n" + metaJSON;
 
 	let port = await getPortWrapper().catch(error => {
-		console.warn(error)
-		callback(false)
-	}); 
-	if (port === undefined)
+		console.warn(error);
+		callback(false);
+	});
+	if (typeof port === "undefined")
 		return;
 
-	let url  = resolve(port, META_CONTEXT);
+	let url  = catUrl(port, META_CONTEXT);
 
 	let xhr  = new XMLHttpRequest();
 	xhr.open(method, url);
@@ -267,14 +267,14 @@ async function uploadMeta(command, meta, method, callback)
 async function deleteMeta(metaId, callback)
 {
 	let port = await getPortWrapper().catch(error => {
-		console.warn(error)
-		callback(false)
-	}); 
-	if (port === undefined)
+		console.warn(error);
+		callback(false);
+	});
+	if (typeof port === "undefined")
 		return;
 
 	let xhr = new XMLHttpRequest();
-	xhr.open("DELETE", resolve(port, META_CONTEXT));
+	xhr.open("DELETE", catUrl(port, META_CONTEXT));
 	xhr.onreadystatechange = function()
 	{
 		if (this.readyState === 4)
@@ -291,7 +291,7 @@ async function deleteMeta(metaId, callback)
 					callback(false);
 			}
 		}
-	}
+	};
 	xhr.send(JSON.stringify({id: metaId}));
 }
 
@@ -322,25 +322,35 @@ async function getPort(successCallback, errorCallback)
 	if (glb_port)
 	{
 		console.log("Checking if port " + glb_port + " connects.");
-		connects = await checkPortWrapper(glb_port, CHECK_CONTEXT).catch((error) => {
+		try
+		{
+			connects = await checkPortWrapper(glb_port, CHECK_CONTEXT);
+		}
+		catch (e)
+		{
 			if (errorCallback)
-				errorCallback(error);
+				errorCallback(e);
 			else
-				console.warn(error);
+				console.warn(e);
 			return;
-		});
+		}
 	}
 
 	if (!glb_port || !connects)
 	{
 		console.log("Finding port");
-		glb_port = await findPortWrapper(DEFAULT_PORT, MAX_PORT).catch((error) => {
+		try
+		{
+			glb_port = await findPortWrapper(DEFAULT_PORT, MAX_PORT);
+		}
+		catch (e)
+		{
 			if (errorCallback)
-				errorCallback(error);
+				errorCallback(e);
 			else
-				console.warn(error);
+				console.warn(e);
 			return;
-		});
+		}
 	}
 
 	if (successCallback)
@@ -361,7 +371,7 @@ function getPortWrapper()
 async function findPort(min, max, successCallback, errorCallback)
 {
 	let callbacksRecieved = 0;
-	for (let port = min; port <= max; port++)
+	for (let port = min; port <= max; port+=1)
 	{
 		checkPort(port, CHECK_CONTEXT, (response) => {
 			if(successCallback && response)
@@ -371,7 +381,7 @@ async function findPort(min, max, successCallback, errorCallback)
 			}
 			else
 			{
-				callbacksRecieved++;
+				callbacksRecieved += 1;
 				if(errorCallback && callbacksRecieved == max - min + 1)
 				{
 					errorCallback("Could not connect to the server on ports " + min + "-" + max);
@@ -386,12 +396,12 @@ async function findPort(min, max, successCallback, errorCallback)
 	}
 }
 
-// Wraps findPort in a Promise and returns it. 
+// Wraps findPort in a Promise and returns it.
 function findPortWrapper(min, max)
 {
 	return new Promise((resolve, reject) => {
-		findPort(min, max, 
-			response => resolve(response), 
+		findPort(min, max,
+			response => resolve(response),
 			error => reject(error));
 	});
 }
@@ -399,7 +409,7 @@ function findPortWrapper(min, max)
 // successCallback returns the port if the port exists.
 async function checkPort(port, context, successCallback, errorCallback)
 {
-	let url = resolve(port, context);
+	let url = catUrl(port, context);
 	let errorMessage = url + " timed out after " + (DEFAULT_TIMEOUT/1000) + " seconds.";
 
 	let timeoutID = setTimeout(() => { errorCallback(errorMessage); }, DEFAULT_TIMEOUT);
@@ -428,14 +438,12 @@ async function checkPort(port, context, successCallback, errorCallback)
 				}
 			}
 			else
-			{
-				if(successCallback)
+			if(successCallback)
 				{
 					clearTimeout(timeoutID);
 					successCallback(null);
 					console.log("port " + port + " responded with status: " + this.status);
 				}
-			}
 		}
 	};
 	xhr.send();
@@ -445,13 +453,13 @@ async function checkPort(port, context, successCallback, errorCallback)
 function checkPortWrapper(port, context)
 {
 	return new Promise((resolve, reject) => {
-		checkPort(port, context, 
-			response => resolve(response), 
+		checkPort(port, context,
+			response => resolve(response),
 			error => reject(error));
 	});
 }
 
-function resolve(port, context, q)
+function catUrl(port, context, q)
 {
 	if (context)
 	{

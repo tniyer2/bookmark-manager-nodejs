@@ -51,7 +51,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 });
 
-function closePopup() 
+function closePopup()
 {
 	glb_root.style.display = "none";
 }
