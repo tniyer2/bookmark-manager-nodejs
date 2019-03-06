@@ -93,9 +93,9 @@ function createContent(metaObject, path)
 		content.appendChild(image);
 		innerBlock.appendChild(content);
 	}
-	else if(metaObject.category === "video")
+	else if (metaObject.category === "video")
 	{
-		if(metaObject.path)
+		if (metaObject.path)
 		{
 			content = document.createElement("video");
 			innerBlock.appendChild(content);

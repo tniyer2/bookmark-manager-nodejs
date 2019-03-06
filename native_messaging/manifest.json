@@ -1,0 +1,7 @@
+{
+	"name": "tagger_plus_desktop",
+	"description": "My desktop application to work with my chrome extension to bookmark, save, and tag photos and videos.",
+	"path": "host.exe",
+	"type": "stdio",
+	"allowed_origins": ["chrome-extension://dkhfconmegmfcglbhcndgaiecjgkfmbk/"]
+}

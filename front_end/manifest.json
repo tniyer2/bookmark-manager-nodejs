@@ -10,7 +10,7 @@
 		"128": "icons/icon128.png"
 	},
 
-	"permissions": ["tabs", "storage", "contextMenus", "activeTab", "http://localhost/"],
+	"permissions": ["tabs", "storage", "contextMenus", "activeTab", "nativeMessaging", "http://localhost/"],
 	"background": 
 	{
 		"scripts": ["js/ratio.js", "js/query.js", "js/storage.js", "js/background.js"],
