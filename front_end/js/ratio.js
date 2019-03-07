@@ -3,33 +3,10 @@ const CASE_WEIGHT = 0.1;
 const FOUND_AT_END_WEIGHT = 0.3;
 const FOUND_IN_MIDDLE_WEIGHT = 0.85;
 
-/*
-let s1 = "spacebar red apple black coke";
-let s2 = "red spacebar coke black apple";
-*/
-/*
-let s1 = "apples";
-let s2 = "apple";
-let percentage = ratio(s1, s2);
-
-console.log("First String: " + s1);
-console.log("Second String: " + s2);
-console.log("Similarity: " + percentage + "%");
-*/
-
 function ratio(x, y)
 {
-	console.log("title: " + x);
-	console.log("query: " + y);
-
-	/*
-	// outer loop should be smaller string
-	if (x.length > y.length)
-	{
-		let temp = x;
-		x = y;
-		y = temp;
-	}*/
+	// console.log("title: " + x);
+	// console.log("query: " + y);
 
 	let split = s => s.split(/\s/).filter(i => i);
 	let xterms = split(x);
@@ -37,44 +14,44 @@ function ratio(x, y)
 
 	let sorted = [];
 	let sortedIndex = [];
-	for (let i in xterms)
+	for (let i = 0; i < xterms.length; i+=1)
 	{
 		sorted[i] = [];
 		sortedIndex[i] = [];
-		for (let j in yterms)
+		for (let j = 0; j < yterms.length; j+=1)
 		{
 			let distance = isInside(xterms[i], yterms[j]);
-			if (!distance)
+			if (distance === false)
 			{
 				distance = calcDistance(xterms[i], yterms[j]);
 			}
 
 			let insertedAt = binaryInsert(sorted[i], distance);
-			sortedIndex[i].splice(insertedAt, 0, Number(j));
+			sortedIndex[i].splice(insertedAt, 0, j);
 		}
 	}
 
-	console.log(sorted);
-	console.log(sortedIndex);
+	// console.log(sorted);
+	// console.log(sortedIndex);
 
 	let totalCharacters = 0;
 	let totalDistance = 0;
 
-	for (let i in sorted)
+	for (let i = 0; i < sorted.length; i+=1)
 	{
 		totalDistance += sorted[i][0];
 		totalCharacters += yterms[sortedIndex[i][0]].length;
 	}
 
 	let percentage = (totalCharacters - totalDistance) / totalCharacters * 100;
-	console.log("ratio: " + Math.round(percentage) + "%");
+	// console.log("ratio: " + Math.round(percentage) + "%");
 	return percentage;
 }
 
 function isInside (x, y)
 {
-	if (x.length === y.length)
-		return false;
+	if (x.length === y.length) return false;
+
 	// y should be the smaller string
 	if (y.length > x.length)
 	{
@@ -89,7 +66,7 @@ function isInside (x, y)
 	{
 		score = false;
 	}
-	else if (i === 0 || i + y.length === x.length)
+	else if (i === 0 || x.length === y.length + i)
 	{
 		score = (x.length - y.length) * FOUND_AT_END_WEIGHT;
 	}
@@ -116,7 +93,7 @@ function calcDistance(x, y)
                 table[i][j] = i;
             else
             {
-                table[i][j] = min(table[i - 1][j - 1]
+                table[i][j] = Math.min(table[i - 1][j - 1]
                  + cost(x.charAt(i - 1), y.charAt(j - 1)),
                   table[i - 1][j] + 1,
                   table[i][j - 1] + 1);
@@ -130,11 +107,6 @@ function calcDistance(x, y)
 function cost(a, b)
 {
 	return a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? CASE_WEIGHT : 1;
-}
-
-function min(a, b, c)
-{
-	return Math.min(Math.min(a, b), c);
 }
 
 function binaryInsert(arr, elm)

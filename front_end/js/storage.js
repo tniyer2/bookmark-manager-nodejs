@@ -4,58 +4,56 @@ const ID_LENGTH = 40;
 
 let glb_meta;
 
-async function deleteMetaLocally(metaId, callback)
+async function getMetaLocally(q, successCallback, errorCallback)
 {
-	if (!glb_meta)
-		glb_meta = await loadWrapper().catch(error => console.warn(error));
+	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
+
+	let result = query(glb_meta.slice(), q);
+	successCallback(result);
+}
+
+async function addMetaLocally(meta, successCallback, errorCallback)
+{
+	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
+
+	meta.id = getRandomString(ID_LENGTH);
+	glb_meta.push(meta);
+
+	let success = await wrap(save).catch(e => errorCallback(e));
+	if (success) successCallback(true);
+}
+
+async function deleteMetaLocally(id, successCallback, errorCallback)
+{
+	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
 
 	let i;
 	for (let j = 0; j < glb_meta.length; j+=1)
 	{
-		if (glb_meta[j].id == metaId)
+		if (glb_meta[j].id === id)
 		{
 			i = j;
 			break;
 		}
 	}
 
-	if (!i && i!==0)
+	if (typeof i === "undefined")
 	{
-		console.warn("Could not find element with id: '" + metaId + "'");
+		console.warn("Could not find element with id: '" + id + "'");
 		return;
 	}
 
 	glb_meta.splice(i, 1);
-	let success = await saveWrapper().catch(error => callback(error));
-	if (success)
-		callback({success: success});
-}
-
-async function uploadMetaLocally(meta, callback)
-{
-	if (!glb_meta)
-		glb_meta = await loadWrapper().catch(error => console.warn(error));
-
-	meta.id = getRandomString(ID_LENGTH);
-	glb_meta.push(meta);
-	let success = await saveWrapper().catch(error => callback(error));
-	if (success)
-		callback({success: true});
-}
-
-async function getMetaLocally(q, callback)
-{
-	if (!glb_meta)
-		glb_meta = await loadWrapper().catch(error => console.warn(error));
-
-	callback(query(glb_meta.slice(), q));
+	let success = await wrap(save).catch(e => errorCallback(e));
+	if (success) successCallback(true);
 }
 
 async function load(successCallback, errorCallback)
 {
 	let meta = [];
 
-	let serialized = (await storageGetWrapper("meta").catch(error => errorCallback(error))).meta;
+	let data = await storageGetWrapper("meta").catch(e => errorCallback(e));
+	let serialized = data.meta;
 	if (!serialized)
 	{
 		successCallback(meta);
@@ -66,24 +64,17 @@ async function load(successCallback, errorCallback)
 	{
 		try
 		{
-			meta.push(JSON.parse(s));
+			let obj = JSON.parse(s);
+			meta.push(obj);
 		}
 		catch (e)
 		{
-			errorCallback(e);
+			errorCallback({jsonError: true});
 			return;
 		}
 	}
 
 	successCallback(meta);
-}
-
-function loadWrapper()
-{
-	return new Promise((resolve, reject) => {
-		load(response => resolve(response),
-			 error => reject(error));
-	});
 }
 
 async function save(successCallback, errorCallback)
@@ -99,10 +90,11 @@ async function save(successCallback, errorCallback)
 		return;
 	}
 
-	chrome.storage.local.set({meta: serialized}, response => {
+	chrome.storage.local.set({meta: serialized}, (response) => {
 		if (chrome.runtime.lastError)
 		{
-			errorCallback({lastError: chrome.runtime.lastError.message});
+			console.warn(chrome.runtime.lastError.message);
+			errorCallback({storageError: true});
 		}
 		else
 		{
@@ -111,22 +103,19 @@ async function save(successCallback, errorCallback)
 	});
 }
 
-function saveWrapper()
-{
-	return new Promise((resolve, reject) => {
-		save(success => resolve(success),
-			 error => reject(error));
-	});
-}
-
 function storageGetWrapper(keys)
 {
 	return new Promise((resolve, reject) => {
 		chrome.storage.local.get(keys, (response) => {
 			if (chrome.runtime.lastError)
-				reject(chrome.runtime.lastError.message);
+			{
+				console.warn(chrome.runtime.lastError.message);
+				reject({storageError: true});
+			}
 			else
+			{
 				resolve(response);
+			}
 		});
 	});
 }

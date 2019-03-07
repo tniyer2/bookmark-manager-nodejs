@@ -25,12 +25,6 @@ function initPopupDOM()
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
-
 	if (msg.to !== "content.js")
 		return;
 

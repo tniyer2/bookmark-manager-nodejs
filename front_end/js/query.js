@@ -7,35 +7,33 @@ const SEARCH_TOLERANCE = 70;
 
 function query(meta, q)
 {
-	try
+	if (q === SEND_RAW) return meta;
+
+	let map = parseQuery(q);
+	let filter = genFilter(map);
+	let sortInfo = genComparator(map);
+
+	if (filter)
 	{
-		if (q === SEND_RAW)
-			return meta;
+		meta = meta.filter(filter);
+	}
 
-		let map = parseQuery(q);
-		let filters = generateFilters(map);
-		let sortInfo = generateComparator(map);
+	if (map.title)
+	{
+		meta = search(meta, map.title[0]);
+	}
 
-		for (let f of filters)
-			meta = meta.filter(f);
+	if (sortInfo)
+	{
+		meta.sort(sortInfo.compare);
 
-		if (map.title)
-			meta = search(meta, map.title[0]);
-
-		if (sortInfo)
+		if (sortInfo.reverse)
 		{
-			meta.sort(sortInfo.compare);
-			if (sortInfo.reverse)
-				meta.reverse();
+			meta.reverse();
 		}
+	}
 
-		return meta;
-	}
-	catch (e)
-	{
-		console.warn(e);
-		return [];
-	}
+	return meta;
 }
 
 function parseQuery(q)
@@ -44,7 +42,7 @@ function parseQuery(q)
 	for (let keyPair of q.split("&"))
 	{
 		arr = keyPair.split("=");
-		if(arr.length != 2)
+		if (arr.length !== 2)
 		{
 			throw "'" + keyPair + "' could not be parsed into key and values.";
 		}
@@ -57,21 +55,20 @@ function parseQuery(q)
 	return map;
 }
 
-function generateFilters(map)
+function genFilter(map)
 {
-	let filters = [];
+	let filter;
 
 	for (let key in map)
 	{
-		if (key === "title" || key === "asc" || key === "dsc")
-			continue;
+		if (key === "title" || key === "asc" || key === "dsc") continue;
 
 		let getFilter = key === "tags"  ? getTagFilter :
-						STRING_KEYS.find(element => key == element) ? getStringFilter :
-						NUMBER_KEYS.find(element => key == element) ? getNumberFilter :
+						STRING_KEYS.find(element => key === String(element)) ? getStringFilter :
+						NUMBER_KEYS.find(element => key === String(element)) ? getNumberFilter :
 						null;
 
-		if(!getFilter)
+		if (getFilter === null)
 		{
 			throw "key '" + key + "' is unsupported.";
 		}
@@ -83,37 +80,40 @@ function generateFilters(map)
 			subFilters.push(f);
 		}
 
-		let combined = (obj) => {
+		filter = (obj) => {
 			for (let f of subFilters)
 			{
-				if (!f(obj))
+				if (!f(obj)) 
+				{
 					return false;
+				}
 			}
 			return true;
 		};
-		filters.push(combined);
 	}
 
-	return filters;
+	return filter;
 }
 
-function generateComparator(map)
+function genComparator(map)
 {
 	let sortInfo = {};
 	let sortKey = map.asc ? map.asc : map.dsc;
 
 	if (!sortKey || (sortKey === "title" && map[sortKey]))
+	{
 		return null;
+	}
 
 	sortInfo.reverse = Boolean(map.dsc);
 
-	if (STRING_KEYS.find(element => sortKey == element))
+	if (STRING_KEYS.find(element => sortKey === String(element)))
 	{
 		sortInfo.compare = (first, second) => {
 			return first[sortKey].localeCompare(second[sortKey]);
 		};
 	}
-	else if (NUMBER_KEYS.find(element => sortKey == element))
+	else if (NUMBER_KEYS.find(element => sortKey === String(element)))
 	{
 		sortInfo.compare = (first, second) => {
 			return first[sortKey] - second[sortKey];
@@ -148,37 +148,41 @@ function getTagFilter(key, value)
 {
 	let not = false;
 	let first = value.substring(0, 1);
+
 	if (first === "!")
 	{
 		not = true;
 		value = value.substring(1);
 	}
 
-	let f1 = obj => Boolean(obj[key].find(tag => tag == value));
+	let f = (obj) => {
+		let b = Boolean(obj[key].find(tag => String(tag) === value));
+		return not ? !b : b;
+	};
 
-	let f2 = obj => not ? !f1(obj) : f1(obj);
-
-	return f2;
+	return f;
 }
 
 function getStringFilter(key, value)
 {
 	let f = value.substring(0, 1) === "!" ?
-			obj => obj[key] != value.substring(1) :
-			obj => obj[key] == value;
+			obj => obj[key] !== value.substring(1) :
+			obj => obj[key] === value;
 
 	return f;
 }
 
 function getNumberFilter(key, value)
 {
+	value = Number(value);
+
 	let f =
 	value.substring(0, 1) === "!"  ? obj => obj[key] != Number(value.substring(1)) :
 	value.substring(0, 1) === ">"  ? obj => obj[key] > Number(value.substring(1)) :
 	value.substring(0, 1) === "<"  ? obj => obj[key] < Number(value.substring(1)) :
 	value.substring(0, 2) === "x>" ? obj => obj[key] >= Number(value.substring(2)) :
 	value.substring(0, 2) === "x<" ? obj => obj[key] <= Number(value.substring(2)) :
-	obj => value == obj[key];
+	obj => value === obj[key];
 
 	return f;
 }

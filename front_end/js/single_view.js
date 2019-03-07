@@ -1,6 +1,6 @@
 
-let glb_deleteButton = document.getElementById("delete");
-let glb_query = getQueryFromHref();
+const glb_deleteButton = document.getElementById("remove");
+const glb_query = getQueryFromHref();
 
 chrome.runtime.sendMessage({request: "get-meta", query: "id=" + glb_query}, (response) => {
 
@@ -10,7 +10,7 @@ chrome.runtime.sendMessage({request: "get-meta", query: "id=" + glb_query}, (res
 		return;
 	}
 
-	if (response.meta.length == 0)
+	if (response.meta.length === 0)
 	{
 		console.warn("Could not get content.");
 		return;
@@ -21,13 +21,13 @@ chrome.runtime.sendMessage({request: "get-meta", query: "id=" + glb_query}, (res
 		return;
 	}
 
-	if (response.xhrError)
+	if (response.clientError)
 	{
-		console.warn("Not Implemented: xhrError");
+		console.warn("Not Implemented: clientError");
 		return;
 	}
 
-	createContent(response.meta[0], response.path);
+	createContent(response.meta[0]);
 	glb_deleteButton.disabled = false;
 });
 
@@ -61,24 +61,17 @@ glb_deleteButton.onclick = () => {
 	});
 };
 
-function createContent(content, path)
+function createContent(meta)
 {
 	let image = document.getElementById("image");
-	if (content.path)
-	{
-		image.src = path + content.path;
-	}
-	else
-	{
-		image.src = content.srcUrl;
-	}
+	image.src = meta.path ? meta.path : meta.srcUrl;
 
 	let title = document.getElementById("title");
-	let titleTextNode = document.createTextNode(content.title);
+	let titleTextNode = document.createTextNode(meta.title);
 	title.appendChild(titleTextNode);
 
 	let tags = document.getElementById("tags");
-	let tagsTextNode = document.createTextNode(content.tags);
+	let tagsTextNode = document.createTextNode(meta.tags);
 	tags.appendChild(tagsTextNode);
 }
 

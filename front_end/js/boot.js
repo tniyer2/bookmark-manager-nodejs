@@ -10,12 +10,6 @@ document.addEventListener("contextmenu", (e) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
-
 	if (message.to !== "boot.js")
 		return;
 

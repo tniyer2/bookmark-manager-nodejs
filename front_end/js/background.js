@@ -1,25 +1,24 @@
 
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
+const DEFAULT_QUERY = "all";
 
-let glb_useLocal = false;
+let glb_useLocal = true;
+let glb_port;
 
-let glb_port = chrome.runtime.connectNative(DESKTOP_APPLICATION_NAME);
-glb_port.onDisconnect.addListener(() => {
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
-});
+if (!glb_useLocal)
+{
+	glb_port = chrome.runtime.connectNative(DESKTOP_APPLICATION_NAME);
+	glb_port.onDisconnect.addListener(() => {
+		if (chrome.runtime.lastError)
+		{
+			console.warn(chrome.runtime.lastError.message);
+			return;
+		}
+	});
+}
 
 // Listens to messages.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
 
 	if (msg.request === "get-popupInfo")
 	{
@@ -36,59 +35,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 	else if (msg.request === "get-meta")
 	{
-		let sendMeta = (meta) => {
-			meta = query(meta, msg.query);
-			let response = {meta: meta};
-			sendResponse(response);
-		};
+		let query = msg.query ? msg.query : DEFAULT_QUERY;
 
 		if (glb_useLocal)
-		{
-			getMetaLocally("all", (meta) => {
-				sendMeta(meta);
-			});
+		{	(async () => {
+				let meta = await wrap(getMetaLocally, query).catch(e => sendResponse(e));
+				if (typeof meta === "undefined") return;
+				sendResponse({meta: meta});
+			})();
 		}
 		else
 		{
-			let tag = String(sender.tab.id);
-			glb_port.postMessage({tag: tag, type: "get"});
+			let tag = sender.tab.id + "get" + getSeconds();
+			glb_port.postMessage({tag: tag, type: "get", query: query});
 			glb_port.onMessage.addListener((response) => {
 				if (response.tag === tag)
-					sendMeta(response.result);
+				{
+					sendResponse({meta: response.result});
+				}
 			});
 		}
 
 		return true;
 	}
-	else if (msg.request === "upload-meta")
+	else if (msg.request === "add-meta")
 	{
 		if (glb_useLocal)
 		{
-			uploadMetaLocally(msg.meta, (response) => {
-				if (response.success)
-				{
-					sendResponse({success: true});
-				}
-				else if (response.outOfMemory)
-				{
-					sendResponse({outOfMemory: true});
-				}
-				else if (response.lastError)
-				{
-					console.warn(response.lastError);
-				}
-				else
-				{
-					console.warn("Unkown response from uploadMetaLocally callback:");
-					console.warn(response);
-				}
-			});
+			(async () => {
+				let success = await wrap(addMetaLocally, msg.meta).catch(e => sendResponse(e));
+				if (success !== true) return;
+				sendResponse({success: true});
+			})();
 		}
 		else
 		{
-			let tag = sender.tab.id;
+			let tag = sender.tab.id + "add" + getSeconds();
 			glb_port.postMessage({tag: tag, type: "add", content: msg.meta});
-			sendResponse({success: true});
+			glb_port.onMessage.addListener((response) => {
+				if (response.tag === tag)
+				{
+					sendResponse({success: true});
+				}
+			});
 		}
 
 		return true;
@@ -97,41 +86,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	{
 		if (glb_useLocal)
 		{
-			deleteMetaLocally(msg.id, (response) => {
-				if (response.success)
-				{
-					sendResponse({success: true});
-				}
-				else if (response.outOfMemory)
-				{
-					sendResponse({outOfMemory: true});
-				}
-				else if (response.lastError)
-				{
-					console.warn(response.lastError);
-				}
-				else
-				{
-					console.warn("Couldn't handle response of deleteMetaLocally callback:");
-					console.warn(response);
-				}
-			});
+			(async () => {
+				let success = await wrap(deleteMetaLocally, msg.id).catch(e => sendResponse(e));
+				if (success !== true) return;
+				sendResponse({success: true});
+			})();
 		}
 		else
 		{
-
+			let tag = sender.tab.id + "delete" + getSeconds();
+			glb_port.postMessage({tag: tag, request: "delete", id: msg.id});
+			glb_port.onMessage.addListener((response) => {
+				if (response.tag === tag)
+				{
+					sendResponse({success: true});
+				}
+			});
 		}
-
+ 
 		return true;
 	}
 	else
 	{
-		console.warn("Content script sent unknown message:");
-		console.warn(msg);
+		console.warn("Content script sent unknown message:", msg);
 	}
 });
 
-// browser action opens up the gallery.
+// Browser action opens up the gallery.
 chrome.browserAction.onClicked.addListener((tab) => {
 	chrome.tabs.create({url: "html/gallery.html"});
 });
@@ -164,12 +145,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 	});
 });
 
+// Sends message to a script. Injects script if necessary.
 function sendMessageToScript(tabId, msg, callback)
 {
 	chrome.tabs.sendMessage(tabId, {to: msg.to, check: true}, (exists) => {
 		if (chrome.runtime.lastError) { /*ignore*/ }
 
-		if (exists)
+		if (exists === true)
 		{
 			chrome.tabs.sendMessage(tabId, msg, callback);
 		}
@@ -180,4 +162,12 @@ function sendMessageToScript(tabId, msg, callback)
 			});
 		}
 	});
+}
+
+// Returns seconds since Unix Epoch.
+function getSeconds()
+{
+	let today = new Date();
+	let seconds = Math.floor(today.getTime() / 1000);
+	return seconds;
 }

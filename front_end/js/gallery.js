@@ -1,51 +1,52 @@
 
-const CONTENT_LINK = "single_view.html";
+const CONTENT_LINK  = "single_view.html";
 
 let glb_feed = document.getElementById("feed");
 let glb_searchField = document.getElementById("search");
 
-chrome.runtime.sendMessage({request: "get-meta", query: "all"}, (response) => {
+getMeta();
 
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
+function getMeta(q)
+{
+	chrome.runtime.sendMessage({request: "get-meta", query: q}, (response) => {
 
-	if (response.xhrError)
-	{
-		console.warn("Not Implemented: xhrError");
-		return;
-	}
+		if (chrome.runtime.lastError)
+		{
+			console.warn(chrome.runtime.lastError.message);
+			return;
+		}
 
-	populateFeed(response.meta, response.path);
-});
+		if (response.clientError)
+		{
+			console.warn("Not Implemented: clientError");
+			return;
+		}
 
-//e is a KeyboardEvent object
-glb_searchField.onkeypress = function(e){
+		populateFeed(response.meta);
+	});
+}
+
+glb_searchField.onkeypress = (e) => {
 	if (!e) e = window.event;
 	let keyCode = e.keyCode || e.which;
 	if (keyCode == '13')
 	{
 		clearFeed();
-		chrome.runtime.sendMessage({from: "gallery.js", request: "get-meta", query: glb_searchField.value});
+		getMeta(glb_searchField.value)
 	}
 };
 
-// meta - an array of metaObjects
-// Loads all content from metaObjects in meta
-// path - path of resource context
-function populateFeed(meta, path)
+function populateFeed(metaList)
 {
-	if (!meta)
+	if (!metaList)
 	{
-		console.warn("meta is " + meta);
+		console.warn("metaList is " + metaList);
 		return;
 	}
 
-	for (let obj of meta)
+	for (let meta of metaList)
 	{
-		createContent(obj, path);
+		createContent(meta);
 	}
 }
 
@@ -57,10 +58,7 @@ function clearFeed()
 	}
 }
 
-// Creates one block of content
-// metaObject - metadata on one block of content
-// path - path of resource context
-function createContent(metaObject, path)
+function createContent(meta)
 {
 	let contentBlock = document.createElement("div");
 	contentBlock.classList.add("contentBlock");
@@ -70,32 +68,25 @@ function createContent(metaObject, path)
 
 	let title = document.createElement("p");
 	title.classList.add("contentTitle");
-	let nameText = document.createTextNode(metaObject.title);
+	let nameText = document.createTextNode(meta.title);
 	title.appendChild(nameText);
 
 	let content;
-	if (metaObject.category === "image")
+	if (meta.category === "image")
 	{
 		content = document.createElement("a");
-		content.href = CONTENT_LINK + "?" + metaObject.id;
+		content.href = CONTENT_LINK + "?" + meta.id;
 
 		let image = document.createElement("img");
 		image.classList.add("contentImage");
-		if (metaObject.path)
-		{
-			image.src = path + metaObject.path;
-		}
-		else
-		{
-			image.src = metaObject.srcUrl;
-		}
+		image.src = meta.path ? meta.path : meta.srcUrl;
 
 		content.appendChild(image);
 		innerBlock.appendChild(content);
 	}
-	else if (metaObject.category === "video")
+	else if (meta.category === "video")
 	{
-		if (metaObject.path)
+		if (meta.path)
 		{
 			content = document.createElement("video");
 			innerBlock.appendChild(content);
@@ -105,13 +96,13 @@ function createContent(metaObject, path)
 			content.style.height = "100%";
 
 			source = document.createElement("source");
-			source.src = path + metaObject.path;
+			source.src = meta.path;
 			content.appendChild(source);
 		}
 		else
 		{
 			content = document.createElement("iframe");
-			content.src = metaObject.srcUrl;
+			content.src = meta.srcUrl;
 			innerBlock.appendChild(content);
 		}
 	}

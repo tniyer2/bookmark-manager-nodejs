@@ -1,23 +1,21 @@
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-	if (message.to != "scanner.js")
+	if (msg.to != "scanner.js")
 		return;
 
-	if (message.check)
+	if (msg.check)
 	{
 		sendResponse(true);
 		return;
 	}
 
-	if (message.scan)
+	if (msg.scan)
 	{
-		let toScan = message.html.parent ? message.html.parent : message.html.element;
+		let toScan = msg.html.parent ? msg.html.parent : msg.html.element;
 		let scanInfo = scanPage(toScan);
 
-		console.log("Page was scanned for videos. scanInfo:");
-		console.log(scanInfo);
-
+		console.log("Page was scanned for videos. scanInfo:", scanInfo);
 		sendResponse(scanInfo);
 	}
 });

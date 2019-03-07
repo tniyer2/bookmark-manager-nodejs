@@ -20,7 +20,8 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 		return;
 	}
 
-	let srcUrl = response.srcUrl;
+	let srcUrl   = response.srcUrl;
+	let scanInfo = response.scanInfo; 
 
 	glb_tabId   = response.tabId;
 	glb_docUrl  = response.docUrl;
@@ -38,25 +39,26 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 		glb_srcUrl = srcUrl;
 		glb_category = response.mediaType;
 	}
+	else if (scanInfo.linkUrls.length > 0)
+	{
+		console.log("Source was found in a link in the document.");
+
+		glb_srcUrl = scanInfo.linkUrls[0].url;
+		glb_title.value = scanInfo.linkUrls[0].title;
+		glb_category = "video";
+	}
+	else if (scanInfo.videoUrls.length > 0)
+	{
+		console.log("Source was found in a video element.");
+
+		glb_srcUrl = scanInfo.videoUrls[0].url;
+		glb_title.value = scanInfo.videoUrls[0].title;
+		glb_category = "video";
+	}
 	else
-	if (response.scanInfo.linkUrls.length > 0)
-		{
-			console.log("Source was found in a link in the document.");
-			glb_srcUrl = response.scanInfo.linkUrls[0].url;
-			glb_title.value = response.scanInfo.linkUrls[0].title;
-			glb_category = "video";
-		}
-		else if (response.scanInfo.videoUrls.length > 0)
-		{
-			console.log("Source was found in a video element.");
-			glb_srcUrl = response.scanInfo.videoUrls[0].url;
-			glb_title.value = response.scanInfo.videoUrls[0].title;
-			glb_category = "video";
-		}
-		else
-		{
-			console.warn("No source was found.");
-		}
+	{
+		console.warn("No source was found.");
+	}
 });
 
 $(function(){
@@ -64,16 +66,16 @@ $(function(){
 });
 
 glb_mask.onclick = () => {
-	chrome.tabs.sendMessage(glb_tabId, {to: "content.js", close: true});
+	closePopup();
 };
 
-// Save Link
+// Bookmark source
 glb_save1.onclick = () => {
 	saveMeta(false);
 	glb_save1.onclick = null;
 };
 
-// Save File on Server
+// Bookmark and download source
 glb_save2.onclick = () => {
 	saveMeta(true);
 	glb_save2.onclick = null;
@@ -81,22 +83,17 @@ glb_save2.onclick = () => {
 
 async function saveMeta(download)
 {
-	let command = {
-		download: download
-	};
-
 	let meta = {
 		title: glb_title.value,
 		tags: $("#tags").tagit("assignedTags"),
 		category: glb_category,
-		date: getDate(),
+		date: getMinutes(),
 		srcUrl: glb_srcUrl,
 		docUrl: glb_docUrl
 	};
 
-	let msg = { from: "popup.js",
-				request: "upload-meta",
-				command: command,
+	let msg = { request: "add-meta",
+				download: download,
 				meta: meta };
 
 	chrome.runtime.sendMessage(msg, (response) => {
@@ -107,17 +104,17 @@ async function saveMeta(download)
 			return;
 		}
 
-		if (response.success)
+		if (response.success === true)
 		{
 			closePopup();
 		}
-		else if (response.outOfMemory)
+		else if (response.outOfMemory === true)
 		{
 			console.warn("Not Implemented: outOfMemory");
 		}
-		else if (response.xhrError)
+		else if (response.clientError === true)
 		{
-			console.warn("Not Implemented: xhrError");
+			console.warn("Not Implemented: clientError");
 		}
 		else
 		{
@@ -132,8 +129,8 @@ function closePopup()
 	chrome.tabs.sendMessage(glb_tabId, {to: "content.js", close: true});
 }
 
-// Returns minutes since 1970.
-function getDate()
+// Returns minutes since the Unix Epoch.
+function getMinutes()
 {
 	let today = new Date();
 	let minutes = Math.floor(today.getTime() / (1000 * 60));
