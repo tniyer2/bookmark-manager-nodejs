@@ -1,17 +1,23 @@
 
 const net 	  = require("net");
+const url     = require("url");
 const fs  	  = require("fs");
+const path    = require("path");
 const buffer  = require("buffer");
 const console = require("console");
 
-const searcher = require("../front_end/js/query.js");
+const {download} = require("./downloader.js");
+const {wrap} 	 = require("../front_end/js/wrapper.js");
+const searcher	 = require("../front_end/js/query.js");
+
+const RESOURCES_PATH = "back_end/resources";
 
 class NativeMessagingServer
 {
 	constructor(metaLoader, portPath)
 	{
 		this.metaLoader = metaLoader;
-		this.glb_meta = metaLoader.load();
+		this.glb_meta = metaLoader.loadSync();
 
 		this.portPath = portPath;
 	}
@@ -23,7 +29,9 @@ class NativeMessagingServer
 
 	    	let writeObject = (jsonifiable) => {
 	    		if (!jsonifiable)
+	    		{
 	    			return;
+	    		}
 	    		let s = JSON.stringify(jsonifiable);
 
 				let lbuf = Buffer.alloc(4);
@@ -43,8 +51,8 @@ class NativeMessagingServer
 					    	 request.type === "delete" ?  (r, cb) => this.remove(r, cb):
 					    	 (r, cb) => this.handleInvalid(r, cb);
 
-				let response = handle(request, writeObject);
-				writeObject(response);
+				let syncResponse = handle(request, writeObject);
+				writeObject(syncResponse);
 		    });
 		});
 
@@ -64,6 +72,7 @@ class NativeMessagingServer
 	get(request, callback)
 	{
 		console.log("NM Server: sending meta");
+
 		let result = searcher.query(this.glb_meta, request.query);
 		return {tag: request.tag, result: result};
 	}
@@ -72,9 +81,35 @@ class NativeMessagingServer
 	{
 		console.log("NM Server: adding content to meta: ", "'" + request.content.title + "'");
 
-		request.content.id = searcher.getRandomString();
-		this.glb_meta.push(request.content);
-		this.metaLoader.save(this.glb_meta);
+		let content = request.content;
+		content.id  = searcher.getRandomString();
+
+		if (request.download === true)
+		{
+			(async () => {
+
+				let urlObj = new URL(content.srcUrl);
+
+				let ext = this.getExtension(urlObj.pathname);
+				let fileName = content.id + ext;
+				let rel 	 = path.join(RESOURCES_PATH, fileName);
+
+				console.log("urlObj:", urlObj);
+				console.log("ext:", ext);
+				console.log("fileName:", fileName);
+				console.log("rel:", rel);
+
+				await wrap(download, urlObj, rel);
+
+				content.path = fs.realpathSync(rel);
+				this.metaLoader.saveSync(this.glb_meta);
+				// if (callback) callback({tag: request.tag});
+			})();
+		}
+
+		this.glb_meta.push(content);
+		this.metaLoader.saveSync(this.glb_meta);
+
 		return {tag: request.tag};
 	}
 
@@ -97,15 +132,39 @@ class NativeMessagingServer
 			return response;
 		}
 
+		let filePath = this.glb_meta[i].path; 
+		if (filePath)
+		{
+			fs.unlink(filePath, (err) => {
+				if (err) throw err;
+			});
+		}
+
 		this.glb_meta.splice(i, 1);
-		this.metaLoader.save(this.glb_meta);
+		this.metaLoader.saveSync(this.glb_meta);
 		return response;
 	}
 
 	handleInvalid(request, callback)
 	{
-		console.log("NM Server: Cient sent invlalid request type: ", "'" + request.type + "'");
+		console.log("NM Server: Cient sent invlalid request type:", 
+					"'" + request.type + "'");
+
 		return {tag: request.tag, clientError: "Invalid Request Method"};
+	}
+
+	// return value includes beginning '.'
+	getExtension(pathname)
+	{
+		let ext = "";
+		let i   = pathname.lastIndexOf(".");
+		if (i !== -1)
+		{
+			// includes beginning '.'
+			ext = pathname.substring(i);
+		}
+
+		return ext;
 	}
 }
 

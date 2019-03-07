@@ -9,7 +9,7 @@ class MetaLoader
 		this.metaPath = metaPath;
 	}
 
-	load()
+	loadSync()
 	{
 		console.log("loading meta . . .");
 		let meta = [];
@@ -17,6 +17,7 @@ class MetaLoader
 		if (!fs.existsSync(this.metaPath))
 		{
 			fs.writeFileSync(this.metaPath, "");
+			return meta;
 		}
 
 		let s = fs.readFileSync(this.metaPath, {encoding: "utf8"});
@@ -31,7 +32,7 @@ class MetaLoader
 		return meta;
 	}
 
-	save(meta)
+	saveSync(meta)
 	{
 		console.log("saving meta . . .");
 

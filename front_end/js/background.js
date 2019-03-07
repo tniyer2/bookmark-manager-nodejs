@@ -71,7 +71,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		else
 		{
 			let tag = sender.tab.id + "add" + getSeconds();
-			glb_port.postMessage({tag: tag, type: "add", content: msg.meta});
+			glb_port.postMessage({tag: tag, type: "add", content: msg.meta, download: msg.download});
 			glb_port.onMessage.addListener((response) => {
 				if (response.tag === tag)
 				{
