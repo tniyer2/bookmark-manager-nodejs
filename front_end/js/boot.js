@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	{
 		if (!glb_info)
 		{
-			console.warn("clickedInfo should not be " + glb_info);
+			console.warn("glb_info should not be " + glb_info);
 			return;
 		}
 		sendResponse(glb_info);

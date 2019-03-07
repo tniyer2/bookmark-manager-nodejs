@@ -1,6 +1,5 @@
 
 const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES - 1000;
-const ID_LENGTH = 40;
 
 let glb_meta;
 
@@ -16,7 +15,7 @@ async function addMetaLocally(meta, successCallback, errorCallback)
 {
 	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
 
-	meta.id = getRandomString(ID_LENGTH);
+	meta.id = getRandomString();
 	glb_meta.push(meta);
 
 	let success = await wrap(save).catch(e => errorCallback(e));
@@ -27,15 +26,7 @@ async function deleteMetaLocally(id, successCallback, errorCallback)
 {
 	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
 
-	let i;
-	for (let j = 0; j < glb_meta.length; j+=1)
-	{
-		if (glb_meta[j].id === id)
-		{
-			i = j;
-			break;
-		}
-	}
+	let i = searcher.getId(id);
 
 	if (typeof i === "undefined")
 	{
@@ -118,18 +109,4 @@ function storageGetWrapper(keys)
 			}
 		});
 	});
-}
-
-function getRandomString(length)
-{
-	const alphaNumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-	let s = "";
-	for (let i = 0; i < length; i+=1)
-	{
-		let rand = Math.floor(Math.random() * alphaNumeric.length);
-		s += alphaNumeric.charAt(rand);
-	}
-
-	return s;
 }

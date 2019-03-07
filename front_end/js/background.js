@@ -2,7 +2,7 @@
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
 const DEFAULT_QUERY = "all";
 
-let glb_useLocal = true;
+let glb_useLocal = false;
 let glb_port;
 
 if (!glb_useLocal)
@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		else
 		{
 			let tag = sender.tab.id + "delete" + getSeconds();
-			glb_port.postMessage({tag: tag, request: "delete", id: msg.id});
+			glb_port.postMessage({tag: tag, type: "delete", id: msg.id});
 			glb_port.onMessage.addListener((response) => {
 				if (response.tag === tag)
 				{

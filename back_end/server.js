@@ -4,6 +4,8 @@ const fs  	  = require("fs");
 const buffer  = require("buffer");
 const console = require("console");
 
+const searcher = require("../front_end/js/query.js");
+
 class NativeMessagingServer
 {
 	constructor(metaLoader, portPath)
@@ -38,7 +40,7 @@ class NativeMessagingServer
 		    	let handle = request.type === "get"    ?  (r, cb) => this.get(r, cb):
 					    	 request.type === "add"    ?  (r, cb) => this.add(r, cb):
 					    	 request.type === "update" ?  (r, cb) => this.update(r, cb):
-					    	 request.type === "remove" ?  (r, cb) => this.remove(r, cb):
+					    	 request.type === "delete" ?  (r, cb) => this.remove(r, cb):
 					    	 (r, cb) => this.handleInvalid(r, cb);
 
 				let response = handle(request, writeObject);
@@ -62,13 +64,15 @@ class NativeMessagingServer
 	get(request, callback)
 	{
 		console.log("NM Server: sending meta");
-		return {tag: request.tag, result: this.glb_meta};
+		let result = searcher.query(this.glb_meta, request.query);
+		return {tag: request.tag, result: result};
 	}
 
 	add(request, callback)
 	{
 		console.log("NM Server: adding content to meta: ", "'" + request.content.title + "'");
 
+		request.content.id = searcher.getRandomString();
 		this.glb_meta.push(request.content);
 		this.metaLoader.save(this.glb_meta);
 		return {tag: request.tag};
@@ -76,12 +80,26 @@ class NativeMessagingServer
 
 	update(request, callback)
 	{
-
+		throw "update(request, callback) is not implemented.";
 	}
 
 	remove(request, callback)
 	{
+		console.log("NM Server: removing", request.id);
 
+		let response = {tag: request.tag};
+		let i = searcher.getId(this.glb_meta, request.id);
+
+		if (typeof i === "undefined")
+		{
+			console.warn("Could not find element with id: '" + request.id + "'");
+			response.clientError = "bad id";
+			return response;
+		}
+
+		this.glb_meta.splice(i, 1);
+		this.metaLoader.save(this.glb_meta);
+		return response;
 	}
 
 	handleInvalid(request, callback)

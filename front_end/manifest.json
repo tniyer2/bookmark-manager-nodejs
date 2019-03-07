@@ -13,7 +13,7 @@
 	"permissions": ["tabs", "storage", "contextMenus", "activeTab", "nativeMessaging", "http://localhost/"],
 	"background": 
 	{
-		"scripts": ["js/wrapper.js", "js/ratio.js", "js/query.js", "js/storage.js", "js/background.js"],
+		"scripts": ["js/wrapper.js", "js/query.js", "js/storage.js", "js/background.js"],
 		"persistent": false
 	},
 	"content_scripts": [{
