@@ -33,15 +33,16 @@ class NativeMessagingServer
 	    			return;
 	    		}
 	    		let s = JSON.stringify(jsonifiable);
+	    		let length = s.length;
 
 				let lbuf = Buffer.alloc(4);
-				lbuf.writeInt32LE(s.length, 0);
+				lbuf.writeInt32LE(length, 0);
 				stream.write(lbuf);
 				stream.write(s);
 			};
 
 		    stream.on("data", (buff) => {
-		    	console.log("NM Server: on data");
+		    	console.log("NM Socket: on data");
 
 		    	let request = JSON.parse(buff.toString("utf8"));
 
@@ -66,6 +67,15 @@ class NativeMessagingServer
 			lbuf.writeInt32LE(port, 0);
 
 		    fs.writeFileSync(this.portPath, lbuf);
+		});
+
+		tcpServer.on("error", (err) => {
+			console.log(err);
+			tcpServer.close();
+		});
+
+		tcpServer.on("close", () => {
+			console.log("NM Server: closed");
 		});
 	}
 

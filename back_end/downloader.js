@@ -6,10 +6,10 @@ const https = require("https");
 function download(srcUrl, filePath, successCallback, errorCallback)
 {
 	let makeRequest = (protocol) => {
-		fs.writeFileSync(filePath, "");
-
 		let wStream = fs.createWriteStream(filePath);
-		protocol.get(srcUrl, (rStream) => {
+		let headers = {"User-Agent": "Mozilla/5.0"};
+
+		protocol.get(srcUrl, {headers: headers}, (rStream) => {
 			rStream.on("close", () => successCallback(true));
 			rStream.pipe(wStream);
 		});

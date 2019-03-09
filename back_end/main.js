@@ -10,9 +10,17 @@ const PORT_PATH = "native_messaging/port";
 
 function main()
 {
-	let loader = new MetaLoader(META_PATH);
-	let server = new NativeMessagingServer(loader, PORT_PATH);
-	server.run();
+	try
+	{
+		let loader = new MetaLoader(META_PATH);
+		let server = new NativeMessagingServer(loader, PORT_PATH);
+		server.run();
+	}
+	catch (e)
+	{
+		console.log(e);
+		throw e;
+	}
 }
 
 app.on("ready", () => {
