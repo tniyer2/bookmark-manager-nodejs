@@ -26,7 +26,7 @@ async function deleteMetaLocally(id, successCallback, errorCallback)
 {
 	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
 
-	let i = searcher.getId(id);
+	let i = getId(id);
 
 	if (typeof i === "undefined")
 	{

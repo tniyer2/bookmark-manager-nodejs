@@ -1,5 +1,6 @@
 
-.mask {
+.mask 
+{
 	position: absolute;
 	width: 100%;
 	height: 100%;
@@ -7,39 +8,51 @@
   left: 0px;
   z-index: -1;
 }
-
-.mask--opaque {
+.mask--opaque
+{
   background-color: #000000;
   opacity: 0.75;
 }
-
-.saveMenu {
+.menuAnchor
+{
   position: absolute;
-  height: 275px;
-  width: 300px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
-.saveMenu--red {
+.saveMenu
+{
+  display: block;
+  width: 250px;
+  height: 250px;
+}
+.saveMenu--red
+{
     background-color: red;
 }
-
-.saveMenu--lightYellow {
+.saveMenu--lightYellow
+{
   background-color: #ffff66;
 }
-
-.saveMenu--edge {
+.saveMenu--edge
+{
   border-radius: 20px;
   padding: 10px;
 }
-
-.saveMenu__button {
+.saveMenu__button
+{
   background-color: #4CAF50;
   height: 30px;
   width: 100px;
   margin: 10px;
   color: white;
   font-size: 16px;
+}
+.urlMenu
+{
+
+}
+.preview
+{
+
 }

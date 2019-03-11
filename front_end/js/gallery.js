@@ -1,5 +1,5 @@
 
-const CONTENT_LINK  = "single_view.html";
+const CONTENT_LINK  = "singleView.html";
 
 let glb_feed = document.getElementById("feed");
 let glb_searchField = document.getElementById("search");
@@ -16,13 +16,22 @@ function getMeta(q)
 			return;
 		}
 
-		if (response.clientError)
+		if (response.meta)
+		{
+			populateFeed(response.meta);
+		}
+		else if (response.clientError === true)
 		{
 			console.warn("Not Implemented: clientError");
-			return;
 		}
-
-		populateFeed(response.meta);
+		else if (response.nmError === true)
+		{
+			console.warn("Not Implemented: nmError");
+		}
+		else
+		{
+			console.warn("Could not handle response:", response);
+		}
 	});
 }
 

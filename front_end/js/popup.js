@@ -5,12 +5,15 @@ const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&
 let glb_category;
 let glb_srcUrl;
 let glb_docUrl;
+let glb_connected;
 let glb_tabId;
 
-let glb_mask  = document.getElementById("mask");
-let glb_title = document.getElementById("title");
-let glb_save1 = document.getElementById("save1");
-let glb_save2 = document.getElementById("save2");
+let glb_mask  	 = document.getElementById("mask");
+let glb_title 	 = document.getElementById("title");
+let glb_save 	 = document.getElementById("save");
+let glb_download = document.getElementById("download");
+
+let myTaggle = new Taggle("tags", {});
 
 chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 
@@ -23,8 +26,9 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 	let srcUrl   = response.srcUrl;
 	let scanInfo = response.scanInfo; 
 
-	glb_tabId   = response.tabId;
-	glb_docUrl  = response.docUrl;
+	glb_tabId     = response.tabId;
+	glb_connected = response.connected;
+	glb_docUrl    = response.docUrl;
 
 	if (glb_docUrl.indexOf("www.youtube.com") > 0)
 	{
@@ -61,40 +65,33 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 	}
 });
 
-$(function(){
-	$("#tags").tagit();
-});
-
 glb_mask.onclick = () => {
 	closePopup();
 };
 
 // Bookmark source
-glb_save1.onclick = () => {
-	saveMeta(false);
-	glb_save1.onclick = null;
+glb_save.onclick = () => {
+	saveMeta();
+	glb_save.onclick = null;
 };
 
 // Bookmark and download source
-glb_save2.onclick = () => {
-	saveMeta(true);
-	glb_save2.onclick = null;
+glb_download.onclick = () => {
+	downloadSrc();
 };
 
-async function saveMeta(download)
+async function saveMeta()
 {
 	let meta = {
 		title: glb_title.value,
-		tags: $("#tags").tagit("assignedTags"),
+		tags: myTaggle.getTags().values,
 		category: glb_category,
 		date: getMinutes(),
 		srcUrl: glb_srcUrl,
 		docUrl: glb_docUrl
 	};
 
-	let msg = { request: "add-meta",
-				download: download,
-				meta: meta };
+	let msg = {request: "add-meta", meta: meta};
 
 	chrome.runtime.sendMessage(msg, (response) => {
 
@@ -107,6 +104,10 @@ async function saveMeta(download)
 		if (response.success === true)
 		{
 			closePopup();
+		}
+		else if (response.nmError === true)
+		{
+			console.warn("Not Implemented: nmError");
 		}
 		else if (response.outOfMemory === true)
 		{
@@ -122,6 +123,11 @@ async function saveMeta(download)
 			console.warn(response);
 		}
 	});
+}
+
+async function downloadSrc()
+{
+
 }
 
 function closePopup()

@@ -2,29 +2,26 @@
   <html>
     <head>
       <link rel="stylesheet" type="text/css" href="../css/popup.css">
-      <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/flick/jquery-ui.css">
-      <link href="../tagit/jquery.tagit.css" rel="stylesheet" type="text/css">
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
-      <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
-      <script src="../tagit/tag-it.min.js" type="text/javascript" charset="utf-8"></script>
+      <link rel="stylesheet" type="text/css" href="../taggle.css">
     </head>
     <body>
       <img id="mask" class="mask mask--opaque">
-      <div id="preview">
-        
-      </div>
-      <div id="saveMenu" class="saveMenu saveMenu--lightYellow saveMenu--edge">
-        <p>Name</p>
-        <input id="title" type="text">
-        <p>Tags</p>
-        <ul id="tags">
-        </ul>
-        <button id ="save1" class="saveMenu__button">Bookmark</button>
-        <button id ="save2" class="saveMenu__button">Bookmark and Cache</button>
-        <script id ="popupScript" src="../js/popup.js"></script>
-      </div>
-      <div id="urlMenu" class="urlMenu">
+      <div id="menuAnchor" class="menuAnchor">
+        <div id="preview" class="preview">
+          
+        </div>
+        <div id="saveMenu" class="saveMenu saveMenu--lightYellow saveMenu--edge">
+          <input id="title" type="text">
+          <div id="tags" class="textarea">
+          </div>
+          <button id ="save" class="saveMenu__button">Save</button>
+          <button id ="download" class="saveMenu__button">Download</button>
+        </div>
+        <div id="urlMenu" class="urlMenu">
 
+        </div>
       </div>
+      <script src="../taggle.js"></script>
+      <script src="../js/popup.js"></script>
     </body>
   </html>

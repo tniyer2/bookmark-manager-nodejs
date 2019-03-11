@@ -11,7 +11,7 @@ class MetaLoader
 
 	loadSync()
 	{
-		console.log("loading meta . . .");
+		console.log("MetaLoader: loading meta");
 		let meta = [];
 
 		if (!fs.existsSync(this.metaPath))
@@ -23,8 +23,8 @@ class MetaLoader
 		let s = fs.readFileSync(this.metaPath, {encoding: "utf8"});
 		if (!s) return meta;
 
-		let all = JSON.parse(s);
-		for (let obj of all.list)
+		let full = JSON.parse(s);
+		for (let obj of full.list)
 		{
 			meta.push(obj);
 		}
@@ -34,12 +34,12 @@ class MetaLoader
 
 	saveSync(meta)
 	{
-		console.log("saving meta . . .");
+		console.log("MetaLoader: saving meta");
 
-		let all = {list: meta};
-		let s = JSON.stringify(all);
+		let full = {list: meta};
+		let s = JSON.stringify(full);
 		fs.writeFileSync(this.metaPath, s);
 	}
 }
 
-module.exports = {MetaLoader: MetaLoader};
+module.exports = MetaLoader;

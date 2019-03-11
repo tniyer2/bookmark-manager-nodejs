@@ -1,20 +1,37 @@
 
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
 const DEFAULT_QUERY = "all";
+const ID_PREFIX = "app_";
+const APP_CONNECT_WAIT = 3 * 1000;
 
-let glb_useLocal = false;
 let glb_port;
 
-if (!glb_useLocal)
+connectApp((port) => {
+	console.log("port:", port);
+});
+
+function connectApp(successCallback, errorCallback)
 {
+	let timeoutId = setTimeout(() => {
+		glb_port.onDisconnect.removeListener(listener);
+		successCallback(glb_port);
+	}, APP_CONNECT_WAIT);
+
 	glb_port = chrome.runtime.connectNative(DESKTOP_APPLICATION_NAME);
+	glb_port.onDisconnect.addListener(listener);
 	glb_port.onDisconnect.addListener(() => {
+		glb_port = null;
+	});
+
+	function listener()
+	{
 		if (chrome.runtime.lastError)
 		{
-			console.warn(chrome.runtime.lastError.message);
-			return;
+			// console.warn(chrome.runtime.lastError.message);
+			clearTimeout(timeoutId);
+			successCallback(null);
 		}
-	});
+	}
 }
 
 // Listens to messages.
@@ -29,38 +46,69 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 		response.scanInfo  = glb_popupInfo.scanInfo;
 		response.mediaType = glb_popupInfo.mediaType;
+		response.connected = Boolean(glb_port);
 		response.tabId	   = sender.tab.id;
 
 		sendResponse(response);
 	}
 	else if (msg.request === "get-meta")
 	{
-		let query = msg.query ? msg.query : DEFAULT_QUERY;
+		let result = [];
+		let query  = msg.query ? msg.query : DEFAULT_QUERY;
 
-		if (glb_useLocal)
-		{	(async () => {
-				let meta = await wrap(getMetaLocally, query).catch(e => sendResponse(e));
-				if (typeof meta === "undefined") return;
-				sendResponse({meta: meta});
-			})();
-		}
-		else
-		{
+		(async () => {
+			let meta = await wrap(getMetaLocally, query).catch(e => sendResponse(e));
+			if (typeof meta === "undefined") return;
+			addToResult(meta);
+		})();
+
+		if (glb_port)
+		{		
 			let tag = sender.tab.id + "get" + getSeconds();
 			glb_port.postMessage({tag: tag, type: "get", query: query});
 			glb_port.onMessage.addListener((response) => {
 				if (response.tag === tag)
 				{
-					sendResponse({meta: response.result});
+					addToResult(response.result);
 				}
 			});
+		}
+
+		function addToResult(meta)
+		{
+			if (!glb_port)
+			{
+				sendResponse({meta: meta});
+				return;
+			}
+			else
+			{
+				result.push(meta);
+				if (result.length === 2)
+				{
+					let final = result[0].concat(result[1]);
+					sendResponse({meta: final});
+				}
+			}
 		}
 
 		return true;
 	}
 	else if (msg.request === "add-meta")
 	{
-		if (glb_useLocal)
+		if (glb_port)
+		{
+			let tag = sender.tab.id + "add" + getSeconds();
+			let appMessage = {tag: tag, type: "add", content: msg.meta, download: true};
+			glb_port.postMessage(appMessage);
+			glb_port.onMessage.addListener((response) => {
+				if (response.tag === tag)
+				{
+					sendResponse({success: true});
+				}
+			});
+		}
+		else
 		{
 			(async () => {
 				let success = await wrap(addMetaLocally, msg.meta).catch(e => sendResponse(e));
@@ -68,40 +116,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 				sendResponse({success: true});
 			})();
 		}
-		else
-		{
-			let tag = sender.tab.id + "add" + getSeconds();
-			glb_port.postMessage({tag: tag, type: "add", content: msg.meta, download: msg.download});
-			glb_port.onMessage.addListener((response) => {
-				if (response.tag === tag)
-				{
-					sendResponse({success: true});
-				}
-			});
-		}
 
 		return true;
 	}
 	else if (msg.request === "delete-meta")
 	{
-		if (glb_useLocal)
+		if (fromApp(msg.id))
+		{
+			if (glb_port)
+			{
+				let tag = sender.tab.id + "delete" + getSeconds();
+				glb_port.postMessage({tag: tag, type: "delete", id: msg.id});
+				glb_port.onMessage.addListener((response) => {
+					if (response.tag === tag)
+					{
+						sendResponse({success: true});
+					}
+				});
+			}
+			else
+			{
+				sendResponse({nmError: true});
+			}
+		}
+		else
 		{
 			(async () => {
 				let success = await wrap(deleteMetaLocally, msg.id).catch(e => sendResponse(e));
 				if (success !== true) return;
 				sendResponse({success: true});
 			})();
-		}
-		else
-		{
-			let tag = sender.tab.id + "delete" + getSeconds();
-			glb_port.postMessage({tag: tag, type: "delete", id: msg.id});
-			glb_port.onMessage.addListener((response) => {
-				if (response.tag === tag)
-				{
-					sendResponse({success: true});
-				}
-			});
 		}
  
 		return true;
@@ -119,6 +163,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
 
 // Creates context menu item "Save".
 chrome.contextMenus.removeAll(() => {
+
 	let saveInfo = {
 		title: "Save",
 		id:"Save",
@@ -170,4 +215,11 @@ function getSeconds()
 	let today = new Date();
 	let seconds = Math.floor(today.getTime() / 1000);
 	return seconds;
+}
+
+// Returns true if content came from the desktop app
+function fromApp(contentId)
+{
+	let sub = contentId.substring(0, 4);
+	return sub === ID_PREFIX;
 }
