@@ -1,2 +1,2 @@
-"C:\Program Files\Mono\bin\csc" -out:host.exe Program.cs Host.cs
+csc -out:host.exe Program.cs Connector.cs Host.cs Logger.cs
 cmd /k

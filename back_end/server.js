@@ -44,8 +44,17 @@ class NativeMessagingServer
 
 		    stream.on("data", (buff) => {
 		    	console.log("NM Server: on data");
+		    	let request;
 
-		    	let request = JSON.parse(buff.toString("utf8"));
+		    	try
+		    	{
+		    		request = JSON.parse(buff.toString("utf8", 4));
+		    	}
+		    	catch (e)
+		    	{
+		    		console.log(e);
+		    		return;
+		    	}
 
 		    	let handle = request.type === "get"    ?  (r, cb) => this.get(r, cb):
 					    	 request.type === "add"    ?  (r, cb) => this.add(r, cb):
@@ -71,12 +80,15 @@ class NativeMessagingServer
 		});
 
 		tcpServer.on("error", (err) => {
-			console.log(err);
+			console.log("NM Server:", err);
 			tcpServer.close();
 		});
 
-		tcpServer.on("close", () => {
-			console.log("NM Server: closed");
+		tcpServer.on("close", (hadError) => {
+			if (hadError)
+				console.log("NM Server: closed with transmission error");
+			else
+				console.log("NM Server: closed");
 		});
 	}
 
