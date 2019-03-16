@@ -22,16 +22,18 @@ class Connector
         {
             if (onPortChange)
             {
-                var watcher = new FileSystemWatcher(@"C:\Projects\tagger-plus\native_messaging");
+                string runningDir = Directory.GetCurrentDirectory();
+                // Logger.log("runningDir: " + runningDir);
+                var watcher = new FileSystemWatcher(runningDir);
                 watcher.Filter = "port";
                 watcher.Changed += onChanged;
                 watcher.EnableRaisingEvents = true;
-                Logger.log("Connecting after port change");
+                // Logger.log("Connecting after port change");
             }
             else
             {
                 connect();
-                Logger.log("Connecting without waiting for port change");
+                // Logger.log("Connecting without waiting for port change");
             }
         }
         catch (Exception e)
@@ -62,12 +64,13 @@ class Connector
     {
         try
         {
+            // Logger.log("onChanged called");
+            // Logger.log("\tName: " + e.Name);
             var watcher = (FileSystemWatcher) source;
-
-            Logger.log("onChanged called");
-            Logger.log("\tName: " + e.Name);
-            connect();
             watcher.Changed -= onChanged;
+
+            WaitForFile(PORT_PATH);
+            connect();
         }
         catch (Exception ex)
         {
@@ -85,5 +88,25 @@ class Connector
 
         int port = BitConverter.ToInt32(b, 0);
         return port;
+    }
+
+    private static bool IsFileReady(string filename)
+    {
+        try
+        {
+            using (FileStream inputStream = File.Open(filename, FileMode.Open, FileAccess.Read))
+            {
+                return inputStream.Length > 0;
+            }
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private static void WaitForFile(string filename)
+    {
+        while (!IsFileReady(filename)) { }
     }
 }
