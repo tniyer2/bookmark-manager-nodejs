@@ -16,17 +16,17 @@ function getMeta(q)
 			return;
 		}
 
-		if (response.meta)
+		if ("local" in response || "app" in response)
 		{
-			populateFeed(response.meta);
-		}
-		else if (response.clientError === true)
-		{
-			console.warn("Not Implemented: clientError");
-		}
-		else if (response.nmError === true)
-		{
-			console.warn("Not Implemented: nmError");
+			if (response.local)
+			{
+				populateFeed(response.local.meta);
+			}
+
+			if (response.app)
+			{
+				populateFeed(response.app.meta);
+			}
 		}
 		else
 		{

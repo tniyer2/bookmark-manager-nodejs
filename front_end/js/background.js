@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		let response = {};
 
 		response.srcUrl = glb_popupInfo.srcUrl;
-		response.docUrl = sender.tab.url === glb_popupInfo.srcUrl ? "src" : sender.tab.url ;
+		response.docUrl = glb_popupInfo.srcUrl === sender.tab.url ? "src" : sender.tab.url ;
 
 		response.scanInfo  = glb_popupInfo.scanInfo;
 		response.mediaType = glb_popupInfo.mediaType;
@@ -21,127 +21,171 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 		sendResponse(response);
 	}
+	// msg properties: query
 	else if (msg.request === "get-meta")
 	{
 		let port;
-		let result = [];
-		let query  = msg.query ? msg.query : DEFAULT_QUERY;
+		let final = {};
+		let query = msg.query ? msg.query : DEFAULT_QUERY;
 
 		(async () => {
-			port = await wrap(glb_connector.connect.bind(glb_connector));
+
+			let port = await wrap(glb_connector.connect
+						 	 .bind(glb_connector))
+							 .catch(e => console.warn(e));
+
 			if (port)
 			{
-				let tag = sender.tab.id + "get" + getSeconds();
-				port.postMessage({type: "get", tag: tag, query: query});
+				let myTag = genTag("get");
+				let request = { type: "get", 
+								tag: myTag, 
+								query: query };
+								
+				port.postMessage(request);
 				port.onMessage.addListener((response) => {
-					if (response.tag === tag)
+					if (response.tag === myTag)
 					{
-						addToResult(response.result);
+						addResult(response, true);
 					}
 				});
 			}
 
-			let localMeta = await wrap(getMetaLocally, query)
-								 .catch(e => sendResponse(e));
-			if (typeof localMeta === "undefined") return;
-			addToResult(localMeta);
-		})();
+			wrap(getMetaLocally, query)
+			.then(addResult, addResult);
 
-
-		function addToResult(meta)
-		{
-			if (!port)
+			function addResult(v, a)
 			{
-				sendResponse({meta: meta});
-				return;
-			}
-			else
-			{
-				result.push(meta);
-				if (result.length === 2)
+				if (v === undefined)
 				{
-					let final = result[0].concat(result[1]);
-					sendResponse({meta: final});
+					throw new Error("result should not be undefined");
+				}
+
+				let s = a ? "app" : "local";
+				final[s] = v;
+				if ((!port && "local" in final) || 
+					(port && "local" in final && "app" in final))
+				{
+					sendResponse(final);
 				}
 			}
-		}
+		})();
 
 		return true;
 	}
+	// msg properties: meta
 	else if (msg.request === "add-meta")
 	{
 		(async () => {
+
 			let port = await wrap(glb_connector.connect
-									.bind(glb_connector));
+							 .bind(glb_connector))
+							 .catch(e => console.warn(e));
+
 			if (port)
 			{
-				let tag = sender.tab.id + "add" + getSeconds();
+				let myTag = genTag("add");
 				let appMessage = { type: "add", 
-								   tag: tag, 
+								   tag: myTag, 
 								   content: msg.meta, 
 								   download: true };
 
 				port.postMessage(appMessage);
 				port.onMessage.addListener((response) => {
-					if (response.tag === tag)
+					if (response.tag === myTag)
 					{
-						sendResponse({success: true});
+						sendResponse(response);
 					}
 				});
 			}
 			else
 			{
-				let success = await wrap(addMetaLocally, msg.meta)
-									.catch(e => sendResponse(e));
-				if (success)
-				{ 
-					sendResponse({success: true});
-				}
+				wrap(addMetaLocally, msg.meta)
+				.then(sendRaw, sendRaw);
 			}
 		})();
 
 		return true;
 	}
+	// msg properties: id
+	else if (msg.request === "pick-meta")
+	{
+		pickMeta(msg.id, "pick", genTag, (v) => sendResponse(v));
+		return true;
+	}
+	// msg properties: id
 	else if (msg.request === "delete-meta")
 	{
-		(async () => {
-			if (fromApp(msg.id))
-			{
-				let port = await wrap(glb_connector.connect.bind(glb_connector));
-				if (port)
-				{
-					let tag = sender.tab.id + "delete" + getSeconds();
-					port.postMessage({type: "delete", tag: tag, id: msg.id});
-					port.onMessage.addListener((response) => {
-						if (response.tag === tag)
-						{
-							sendResponse({success: true});
-						}
-					});
-				}
-				else
-				{
-					sendResponse(null);
-				}
-			}
-			else
-			{
-				let success = await wrap(deleteMetaLocally, msg.id)
-									.catch(e => sendResponse(e));
-				if (success)
-				{
-					sendResponse({success: true});
-				}
-			}
-		})();
- 
+		pickMeta(msg.id, "delete", genTag, (v) => sendResponse(v));
 		return true;
 	}
 	else
 	{
 		console.warn("Content script sent unknown message:", msg);
 	}
+
+	function sendRaw(e) 
+	{ 
+		sendResponse(e);
+	}
+
+	function genTag(method)
+	{
+		let ms = new Date().getTime();
+		return String(sender.tab.id) + method + ms;
+	}
 });
+
+// mode can be 'pick' or 'delete'
+async function pickMeta(id, mode, genTag, successCallback, errorCallback)
+{
+	let localFunc;
+	if (mode === "pick")
+	{
+		localFunc = pickMetaLocally;
+	}
+	else if (mode === "delete")
+	{
+		localFunc = deleteMetaLocally;
+	}
+	else
+	{
+		console.warn("mode should not be", mode);
+		errorCallback(null);
+		return;
+	}
+
+	if (fromApp(id))
+	{
+		let port = await wrap(glb_connector.connect
+					 	 .bind(glb_connector))
+						 .catch(e => console.warn(e));
+
+		if (port)
+		{
+			let myTag = genTag(mode);
+			let request = { type: mode, 
+							tag: myTag,
+							id: id };
+
+			port.postMessage(request);
+			port.onMessage.addListener((response) => {
+				if (response.tag === myTag)
+				{
+					successCallback(response);
+				}
+			});
+		}
+		else
+		{
+			console.warn("connection required for " + mode + " mode");
+			successCallback({nmError: true});
+		}
+	}
+	else
+	{
+		wrap(localFunc, id).then(successCallback, successCallback);
+	}
+}
 
 // Browser action opens up the gallery.
 chrome.browserAction.onClicked.addListener((tab) => {
@@ -151,12 +195,13 @@ chrome.browserAction.onClicked.addListener((tab) => {
 // Creates context menu item "Save".
 chrome.contextMenus.removeAll(() => {
 
-	let saveInfo = {
-		title: "Save",
-		id:"Save",
-		contexts:["all"],
-		documentUrlPatterns: ["http://*/*", "https://*/*", "data:image/*", "file://*"]
-	};
+	let saveInfo = { title: "Save",
+					 id:"Save",
+					 contexts:["all"],
+					 documentUrlPatterns: [ "http://*/*", 
+					 						"https://*/*", 
+					 						"data:image/*", 
+					 						"file://*" ] };
 
 	chrome.contextMenus.create(saveInfo);
 });
@@ -196,15 +241,7 @@ function sendMessageToScript(tabId, msg, callback)
 	});
 }
 
-// Returns seconds since Unix Epoch.
-function getSeconds()
-{
-	let today = new Date();
-	let seconds = Math.floor(today.getTime() / 1000);
-	return seconds;
-}
-
-// Returns true if content came from the desktop app
+// Returns true if id is prefixed with APP_ID_PREFIX
 function fromApp(contentId)
 {
 	let sub = contentId.substring(0, 4);

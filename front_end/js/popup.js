@@ -69,13 +69,13 @@ glb_mask.onclick = () => {
 	closePopup();
 };
 
-// Bookmark source
+// save
 glb_save.onclick = () => {
-	saveMeta();
 	glb_save.onclick = null;
+	saveMeta();
 };
 
-// Bookmark and download source
+// download
 glb_download.onclick = () => {
 	downloadSrc();
 };
@@ -101,33 +101,20 @@ async function saveMeta()
 			return;
 		}
 
-		if (response.success === true)
+		if (response.success)
 		{
 			closePopup();
 		}
-		else if (response.nmError === true)
-		{
-			console.warn("Not Implemented: nmError");
-		}
-		else if (response.outOfMemory === true)
-		{
-			console.warn("Not Implemented: outOfMemory");
-		}
-		else if (response.clientError === true)
-		{
-			console.warn("Not Implemented: clientError");
-		}
 		else
 		{
-			console.warn("Could not handle response:");
-			console.warn(response);
+			console.warn("Could not handle response:", response);
 		}
 	});
 }
 
 async function downloadSrc()
 {
-
+	console.warn("downloadSrc() is not implemented");
 }
 
 function closePopup()
@@ -135,10 +122,10 @@ function closePopup()
 	chrome.tabs.sendMessage(glb_tabId, {to: "content.js", close: true});
 }
 
-// Returns minutes since the Unix Epoch.
+// Returns the minutes passed since the Unix Epoch.
 function getMinutes()
 {
-	let today = new Date();
-	let minutes = Math.floor(today.getTime() / (1000 * 60));
+	let milli = new Date().getTime();
+	let minutes = Math.floor(milli / (1000 * 60));
 	return minutes;
 }

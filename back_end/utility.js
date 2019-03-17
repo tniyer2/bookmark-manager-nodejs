@@ -1,7 +1,8 @@
-	
+
+// Parses 
 module.exports.parseFileName = function (pathname, split) {
 
-	const full    = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
+	const full = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
 	let matches = pathname.match(full);
 	
 	if (matches && matches.length > 0)

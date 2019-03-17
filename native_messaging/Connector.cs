@@ -22,18 +22,19 @@ class Connector
         {
             if (onPortChange)
             {
-                string runningDir = Directory.GetCurrentDirectory();
-                // Logger.log("runningDir: " + runningDir);
-                var watcher = new FileSystemWatcher(runningDir);
-                watcher.Filter = "port";
-                watcher.Changed += onChanged;
-                watcher.EnableRaisingEvents = true;
-                // Logger.log("Connecting after port change");
+                connectOnPortChange();
             }
             else
             {
-                connect();
-                // Logger.log("Connecting without waiting for port change");
+                try
+                {
+                    // Logger.log("Connecting without waiting for port change");
+                    connect();
+                }
+                catch (SocketException)
+                {
+                    connectOnPortChange();
+                }
             }
         }
         catch (Exception e)
@@ -42,6 +43,17 @@ class Connector
             throw;
         }
 	}
+
+    private void connectOnPortChange()
+    {
+        // Logger.log("Connecting after port change");
+
+        string runningDir = Directory.GetCurrentDirectory();
+        var watcher = new FileSystemWatcher(runningDir);
+        watcher.Filter = "port";
+        watcher.Changed += onChanged;
+        watcher.EnableRaisingEvents = true;
+    }
 
     private void connect()
     {

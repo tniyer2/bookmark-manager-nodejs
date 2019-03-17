@@ -7,20 +7,19 @@ const buffer  = require("buffer");
 const console = require("console");
 
 const getDownloader   = require("./downloader.js");
-const {parseFileName} = require("./utility.js");
 
 const searcher = require("../front_end/js/query.js");
 const {wrap}   = require("../front_end/js/wrapper.js");
 
 const RESOURCES_PATH = "back_end/resources";
-const ID_PREFIX	= "app_";
+const APP_ID_PREFIX	= "app_";
 
 class NativeMessagingServer
 {
 	constructor(metaLoader, portPath)
 	{
 		this.metaLoader = metaLoader;
-		this.glb_meta = metaLoader.loadSync();
+		this.meta = metaLoader.loadSync();
 
 		this.portPath = portPath;
 	}
@@ -61,6 +60,7 @@ class NativeMessagingServer
 		    	let handle = request.type === "get"    ?  (r, cb) => this.get(r, cb):
 					    	 request.type === "add"    ?  (r, cb) => this.add(r, cb):
 					    	 request.type === "update" ?  (r, cb) => this.update(r, cb):
+					    	 request.type === "pick"   ?  (r, cb) => this.pick(r, cb):
 					    	 request.type === "delete" ?  (r, cb) => this.remove(r, cb):
 					    	 (r, cb) => this.handleInvalid(r, cb);
 
@@ -99,10 +99,10 @@ class NativeMessagingServer
 		console.log("NM Server: client requested meta");
 		console.log("\t", "query:", request.query);
 
-		let result = searcher.query(this.glb_meta, request.query);
+		let result = searcher.query(this.meta, request.query);
 		console.log("\t", "meta has been sent");
 
-		return {tag: request.tag, result: result};
+		return {tag: request.tag, meta: result};
 	}
 
 	add(request, callback)
@@ -110,45 +110,30 @@ class NativeMessagingServer
 		console.log("NM Server: adding content to meta:", "'" + request.content.title + "'");
 
 		let content = request.content;
-		content.id  = ID_PREFIX + searcher.getRandomString();
+		content.id  = APP_ID_PREFIX + searcher.getRandomString();
 
 		if (request.download === true)
 		{
 			(async () => {
-
+				
 				let srcUrl   = new URL(content.srcUrl);
-				let fileName;
-				if (srcUrl.protocol.substring(0, 4) === "http")
-				{
-					let arr  = parseFileName(srcUrl.pathname, true);
-					fileName = arr ? arr[0] : content.id;
-				}
-				else
-				{
-					fileName = content.id;
-				}
+				let fileName = content.id;
 				let filePath = path.join(RESOURCES_PATH, fileName);
 
 				let d = getDownloader(srcUrl, filePath);
 				await wrap(d.download.bind(d));
 
 				content.path = d.getPath();
-				this.metaLoader.saveSync(this.glb_meta);
-				/*
-				if (callback)
-				{
-					callback({tag: request.tag});
-				}
-				*/
+				this.metaLoader.saveSync(this.meta);
 			})();
 		}
 
-		this.glb_meta.push(content);
+		this.meta.push(content);
 		console.log("\t", "content has been added");
 
-		this.metaLoader.saveSync(this.glb_meta);
+		this.metaLoader.saveSync(this.meta);
 
-		return {tag: request.tag};
+		return {tag: request.tag, success: true};
 	}
 
 	update(request, callback)
@@ -156,21 +141,35 @@ class NativeMessagingServer
 		throw new Error("handling update requests is not implemented.");
 	}
 
+	pick(request, callback)
+	{
+		console.log("NM Server: retrieving", request.id);
+
+		let index = searcher.getId(this.meta, request.id);
+
+		if (index === -1)
+		{
+			console.warn("\t", "Could not find element with id:", "'" + request.id + "'");
+			return {tag: request.tag, badQuery: true};
+		}
+
+		let content = this.meta[index];
+		return {tag: request.tag, content: content};
+	}
+
 	remove(request, callback)
 	{
 		console.log("NM Server: removing", request.id);
 
-		let response = {tag: request.tag};
-		let i = searcher.getId(this.glb_meta, request.id);
+		let index = searcher.getId(this.meta, request.id);
 
-		if (typeof i === "undefined")
+		if (index === -1)
 		{
 			console.warn("\t", "Could not find element with id:", "'" + request.id + "'");
-			response.clientError = "bad id";
-			return response;
+			return {tag: request.tag, badQuery: true};
 		}
 
-		let filePath = this.glb_meta[i].path; 
+		let filePath = this.meta[index].path; 
 		if (filePath)
 		{
 			fs.unlink(filePath, (err) => {
@@ -178,11 +177,11 @@ class NativeMessagingServer
 			});
 		}
 
-		this.glb_meta.splice(i, 1);
+		this.meta.splice(index, 1);
 		console.log("\t", "removed", request.id);
 
-		this.metaLoader.saveSync(this.glb_meta);
-		return response;
+		this.metaLoader.saveSync(this.meta);
+		return {tag: request.tag, success: true};
 	}
 
 	handleInvalid(request, callback)

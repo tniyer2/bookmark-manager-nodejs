@@ -2,10 +2,9 @@
 (function(){
 	const STRING_KEYS = ["id", "title", "category", "srcUrl", "docUrl"];
 	const NUMBER_KEYS = ["date", "bytes"];
-
 	const SEND_RAW = "all";
-	const SEARCH_TOLERANCE = 70;
 
+	const SEARCH_TOLERANCE = 70;
 	const CASE_WEIGHT = 0.1;
 	const FOUND_AT_END_WEIGHT = 0.3;
 	const FOUND_IN_MIDDLE_WEIGHT = 0.85;
@@ -103,22 +102,35 @@
 	function genComparator(map)
 	{
 		let sortInfo = {};
-		let sortKey = map.asc ? map.asc : map.dsc;
+		let sortKey;
 
-		if (!sortKey || (sortKey === "title" && map[sortKey]))
+		if (map.asc)
+		{
+			sortKey = String(map.asc);
+		}
+		else if (map.dsc)
+		{
+			sortKey = String(map.dsc);
+		}
+		else
+		{
+			return null;
+		}
+
+		if (sortKey === "title" && "title" in map)
 		{
 			return null;
 		}
 
 		sortInfo.reverse = Boolean(map.dsc);
 
-		if (STRING_KEYS.find(element => sortKey === String(element)))
+		if (STRING_KEYS.find(element => sortKey === element))
 		{
 			sortInfo.compare = (first, second) => {
 				return first[sortKey].localeCompare(second[sortKey]);
 			};
 		}
-		else if (NUMBER_KEYS.find(element => sortKey === String(element)))
+		else if (NUMBER_KEYS.find(element => sortKey === element))
 		{
 			sortInfo.compare = (first, second) => {
 				return first[sortKey] - second[sortKey];
@@ -198,6 +210,8 @@
 		{
 			if (meta[i].id === id) return i;
 		}
+
+		return -1;
 	}
 
 	function ratio(x, y)
