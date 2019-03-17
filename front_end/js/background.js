@@ -1,38 +1,9 @@
 
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
 const DEFAULT_QUERY = "all";
-const ID_PREFIX = "app_";
-const APP_CONNECT_WAIT = 3 * 1000;
+const APP_ID_PREFIX = "app_";
 
-let glb_port;
-
-connectApp((port) => {
-	console.log("port:", port);
-});
-
-function connectApp(successCallback, errorCallback)
-{
-	let timeoutId = setTimeout(() => {
-		glb_port.onDisconnect.removeListener(listener);
-		successCallback(glb_port);
-	}, APP_CONNECT_WAIT);
-
-	glb_port = chrome.runtime.connectNative(DESKTOP_APPLICATION_NAME);
-	glb_port.onDisconnect.addListener(listener);
-	glb_port.onDisconnect.addListener(() => {
-		glb_port = null;
-	});
-
-	function listener()
-	{
-		if (chrome.runtime.lastError)
-		{
-			// console.warn(chrome.runtime.lastError.message);
-			clearTimeout(timeoutId);
-			successCallback(null);
-		}
-	}
-}
+const glb_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
 
 // Listens to messages.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -46,37 +17,40 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 		response.scanInfo  = glb_popupInfo.scanInfo;
 		response.mediaType = glb_popupInfo.mediaType;
-		response.connected = Boolean(glb_port);
 		response.tabId	   = sender.tab.id;
 
 		sendResponse(response);
 	}
 	else if (msg.request === "get-meta")
 	{
+		let port;
 		let result = [];
 		let query  = msg.query ? msg.query : DEFAULT_QUERY;
 
 		(async () => {
-			let meta = await wrap(getMetaLocally, query).catch(e => sendResponse(e));
-			if (typeof meta === "undefined") return;
-			addToResult(meta);
+			port = await wrap(glb_connector.connect.bind(glb_connector));
+			if (port)
+			{
+				let tag = sender.tab.id + "get" + getSeconds();
+				port.postMessage({type: "get", tag: tag, query: query});
+				port.onMessage.addListener((response) => {
+					if (response.tag === tag)
+					{
+						addToResult(response.result);
+					}
+				});
+			}
+
+			let localMeta = await wrap(getMetaLocally, query)
+								 .catch(e => sendResponse(e));
+			if (typeof localMeta === "undefined") return;
+			addToResult(localMeta);
 		})();
 
-		if (glb_port)
-		{		
-			let tag = sender.tab.id + "get" + getSeconds();
-			glb_port.postMessage({tag: tag, type: "get", query: query});
-			glb_port.onMessage.addListener((response) => {
-				if (response.tag === tag)
-				{
-					addToResult(response.result);
-				}
-			});
-		}
 
 		function addToResult(meta)
 		{
-			if (!glb_port)
+			if (!port)
 			{
 				sendResponse({meta: meta});
 				return;
@@ -96,38 +70,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 	else if (msg.request === "add-meta")
 	{
-		if (glb_port)
-		{
-			let tag = sender.tab.id + "add" + getSeconds();
-			let appMessage = {tag: tag, type: "add", content: msg.meta, download: true};
-			glb_port.postMessage(appMessage);
-			glb_port.onMessage.addListener((response) => {
-				if (response.tag === tag)
-				{
-					sendResponse({success: true});
-				}
-			});
-		}
-		else
-		{
-			(async () => {
-				let success = await wrap(addMetaLocally, msg.meta).catch(e => sendResponse(e));
-				if (success !== true) return;
-				sendResponse({success: true});
-			})();
-		}
-
-		return true;
-	}
-	else if (msg.request === "delete-meta")
-	{
-		if (fromApp(msg.id))
-		{
-			if (glb_port)
+		(async () => {
+			let port = await wrap(glb_connector.connect
+									.bind(glb_connector));
+			if (port)
 			{
-				let tag = sender.tab.id + "delete" + getSeconds();
-				glb_port.postMessage({tag: tag, type: "delete", id: msg.id});
-				glb_port.onMessage.addListener((response) => {
+				let tag = sender.tab.id + "add" + getSeconds();
+				let appMessage = { type: "add", 
+								   tag: tag, 
+								   content: msg.meta, 
+								   download: true };
+
+				port.postMessage(appMessage);
+				port.onMessage.addListener((response) => {
 					if (response.tag === tag)
 					{
 						sendResponse({success: true});
@@ -136,17 +91,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			}
 			else
 			{
-				sendResponse({nmError: true});
+				let success = await wrap(addMetaLocally, msg.meta)
+									.catch(e => sendResponse(e));
+				if (success)
+				{ 
+					sendResponse({success: true});
+				}
 			}
-		}
-		else
-		{
-			(async () => {
-				let success = await wrap(deleteMetaLocally, msg.id).catch(e => sendResponse(e));
-				if (success !== true) return;
-				sendResponse({success: true});
-			})();
-		}
+		})();
+
+		return true;
+	}
+	else if (msg.request === "delete-meta")
+	{
+		(async () => {
+			if (fromApp(msg.id))
+			{
+				let port = await wrap(glb_connector.connect.bind(glb_connector));
+				if (port)
+				{
+					let tag = sender.tab.id + "delete" + getSeconds();
+					port.postMessage({type: "delete", tag: tag, id: msg.id});
+					port.onMessage.addListener((response) => {
+						if (response.tag === tag)
+						{
+							sendResponse({success: true});
+						}
+					});
+				}
+				else
+				{
+					sendResponse(null);
+				}
+			}
+			else
+			{
+				let success = await wrap(deleteMetaLocally, msg.id)
+									.catch(e => sendResponse(e));
+				if (success)
+				{
+					sendResponse({success: true});
+				}
+			}
+		})();
  
 		return true;
 	}
@@ -221,5 +208,5 @@ function getSeconds()
 function fromApp(contentId)
 {
 	let sub = contentId.substring(0, 4);
-	return sub === ID_PREFIX;
+	return sub === APP_ID_PREFIX;
 }

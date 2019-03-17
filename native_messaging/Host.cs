@@ -2,10 +2,23 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
+using System.Linq;
+using System.Text;
 using System.Threading;
 
 class Host
 {
+    private const int NET_TIMEOUT = 100;
+
+    private const string 
+        STATUS_MESSAGE = "\"status\"",
+        CONNECTED_MESSAGE    = "{\"status\": \"connected\", \"tag\": \"status\"}",
+        DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"status\"}";
+
+    private readonly byte[] STATUS_MESSAGE_BYTES;
+    private readonly byte[] CONNECTED_MESSAGE_BYTES;
+    private readonly byte[] DISCONNECTED_MESSAGE_BYTES;
+
     private Stream _appStream;
     public Stream appStream
     {
@@ -24,14 +37,20 @@ class Host
     }
     public Socket socket;
 
-    private const int NET_TIMEOUT = 100;
-
+    private Stream stdin, stdout;
     private Connector connector;
     private Object exitLock, appLock;
     private bool exit = false;
 
     public Host()
     {
+        var encoding = new UTF8Encoding();
+        STATUS_MESSAGE_BYTES = encoding.GetBytes(STATUS_MESSAGE);
+        CONNECTED_MESSAGE_BYTES = encoding.GetBytes(CONNECTED_MESSAGE);
+        DISCONNECTED_MESSAGE_BYTES = encoding.GetBytes(DISCONNECTED_MESSAGE);
+
+        stdin     = Console.OpenStandardInput();
+        stdout    = Console.OpenStandardOutput();
         exitLock  = new Object(); 
         appLock   = new Object();
         connector = new Connector(this, appLock);
@@ -49,8 +68,6 @@ class Host
     public void toApp()
     {
         byte[] b = new byte[0];
-
-    	Stream stdin = Console.OpenStandardInput();
 
     	while (true)
     	{
@@ -74,20 +91,26 @@ class Host
             lock (appLock)
             {
                 if (socket == null || !socket.Connected)
-                {
+                { 
+                    write(stdout, DISCONNECTED_MESSAGE_BYTES);
                     continue;
                 }
             }
 
-            write(appStream, b);
+            if (Enumerable.SequenceEqual(b, STATUS_MESSAGE_BYTES))
+            {
+                write(stdout, CONNECTED_MESSAGE_BYTES);
+            }
+            else
+            {
+                write(appStream, b);
+            }
     	}
     }
 
 	public void toChrome()
     {
         byte[] b = new byte[0];
-
-        Stream stdout = Console.OpenStandardOutput();
 
     	while (true)
     	{

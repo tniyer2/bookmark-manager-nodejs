@@ -6,9 +6,11 @@ const path    = require("path");
 const buffer  = require("buffer");
 const console = require("console");
 
-const getDownloader = require("./downloader.js");
-const searcher	 	= require("../front_end/js/query.js");
-const {wrap} 	 	= require("../front_end/js/wrapper.js");
+const getDownloader   = require("./downloader.js");
+const {parseFileName} = require("./utility.js");
+
+const searcher = require("../front_end/js/query.js");
+const {wrap}   = require("../front_end/js/wrapper.js");
 
 const RESOURCES_PATH = "back_end/resources";
 const ID_PREFIX	= "app_";
@@ -115,10 +117,20 @@ class NativeMessagingServer
 			(async () => {
 
 				let srcUrl   = new URL(content.srcUrl);
-				let filePath = path.join(RESOURCES_PATH, content.id);
+				let fileName;
+				if (srcUrl.protocol.substring(0, 4) === "http")
+				{
+					let arr  = parseFileName(srcUrl.pathname, true);
+					fileName = arr ? arr[0] : content.id;
+				}
+				else
+				{
+					fileName = content.id;
+				}
+				let filePath = path.join(RESOURCES_PATH, fileName);
 
 				let d = getDownloader(srcUrl, filePath);
-				await wrap((...args) => d.download(...args));
+				await wrap(d.download.bind(d));
 
 				content.path = d.getPath();
 				this.metaLoader.saveSync(this.glb_meta);

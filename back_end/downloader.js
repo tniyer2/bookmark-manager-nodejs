@@ -2,8 +2,12 @@
 const fs  	= require("fs");
 const http  = require("http");
 const https = require("https");
+
 const parseDataUri = require("parse-data-uri");
 const fileType = require("file-type");
+
+const {parseFileName} = require("./utility.js");
+const {wrap} = require("../front_end/js/wrapper.js");
 
 function getDownloader(srcUrl, filePath)
 {
@@ -21,7 +25,7 @@ function getDownloader(srcUrl, filePath)
 	}
 	else
 	{
-		throw new Error(srcUrl.protocol, "is not supported. Only http, https, and data protocols are supported.");
+		throw new Error(srcUrl.protocol, "is not supported. Only 'http', 'https', and 'data' are supported.");
 	}
 }
 
@@ -33,19 +37,16 @@ class HttpDownloader
 		this.protocol = protocol;
 		this.filePath = filePath;
 		this.headers  = {"User-Agent": "Mozilla/5.0"};
-		this.ext 	  = this.parseExtension(srcUrl.pathname);
-	}
 
-	getPath()
-	{
-		return fs.realpathSync(this.filePath + this.ext);
+		let arr  = parseFileName(srcUrl.pathname, true); 
+		this.ext = arr ? arr[1] : null;
 	}
 
 	async download(successCallback, errorCallback)
 	{
 		if (!this.ext)
 		{
-			this.ext = await wrap((...args) => this.getRemoteExtension(...args));
+			this.ext = await wrap(this._getRemoteExtension.bind(this));
 		}
 
 		let wStream = fs.createWriteStream(this.filePath + this.ext);
@@ -64,27 +65,36 @@ class HttpDownloader
 		});
 	}
 
-	getRemoteExtension(successCallback, errorCallback)
+	_getRemoteExtension(successCallback, errorCallback)
 	{
+		let firstTime = true;
+
 		this.protocol.get(this.srcUrl, {headers: this.headers}, (rStream) => {
-			const buf = rStream.read(fileType.minimumBytes);
-			rStream.destroy();
-			let ext = "." + fileType(buf).ext;
-			successCallback(ext);
+			rStream.on("readable", () => {
+				if (firstTime)
+				{
+					firstTime = false;
+				}
+				else
+				{
+					return;
+				}
+
+				const buf = rStream.read(fileType.minimumBytes);
+				rStream.destroy();
+
+				let ft  = fileType(buf);
+				let ext = "." + ft.ext;
+				successCallback(ext);
+			});
 		}).on("error", (err) => {
 			errorCallback(err);
 		});
 	}
 
-	parseExtension(pathname)
+	getPath()
 	{
-		let i   = pathname.lastIndexOf(".");
-		if (i !== -1)
-		{
-			return "." + pathname.substring(i+1);
-		}
-
-		return null;
+		return fs.realpathSync(this.filePath + this.ext);
 	}
 }
 
@@ -94,7 +104,8 @@ class DataURIDownloader
 	{
 		let errorMessage = "Could not parse Data URI";
 
-		this.srcUrl = srcUrl;
+		this.srcUrl   = srcUrl;
+		this.filePath = filePath; 
 
 		let parsed = parseDataUri(srcUrl.toString());
 		this.data = parsed.data;
@@ -111,15 +122,15 @@ class DataURIDownloader
 			throw new Error(errorMessage);
 		}
 
-		let ext = parsed.mimeType.substring(slash+1);
-		this.filePath = filePath + "." + ext;
+		let ext  = parsed.mimeType.substring(slash+1);
+		this.ext = "." + ext;
 	}
 
 	download(successCallback, errorCallback)
 	{
-		console.log("download: connecting to", this.srcUrl.toString());
+		console.log("downloading data uri:");
 
-		fs.writeFile(this.filePath, this.data, (err) => {
+		fs.writeFile(this.filePath + this.ext, this.data, (err) => {
 			if (err)
 			{
 				errorCallback(err);
@@ -130,6 +141,11 @@ class DataURIDownloader
 				successCallback(true);
 			}
 		});
+	}
+
+	getPath()
+	{
+		return fs.realpathSync(this.filePath + this.ext);
 	}
 }
 
