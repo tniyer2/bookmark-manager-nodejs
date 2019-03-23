@@ -1,19 +1,19 @@
 
-const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
-const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+const glb_mask  = document.getElementById("mask");
+const glb_title = document.getElementById("title");
+const glb_save 	= document.getElementById("save");
+const glb_bookmark = document.getElementById("bookmark");
+const glb_saveMenu = document.getElementById("saveMenu");
+const glb_sourceMenu = document.getElementById("sourceMenu");
+const glb_sourceList = document.getElementById("sourceList");
+const glb_test = document.createElement("canvas");
 
-let glb_category;
-let glb_srcUrl;
+let glb_saveInfo;
 let glb_docUrl;
-let glb_connected;
 let glb_tabId;
 
-let glb_mask  	 = document.getElementById("mask");
-let glb_title 	 = document.getElementById("title");
-let glb_save 	 = document.getElementById("save");
-let glb_download = document.getElementById("download");
-
-let myTaggle = new Taggle("tags", {});
+let glb_myTaggle = new Taggle("tags", {});
+let glb_selectedList;
 
 chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 
@@ -23,75 +23,119 @@ chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 		return;
 	}
 
-	let srcUrl   = response.srcUrl;
-	let scanInfo = response.scanInfo; 
+	let creator = new ListCreator();
+	glb_tabId = response.tabId;
 
-	glb_tabId     = response.tabId;
-	glb_connected = response.connected;
-	glb_docUrl    = response.docUrl;
+	enableBookmark();
+	glb_docUrl = response.docUrl;
 
-	if (glb_docUrl.indexOf("www.youtube.com") > 0)
+	let mediaTypeIsImage = response.mediaType === "image";
+	if (mediaTypeIsImage)
 	{
-		let matches = glb_docUrl.match(YOUTUBE_REGEX);
+		enableSave();
+		_setMainSource(response.srcUrl, response.mediaType, "");
 
-		glb_srcUrl = YOUTUBE_EMBED_URL + matches[1];
-		glb_category = "video";
-		glb_save2.style.display = "none";
+		if (response.docUrl === response.srcUrl)
+		{
+			return;
+		}
 	}
-	else if (srcUrl)
-	{
-		glb_srcUrl = srcUrl;
-		glb_category = response.mediaType;
-	}
-	else if (scanInfo.linkUrls.length > 0)
-	{
-		console.log("Source was found in a link in the document.");
 
-		glb_srcUrl = scanInfo.linkUrls[0].url;
-		glb_title.value = scanInfo.linkUrls[0].title;
-		glb_category = "video";
-	}
-	else if (scanInfo.videoUrls.length > 0)
+	if (response.scanInfo.list && response.scanInfo.list.length)
 	{
-		console.log("Source was found in a video element.");
+		enableSave();
+		glb_saveMenu.classList.add("saveMenu--shiftLeft");
+		glb_saveMenu.style.display = "flex";
+		glb_sourceMenu.style.display = "block";
 
-		glb_srcUrl = scanInfo.videoUrls[0].url;
-		glb_title.value = scanInfo.videoUrls[0].title;
-		glb_category = "video";
+		if (mediaTypeIsImage)
+		{
+			let li = _createList(response.srcUrl, response.mediaType, "");
+			li.click();
+		}
+
+		for (let i = 0; i < response.scanInfo.list.length; i+=1)
+		{
+			let video = response.scanInfo.list[i];
+
+			let li = _createList(video.url, "video", video.title);
+			if (!mediaTypeIsImage && i === 0)
+			{
+				_setMainSource(video.url, "video", video.title);
+				li.click();
+			}
+		}
 	}
-	else
+	else if (response.scanInfo.single)
 	{
-		console.warn("No source was found.");
+		let video = response.scanInfo.single;
+
+		_createList(video.url, "video", video.title, { showDimensions: false });
+		_setMainSource(video.url, "video", video.title);
+	}
+	glb_saveMenu.style.display = "flex";
+
+	function _setMainSource(srcUrl, category, title)
+	{
+		glb_saveInfo = { srcUrl: srcUrl, 
+						 category: category };
+		glb_title.value = title;
+	}
+
+	function _createList(srcUrl, category, title, options)
+	{
+		let li = creator.createList(srcUrl, category, title, options);
+
+		li.addEventListener("click", () => {
+			if (glb_selectedList)
+			{
+				glb_selectedList.classList.remove("sourceMenu__tag--active");
+			}
+			glb_selectedList = li;
+			li.classList.add("sourceMenu__tag--active");
+
+			_setMainSource(srcUrl, category, title);
+		});
+
+		glb_sourceList.appendChild(li);
+		return li;
 	}
 });
 
-glb_mask.onclick = () => {
+// mask closes popup
+glb_mask.addEventListener("click", () => {
 	closePopup();
-};
+});
 
-// save
-glb_save.onclick = () => {
-	glb_save.onclick = null;
-	saveMeta();
-};
+// save button
+glb_save.addEventListener("click", function evt(){
 
-// download
-glb_download.onclick = () => {
-	downloadSrc();
-};
+	glb_save.removeEventListener("click", evt);
+	saveMeta(glb_saveInfo.srcUrl, glb_saveInfo.category, true);
+});
 
-async function saveMeta()
+// bookmark button
+glb_bookmark.addEventListener("click", function evt(){
+
+	glb_bookmark.removeEventListener("click", evt);
+	saveMeta(glb_docUrl, "web", false);
+});
+
+function enableSave(){glb_save.style.display = "inline-block"};
+function enableBookmark(){glb_bookmark.style.display = "inline-block"};
+
+async function saveMeta(srcUrl, category, cache)
 {
 	let meta = {
 		title: glb_title.value,
-		tags: myTaggle.getTags().values,
-		category: glb_category,
+		tags: glb_myTaggle.getTags().values,
+		category: category,
 		date: getMinutes(),
-		srcUrl: glb_srcUrl,
+		srcUrl: srcUrl,
 		docUrl: glb_docUrl
 	};
 
-	let msg = {request: "add-meta", meta: meta};
+	let msg = {request: "add-meta", meta: meta, cache: cache};
 
 	chrome.runtime.sendMessage(msg, (response) => {
 
@@ -110,11 +154,6 @@ async function saveMeta()
 			console.warn("Could not handle response:", response);
 		}
 	});
-}
-
-async function downloadSrc()
-{
-	console.warn("downloadSrc() is not implemented");
 }
 
 function closePopup()

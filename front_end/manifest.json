@@ -10,15 +10,25 @@
 		"128": "icons/icon128.png"
 	},
 
-	"permissions": ["tabs", "storage", "contextMenus", "activeTab", "nativeMessaging", "http://localhost/"],
+	"permissions": [ "tabs", 
+					 "storage", 
+					 "contextMenus", 
+					 "activeTab", 
+					 "nativeMessaging",
+					 "downloads",
+					 "http://localhost/" ],
 	"background": 
 	{
-		"scripts": ["js/wrapper.js", "js/query.js", "js/storage.js", "js/connector.js", "js/background.js"],
+		"scripts": [ "js/utility.js", 
+					 "js/query.js", 
+					 "js/storage.js", 
+					 "js/connector.js", 
+					 "js/background.js" ],
 		"persistent": false
 	},
 	"content_scripts": [{
      	"matches": ["<all_urls>"],
-    	"js": ["js/boot.js"]
+    	"js": ["js/scanner.js"]
    	}],
     "browser_action":
     {

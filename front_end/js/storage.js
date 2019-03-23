@@ -75,7 +75,7 @@ async function _pick(id, successCallback, errorCallback)
 }
 
 // success: metadata
-// error: null
+// error: error
 async function load(successCallback, errorCallback)
 {
 	let meta = [];
@@ -98,7 +98,7 @@ async function load(successCallback, errorCallback)
 		catch (e)
 		{
 			console.warn(e);
-			errorCallback(null);
+			errorCallback({error: true});
 			return;
 		}
 	}
@@ -106,8 +106,8 @@ async function load(successCallback, errorCallback)
 	successCallback(meta);
 }
 
-// success: true 
-// error: memoryError, null 
+// success: true
+// error: memoryError, error
 async function save(successCallback, errorCallback)
 {
 	let serialized = "";
@@ -126,7 +126,7 @@ async function save(successCallback, errorCallback)
 		if (chrome.runtime.lastError)
 		{
 			console.warn(chrome.runtime.lastError.message);
-			errorCallback(null);
+			errorCallback({error: true});
 		}
 		else
 		{
@@ -136,7 +136,7 @@ async function save(successCallback, errorCallback)
 }
 
 // success: data retrieved from storage
-// error: null
+// error: error
 function storageGetWrapper(keys)
 {
 	return new Promise((resolve, reject) => {
@@ -144,7 +144,7 @@ function storageGetWrapper(keys)
 			if (chrome.runtime.lastError)
 			{
 				console.warn(chrome.runtime.lastError.message);
-				reject(null);
+				reject({error: true});
 			}
 			else
 			{

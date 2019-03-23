@@ -16,7 +16,7 @@ function getMeta(q)
 			return;
 		}
 
-		if ("local" in response || "app" in response)
+		if (response.local || response.app)
 		{
 			if (response.local)
 			{
@@ -41,7 +41,7 @@ glb_searchField.onkeypress = (e) => {
 	if (keyCode == '13')
 	{
 		clearFeed();
-		getMeta(glb_searchField.value)
+		getMeta(glb_searchField.value);
 	}
 };
 
@@ -93,7 +93,7 @@ function createContent(meta)
 		content.appendChild(image);
 		innerBlock.appendChild(content);
 	}
-	else if (meta.category === "video")
+	else if (meta.category === "video" || meta.category === "web")
 	{
 		if (meta.path)
 		{
@@ -114,6 +114,11 @@ function createContent(meta)
 			content.src = meta.srcUrl;
 			innerBlock.appendChild(content);
 		}
+	}
+	else
+	{
+		console.log("invalid category:", meta.category)
+		return;
 	}
 
 	contentBlock.appendChild(innerBlock);

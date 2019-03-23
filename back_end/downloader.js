@@ -6,8 +6,7 @@ const https = require("https");
 const parseDataUri = require("parse-data-uri");
 const fileType = require("file-type");
 
-const {parseFileName} = require("./utility.js");
-const {wrap} = require("../front_end/js/wrapper.js");
+const {wrap, parseFileName} = require("../front_end/js/utility.js");
 
 function getDownloader(srcUrl, filePath)
 {
@@ -38,7 +37,7 @@ class HttpDownloader
 		this.filePath = filePath;
 		this.headers  = {"User-Agent": "Mozilla/5.0"};
 
-		let arr  = parseFileName(srcUrl.pathname, true); 
+		let arr = parseFileName(srcUrl.pathname, true);
 		this.ext = arr ? arr[1] : null;
 	}
 
@@ -105,7 +104,7 @@ class DataURIDownloader
 		let errorMessage = "Could not parse Data URI";
 
 		this.srcUrl   = srcUrl;
-		this.filePath = filePath; 
+		this.filePath = filePath;
 
 		let parsed = parseDataUri(srcUrl.toString());
 		this.data = parsed.data;

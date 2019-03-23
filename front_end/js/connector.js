@@ -1,10 +1,9 @@
 
 class AppConnector
 {
-	APP_TIMEOUT = 1000;
-
 	constructor(appName)
 	{
+		this.APP_TIMEOUT = 1000;
 		this.appName = appName;
 	}
 
@@ -41,6 +40,18 @@ class AppConnector
 		}
 	}
 
+	async getStatus(successCallback, errorCallback)
+	{
+		if (this.port)
+		{
+			_getStatus(successCallback, errorCallback);
+		}
+		else
+		{
+			successCallback(false);
+		}
+	}
+
 	async _getPort(successCallback, errorCallback)
 	{
 		let timeoutId = setTimeout(() => {
@@ -67,19 +78,19 @@ class AppConnector
 	{
 		if (!this.port)
 		{
-			console.warn("this.port is undefined");
+			console.warn("this.port is", this.port);
 			successCallback(false);
 			return;
 		}
 
 		this.port.postMessage("status");
-		this.port.onMessage.addListener(listener.bind(this));
+		this.port.onMessage.addListener(listener);
 
-		function listener(response) 
+		function listener(response, port)
 		{
 			if (response.tag !== "status") return;
 
-			this.port.onMessage.removeListener(listener.bind(this));
+			port.onMessage.removeListener(listener);
 			if (response.status === "connected")
 			{
 				successCallback(true);
@@ -91,7 +102,7 @@ class AppConnector
 			else
 			{
 				console.warn("unknown response:", response);
-				successCallback(false);	
+				successCallback(false);
 			}
 		}
 	}

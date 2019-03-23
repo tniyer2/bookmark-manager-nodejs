@@ -44,7 +44,7 @@
 		"valid-typeof": 2,
 
 		"array-callback-return": 2,
-		"dot-location": 2,
+		"dot-location": [2, "property"],
 		"no-case-declarations": 2,
 		"no-empty-function": 2,
 		"no-eval" : 2,

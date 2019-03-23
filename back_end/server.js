@@ -6,10 +6,10 @@ const path    = require("path");
 const buffer  = require("buffer");
 const console = require("console");
 
-const getDownloader   = require("./downloader.js");
+const getDownloader = require("./downloader.js");
 
 const searcher = require("../front_end/js/query.js");
-const {wrap}   = require("../front_end/js/wrapper.js");
+const {wrap} = require("../front_end/js/utility.js");
 
 const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
@@ -115,7 +115,7 @@ class NativeMessagingServer
 		if (request.download === true)
 		{
 			(async () => {
-				
+
 				let srcUrl   = new URL(content.srcUrl);
 				let fileName = content.id;
 				let filePath = path.join(RESOURCES_PATH, fileName);
@@ -169,7 +169,7 @@ class NativeMessagingServer
 			return {tag: request.tag, badQuery: true};
 		}
 
-		let filePath = this.meta[index].path; 
+		let filePath = this.meta[index].path;
 		if (filePath)
 		{
 			fs.unlink(filePath, (err) => {
@@ -186,10 +186,11 @@ class NativeMessagingServer
 
 	handleInvalid(request, callback)
 	{
-		console.log("NM Server: client sent invalid request type:", 
-					"'" + request.type + "'");
+		let e = "NM Server: client sent invalid request type:" +
+				"'" + request.type + "'";
 
-		return {tag: request.tag, clientError: "Invalid Request Type"};
+		console.log(e);
+		return {tag: request.tag, error: e};
 	}
 }
 

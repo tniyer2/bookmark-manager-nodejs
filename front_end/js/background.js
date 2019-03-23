@@ -1,7 +1,7 @@
 
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
-const DEFAULT_QUERY = "all";
-const APP_ID_PREFIX = "app_";
+const DEFAULT_QUERY  = "all";
+const APP_ID_PREFIX  = "app_";
 
 const glb_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
 
@@ -13,13 +13,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		let response = {};
 
 		response.srcUrl = glb_popupInfo.srcUrl;
-		response.docUrl = glb_popupInfo.srcUrl === sender.tab.url ? "src" : sender.tab.url ;
-
+		response.docUrl = sender.tab.url;
 		response.scanInfo  = glb_popupInfo.scanInfo;
 		response.mediaType = glb_popupInfo.mediaType;
 		response.tabId	   = sender.tab.id;
 
 		sendResponse(response);
+	}
+	else if (msg.request === "get-status")
+	{
+		glb_connector.getStatus(sendResponse, e => console.warn(e));
+
+		return true;
 	}
 	// msg properties: query
 	else if (msg.request === "get-meta")
@@ -28,19 +33,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		let final = {};
 		let query = msg.query ? msg.query : DEFAULT_QUERY;
 
+		let addResult = (v, a) => {
+			if (!v)
+			{
+				throw new Error("result should not be " + v);
+			}
+
+			let s = a ? "app" : "local";
+			final[s] = v;
+			if ((!port && final.local) ||
+				(port && final.local && final.app))
+			{
+				sendResponse(final);
+			}
+		};
+
 		(async () => {
 
-			let port = await wrap(glb_connector.connect
-						 	 .bind(glb_connector))
-							 .catch(e => console.warn(e));
+			port = await wrap(glb_connector.connect
+						 	.bind(glb_connector))
+							.catch(e => console.warn(e));
 
 			if (port)
 			{
 				let myTag = genTag("get");
-				let request = { type: "get", 
-								tag: myTag, 
+				let request = { type: "get",
+								tag: myTag,
 								query: query };
-								
+
 				port.postMessage(request);
 				port.onMessage.addListener((response) => {
 					if (response.tag === myTag)
@@ -52,27 +72,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 			wrap(getMetaLocally, query)
 			.then(addResult, addResult);
-
-			function addResult(v, a)
-			{
-				if (v === undefined)
-				{
-					throw new Error("result should not be undefined");
-				}
-
-				let s = a ? "app" : "local";
-				final[s] = v;
-				if ((!port && "local" in final) || 
-					(port && "local" in final && "app" in final))
-				{
-					sendResponse(final);
-				}
-			}
 		})();
 
 		return true;
 	}
-	// msg properties: meta
+	// msg properties: meta, cache
 	else if (msg.request === "add-meta")
 	{
 		(async () => {
@@ -84,10 +88,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			if (port)
 			{
 				let myTag = genTag("add");
-				let appMessage = { type: "add", 
-								   tag: myTag, 
-								   content: msg.meta, 
-								   download: true };
+				let appMessage = { type: "add",
+								   tag: myTag,
+								   content: msg.meta,
+								   download: msg.cache };
 
 				port.postMessage(appMessage);
 				port.onMessage.addListener((response) => {
@@ -123,8 +127,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		console.warn("Content script sent unknown message:", msg);
 	}
 
-	function sendRaw(e) 
-	{ 
+	function sendRaw(e)
+	{
 		sendResponse(e);
 	}
 
@@ -163,7 +167,8 @@ async function pickMeta(id, mode, genTag, successCallback, errorCallback)
 		if (port)
 		{
 			let myTag = genTag(mode);
-			let request = { type: mode, 
+				console.log("myTag:", myTag);
+			let request = { type: mode,
 							tag: myTag,
 							id: id };
 
@@ -196,11 +201,11 @@ chrome.browserAction.onClicked.addListener((tab) => {
 chrome.contextMenus.removeAll(() => {
 
 	let saveInfo = { title: "Save",
-					 id:"Save",
-					 contexts:["all"],
-					 documentUrlPatterns: [ "http://*/*", 
-					 						"https://*/*", 
-					 						"data:image/*", 
+					 id: "Save",
+					 contexts: ["image", "video", "page"],
+					 documentUrlPatterns: [ "http://*/*",
+					 						"https://*/*",
+					 						"data:image/*",
 					 						"file://*" ] };
 
 	chrome.contextMenus.create(saveInfo);
@@ -212,13 +217,18 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 	glb_popupInfo = { srcUrl: info.srcUrl,
 					  mediaType: info.mediaType };
 
-	chrome.tabs.sendMessage(tab.id, {to: "boot.js", script: "js/boot.js", getClickedElementInfo: true}, (html) => {
-		if (chrome.runtime.lastError) {console.warn(chrome.runtime.lastError.message); return;}
-		sendMessageToScript(tab.id, {to: "scanner.js", script: "js/scanner.js", scan: true, html: html}, (scanInfo) => {
-			if (chrome.runtime.lastError) {console.warn(chrome.runtime.lastError.message); return;}
-			glb_popupInfo.scanInfo = scanInfo;
-			sendMessageToScript(tab.id, {to: "content.js", script: "js/content.js", open: true});
-		});
+	chrome.tabs.sendMessage(tab.id, {to: "scanner.js", scan: true}, (scanInfo) => {
+
+		if (chrome.runtime.lastError) 
+		{
+			console.warn(chrome.runtime.lastError.message);
+			return;
+		}
+
+		glb_popupInfo.scanInfo = scanInfo;
+		sendMessageToScript(tab.id, { to: "content.js", 
+									  script: "js/content.js", 
+									  open: true });
 	});
 });
 

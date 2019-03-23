@@ -87,7 +87,7 @@
 			filter = (obj) => {
 				for (let f of subFilters)
 				{
-					if (!f(obj)) 
+					if (!f(obj))
 					{
 						return false;
 					}

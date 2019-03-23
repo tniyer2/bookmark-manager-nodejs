@@ -1,154 +1,276 @@
 
+const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
+const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 	if (msg.to != "scanner.js")
-		return;
-
-	if (msg.check)
 	{
-		sendResponse(true);
 		return;
 	}
 
 	if (msg.scan)
 	{
-		let toScan = msg.html.parent ? msg.html.parent : msg.html.element;
-		let scanInfo = scanPage(toScan);
+		let scanInfo = scanPage();
 
-		console.log("Page was scanned for videos. scanInfo:", scanInfo);
+		console.log("Page was scanned for videos:", scanInfo.list);
 		sendResponse(scanInfo);
 	}
 });
 
-function scanPage(html)
+function scanPage()
 {
-	let url = document.location.href;
-	let scanInfo = { linkUrls: [], externUrls: [], videoUrls: [] };
-
-	for (let j = 0; j < 3; j+=1)
+	let youtube = findYoutube();
+	if (youtube)
 	{
-	    for (let i = 0; ;)
-	    {
-	        let o = FindFirstUrl(html, j == 2 ? ".mov" : j == 1 ? ".flv" : ".mp4", i);
-	        if (!o || !o.start)
-	            break;
-	        i = o.start;
-	        scanInfo.linkUrls.push({ 'url': o.mp4, 'title': document.title, 'type': "link" });
-	    }
+		return {single: youtube};
 	}
 
-	for (let link of document.links)
-	{
-	    let u = isSupportedUrl(link.href);
-		if (u)
-		{
-			let title = '';
-			if (link.hasAttribute('title'))
-				title = myTrim(link.getAttribute('title'));
-			if (!title && link.hasAttribute('alt'))
-				title = myTrim(link.getAttribute('alt'));
-			if (!title)
-				title = myTrim(link.innerText);
-	        if (!title)
-	            title=document.title;
+	let html = document.documentElement.outerHTML;
+	let sources = [ findAllOf(html, ".mp4"), 
+					findAllOf(html, ".flv"), 
+					findAllOf(html, ".mov"),
+					findByLinkElm(),
+					findByVideoElm() ];
 
-			let cl = "";
-			if (link.hasAttribute('class'))
-				cl = myTrim(link.getAttribute('class'));
-			scanInfo.externUrls.push({'url': u,'title': title,'class': cl,'id': (link.id ? link.id : ""),'value': '','type': 'extern'});
+	let final = [];
+	for (let arr of sources)
+	{
+		final = final.concat(arr);
+	}
+
+	console.log("scanInfo before removing duplicates:", final);
+
+	final = final.sort((o1, o2) => o1.url.localeCompare(o2.url));
+	for (let i = final.length - 1; i > 0; i-=1)
+	{
+		if (final[i].url === final[i-1].url)
+		{
+			// Delete the duplicate with a lower priority
+			let j = final[i].priority < final[i-1].priority ? i : i-1;
+			final.splice(j, 1);
+		}
+	}
+
+	final = final.sort((o1, o2) => o2.priority - o1.priority);
+
+	return {list: final};
+}
+
+function findYoutube()
+{
+	let href = document.location.href;
+
+	if (href.indexOf("://www.youtube.com") > 0)
+	{
+		let matches = href.match(YOUTUBE_REGEX);
+		let source = YOUTUBE_EMBED_URL + matches[1];
+		let h1 = document.querySelector("h1").firstChild.innerText;
+
+		return {url: source, title: h1};
+	}
+	else
+	{
+		return null;
+	}
+}
+
+const VIDEO_PRIORITY = 2;
+function findByVideoElm()
+{
+	let sources = [];
+
+    let a = document.getElementsByTagName("video");
+    for (let i = 0; i < a.length; i+=1)
+    {
+    	let link = a[i];
+        let url = null;
+
+	    if (link.src)
+	    {
+	        url = isValid(link.src);
+	    }
+	    if (!url && link.hasAttribute("data-thumb"))
+	    {
+		    url = myTrim(link.getAttribute("data-thumb"));
+		    if (url.indexOf("http") == -1)
+		    {
+		        url = isValid("http:" + url);
+		    }
+	    }
+
+	    let title = "";
+	    if (link.hasAttribute("alt"))
+	    {
+		    title = myTrim(link.getAttribute("alt"));
+	    }
+	    else if (link.hasAttribute("title"))
+	    {
+		    title = myTrim(link.getAttribute("title"));
+	    }
+		if (!title)
+		{
+            title = document.title;
+		}
+
+		addUrl(url, title);
+
+		let elms = link.querySelectorAll("source");
+		for (let i = 0; i < elms.length; i+=1)
+		{
+			let src = isValid(elms[i].src);
+			if (src)
+			{ 
+				addUrl(src, title);
+			}
+		}
+	}
+
+	function addUrl(url, title)
+	{
+		if (url)
+		{
+			sources.push({url: url, title: title, priority: VIDEO_PRIORITY});
+		}
+	}
+
+	return sources;
+}
+
+const LINK_PRIORITY = 1;
+function findByLinkElm()
+{
+	let sources = [];
+
+	let links = document.links;
+	for (let i = 0; i < links.length; i+=1)
+	{
+		let link = links[i];
+	    let url = isValid(link.href);
+
+		if (url)
+		{
+			let title = "";
+			if (link.hasAttribute("title"))
+			{
+				title = myTrim(link.getAttribute("title"));
+			}
+			if (!title && link.hasAttribute("alt"))
+			{
+				title = myTrim(link.getAttribute("alt"));
+			}
+			if (!title)
+			{
+				title = myTrim(link.innerText);
+			}
+	        if (!title)
+	        {
+	            title = document.title;
+	        }
+
+			sources.push({url: url, title: title, priority: LINK_PRIORITY});
 		}
     }
 
-    type="video";
-    a = document.getElementsByTagName('video');
-    for (let link of a)
-    {
-        let u = false;
-	    if (link.src)
-	        u = link.src;
-	    if (!u && link.hasAttribute('data-thumb'))
-	    {
-		    u = myTrim(link.getAttribute('data-thumb'));
-		    if (u.indexOf("http") == -1)
-		        u = "http:" + u;
-	    }
-
-	    u = isSupportedUrl(u);
-	    if ( u)
-	    {
-		    let title = '';
-		    if (link.hasAttribute('alt'))
-			    title = myTrim(link.getAttribute('alt'));
-		    else if (link.hasAttribute('title'))
-			    title = myTrim(link.getAttribute('title'));
-			if (!title)
-	            title=document.title;
-		    let cl = "";
-		    if (link.hasAttribute('class'))
-			    cl = myTrim(link.getAttribute('class'));
-
-		    scanInfo.videoUrls.push({'url': u,'title': title, 'type': type});
-	    }
-	}
-
-	return scanInfo;
+    return sources;
 }
 
-function FindFirstUrl(html, ext, start)
+const SEARCH_PRIORITY = 0;
+function findAllOf(html, ext)
 {
-    for (; ;) {
-        var i = html.indexOf(ext, start);
+	let sources = [];
+
+	let start = 0;
+    while (true)
+    {
+        let i = html.indexOf(ext, start);
         if (i < 0)
-            return false;
+        {
+        	break;
+        }
         start = i + ext.length;
-        var i1 = html.indexOf('\"', i);
-        var i2 = html.indexOf('\'', i);
-        var c = false;
-        if (i1 > i && i2 > i) {
 
-            c = i1 > i2 ? "\'" : "\"";
-            if (i1 > i2)
-                i1 = i2;
+        let dq = html.indexOf("\"", i);
+        let sq = html.indexOf("\'", i);
+        let character = null;
+        let c_end;
+        if (dq > i && sq > i) 
+        {
+            if (dq > sq)
+            {
+                character = "\'";
+                c_end = sq;
+            }
+            else
+            {
+                character = "\"";
+                c_end = dq
+            }
         }
-        else if (i1 > i) {
-            c = "\"";
-
+        else if (dq > i)
+        {
+            character = "\"";
+            c_end = dq;
         }
-        else if (i2 > i) {
-            c = "\'";
-            i1 = i2;
+        else if (sq > i) 
+        {
+            character = "\'";
+            c_end = sq;
         }
         else
+        {
             continue;
-
-        var s = html.substr(i1 - 300, 300);
-        i2 = s.lastIndexOf(c);
-        if (i2 < 0)
-            continue;
-        s = s.substr(i2 + 1);
-        if (s.indexOf("http://") == 0 || s.indexOf("https://") == 0)
-            return { mp4: s, start: i1 };
-        if (s.indexOf("http:\\/\\/") == 0 || s.indexOf("https:\\/\\/") == 0) {
-
-            s = s.replace(/\\\//g, '\/');
-            return { mp4: s, start: i1 };
         }
-        continue;
+
+        let s = html.substr(c_end - 300, 300);
+        let c_start = s.lastIndexOf(character);
+        if (c_start < 0)
+        {
+            continue;
+        }
+        else
+        {
+        	s = s.substr(c_start + 1);
+        }
+
+        s = isValid(s);
+        if (s)
+        {
+        	add(s);
+	    }
     }
+
+    function add(s)
+    {
+    	sources.push({url: s, title: document.title, priority: SEARCH_PRIORITY});
+    }
+
+    return sources;
 }
 
-function isSupportedUrl( url)
+function isValid(url)
 {
-    if (!url || !url.toLowerCase)
+	if (typeof url !== "string")
+	{
+		return false;
+	}
+	if (url.indexOf("blob:") === 0)
+	{
+		return false;
+	}
+	if (	url.indexOf("http://") === -1 
+		&& url.indexOf("https://") === -1)
+	{
+		return false;
+	}
+    if (   url.indexOf(".mp4") === -1 
+    	&& url.indexOf(".flv") === -1 
+    	&& url.indexOf(".mov") === -1)
+    {
         return false;
-	if ((url.toLowerCase().indexOf('javascript:') != -1) || (url.toLowerCase().indexOf('javascript :') != -1) )
-	    return false;
-	if ((url.toLowerCase().indexOf('mailto:') != -1) || (url.toLowerCase().indexOf('mailto :') != -1) )
-	    return false;
-	if (url.indexOf("data:image") != -1)
-	    return false;
-    if ((url.indexOf(".mp4") == -1) && (url.indexOf(".flv") == -1) && (url.indexOf(".mov") == -1))
-        return false;
+    }
+
+    url = url.replace(/&amp;/g, "&");
 
 	return url;
 }
