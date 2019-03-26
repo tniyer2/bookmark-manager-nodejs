@@ -209,7 +209,11 @@
          * @param  {Event} event Event triggered when tag was removed
          * @param  {String} tag The tag removed
          */
-        onTagRemove: noop
+        onTagRemove: noop,
+
+        onFocusInput: noop,
+
+        onBlurInput: noop
     };
 
     //////////////////////
@@ -308,6 +312,7 @@
         this.list = document.createElement('ul');
         this.inputLi = document.createElement('li');
         this.input = document.createElement('input');
+        this.input.id = "taggle_input";
         this.sizer = document.createElement('div');
         this.pasting = false;
         this.placeholder = null;
@@ -669,6 +674,8 @@
     Taggle.prototype._focusInput = function() {
         this._fixInputWidth();
 
+        this.settings.onFocusInput();
+
         if (!this.container.classList.contains(this.settings.containerFocusClass)) {
             this.container.classList.add(this.settings.containerFocusClass);
         }
@@ -683,6 +690,9 @@
      * @param  {Event} e
      */
     Taggle.prototype._blurEvent = function(e) {
+
+        this.settings.onBlurInput();
+
         if (this.container.classList.contains(this.settings.containerFocusClass)) {
             this.container.classList.remove(this.settings.containerFocusClass);
         }

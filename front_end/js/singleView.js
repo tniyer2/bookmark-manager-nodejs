@@ -1,10 +1,11 @@
 
 const DELETE_REDIRECT = chrome.runtime.getURL("html/gallery.html");
+const ID = getIdFromHref();
 
+const glb_main = document.getElementById("main");
 const glb_deleteButton = document.getElementById("remove");
-const glb_query = getQueryFromHref();
 
-let message = {request: "pick-meta", id: glb_query};
+let message = {request: "pick-meta", id: ID};
 chrome.runtime.sendMessage(message, (response) => {
 
 	if (chrome.runtime.lastError)
@@ -15,7 +16,8 @@ chrome.runtime.sendMessage(message, (response) => {
 
 	if (response.content)
 	{
-		createContent(response.content);
+		let content = createContent(response.content);
+		glb_main.insertBefore(content, glb_deleteButton);
 		glb_deleteButton.disabled = false;
 	}
 	else
@@ -24,9 +26,8 @@ chrome.runtime.sendMessage(message, (response) => {
 	}
 });
 
-glb_deleteButton.disabled = true;
-glb_deleteButton.onclick = () => {
-	chrome.runtime.sendMessage({request: "delete-meta", id: glb_query}, (response) => {
+glb_deleteButton.addEventListener("click", () => {
+	chrome.runtime.sendMessage({request: "delete-meta", id: ID}, (response) => {
 
 		if (chrome.runtime.lastError)
 		{
@@ -36,43 +37,86 @@ glb_deleteButton.onclick = () => {
 
 		if (response.success)
 		{
-			window.location = DELETE_REDIRECT;
+			document.location.href = DELETE_REDIRECT;
 		}
 		else
 		{
 			console.warn("Could not handle response:", response);
 		}
 	});
-};
+});
 
-function getQueryFromHref()
+function getIdFromHref()
 {
 	let decoded = decodeURI(location.search);
 	let index 	= decoded.indexOf("?");
 
-	let query;
+	let id;
 	if (index == decoded.length - 1)
 	{
-		query = "";
+		id = "";
 	}
 	else
 	{
-		query = decoded.substring(index + 1);
+		id = decoded.substring(index + 1);
 	}
 
-	return query;
+	return id;
 }
 
 function createContent(meta)
 {
-	let image = document.getElementById("image");
-	image.src = meta.path ? meta.path : meta.srcUrl;
+	let contentBlock = document.createElement("div");
+	contentBlock.classList.add("contentBlock");
 
-	let title = document.getElementById("title");
-	let titleTextNode = document.createTextNode(meta.title);
-	title.appendChild(titleTextNode);
+	let innerBlock = document.createElement("div");
+	innerBlock.classList.add("imageBlock");
 
-	let tags = document.getElementById("tags");
-	let tagsTextNode = document.createTextNode(meta.tags);
-	tags.appendChild(tagsTextNode);
+	let title = document.createElement("p");
+	title.classList.add("title");
+	let nameText = document.createTextNode(meta.title);
+	title.appendChild(nameText);
+
+	if (meta.category === "image")
+	{
+		let content = document.createElement("img");
+		content.classList.add("image");
+		content.src = meta.path ? meta.path : meta.srcUrl;
+
+		innerBlock.appendChild(content);
+	}
+	else if (meta.category === "video")
+	{
+		let content = document.createElement("video");
+		content.classList.add("video");
+		content.controls = true;
+
+		if (meta.path)
+		{
+			content.src = meta.path;
+		}
+		else
+		{
+			content.src = meta.srcUrl;
+		}
+
+		innerBlock.appendChild(content);
+	}
+	else if (meta.category === "web")
+	{
+		// not supported for now
+	}
+	else
+	{
+		console.log("invalid category:", meta.category)
+		return;
+	}
+
+	contentBlock.appendChild(innerBlock);
+	contentBlock.appendChild(title);
+	contentBlock.addEventListener("click", () => {
+		document.location.href = CONTENT_LINK + "?" + meta.id;
+	});
+
+	return contentBlock;
 }

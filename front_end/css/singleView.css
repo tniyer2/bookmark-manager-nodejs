@@ -1,9 +1,11 @@
 
-.imageBlock
+.main
 {
-  display: block;
+	display: flex;
+    flex-direction: column;
 }
-.contentImage
+
+.deleteButton
 {
-  display: block;
+	width: 50px;
 }

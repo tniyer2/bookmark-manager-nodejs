@@ -1,6 +1,16 @@
 
 const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+const FOCUSED_URL_PRIORITY = 5;
+
+let glb_clicked;
+
+document.documentElement.addEventListener("mousedown", (e) => {
+	if (e.button === 2)
+	{
+		glb_clicked = e.target;
+	}
+});
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
@@ -13,7 +23,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	{
 		let scanInfo = scanPage();
 
-		console.log("Page was scanned for videos:", scanInfo.list);
+		console.log("Page was scanned for videos:", scanInfo);
 		sendResponse(scanInfo);
 	}
 });
@@ -26,35 +36,68 @@ function scanPage()
 		return {single: youtube};
 	}
 
-	let html = document.documentElement.outerHTML;
-	let sources = [ findAllOf(html, ".mp4"), 
-					findAllOf(html, ".flv"), 
-					findAllOf(html, ".mov"),
-					findByLinkElm(),
-					findByVideoElm() ];
+	let final = scan(document.documentElement);
 
-	let final = [];
-	for (let arr of sources)
+	if (glb_clicked)
 	{
-		final = final.concat(arr);
+		findUnderElement(glb_clicked, final, (found) => {
+			found.priority += FOCUSED_URL_PRIORITY;
+		});
 	}
+	glb_clicked = null;
 
-	console.log("scanInfo before removing duplicates:", final);
-
-	final = final.sort((o1, o2) => o1.url.localeCompare(o2.url));
-	for (let i = final.length - 1; i > 0; i-=1)
-	{
-		if (final[i].url === final[i-1].url)
-		{
-			// Delete the duplicate with a lower priority
-			let j = final[i].priority < final[i-1].priority ? i : i-1;
-			final.splice(j, 1);
-		}
-	}
-
-	final = final.sort((o1, o2) => o2.priority - o1.priority);
+	mySort(final);
 
 	return {list: final};
+}
+
+function scan(root)
+{
+	let urls = concat( findAllOf(root, ".mp4"), 
+					   findAllOf(root, ".flv"), 
+					   findAllOf(root, ".mov"),
+					   findByLinkElm(root),
+					   findByVideoElm(root) );
+
+	mySort(urls);
+	urls = logUrls("before removing duplicates", urls);
+
+	removeDuplicates(urls, "url", (o1, o2) => {
+		return o1.priority < o2.priority;
+	});
+
+	return urls;
+}
+
+function findUnderElement(element, urls, callback)
+{
+	let docHtml = document.documentElement.outerHTML;
+	let html = element.outerHTML;
+
+	let start = docHtml.indexOf(html);
+	let end  = start + html.length;
+
+	for (let i = 0; i < urls.length; i+=1)
+	{
+		if (urls[i].start >= start && urls[i].start < end)
+		{
+			callback(urls[i]);
+		}
+	}
+}
+
+function mySort(urls)
+{
+	urls = urls.sort((o1, o2) => {
+		if (o1.priority === o2.priority)
+		{
+			return o1.start - o2.start;
+		}
+		else
+		{
+			return o2.priority - o1.priority;
+		}
+	});
 }
 
 function findYoutube()
@@ -76,11 +119,11 @@ function findYoutube()
 }
 
 const VIDEO_PRIORITY = 2;
-function findByVideoElm()
+function findByVideoElm(root)
 {
 	let sources = [];
 
-    let a = document.getElementsByTagName("video");
+    let a = root.getElementsByTagName("video");
     for (let i = 0; i < a.length; i+=1)
     {
     	let link = a[i];
@@ -113,24 +156,29 @@ function findByVideoElm()
             title = document.title;
 		}
 
-		addUrl(url, title);
+		addUrl(url, title, root.outerHTML.indexOf(link.outerHTML));
 
 		let elms = link.querySelectorAll("source");
 		for (let i = 0; i < elms.length; i+=1)
 		{
-			let src = isValid(elms[i].src);
+			let elm = elms[i];
+
+			let src = isValid(elm.src);
 			if (src)
 			{ 
-				addUrl(src, title);
+				addUrl(src, title, root.outerHTML.indexOf(elm.outerHTML));
 			}
 		}
 	}
 
-	function addUrl(url, title)
+	function addUrl(url, title, start)
 	{
 		if (url)
 		{
-			sources.push({url: url, title: title, priority: VIDEO_PRIORITY});
+			sources.push({ url: url, 
+						   title: title, 
+						   start: start, 
+						   priority: VIDEO_PRIORITY });
 		}
 	}
 
@@ -138,11 +186,11 @@ function findByVideoElm()
 }
 
 const LINK_PRIORITY = 1;
-function findByLinkElm()
+function findByLinkElm(root)
 {
 	let sources = [];
 
-	let links = document.links;
+	let links = root.querySelectorAll("a");
 	for (let i = 0; i < links.length; i+=1)
 	{
 		let link = links[i];
@@ -168,7 +216,10 @@ function findByLinkElm()
 	            title = document.title;
 	        }
 
-			sources.push({url: url, title: title, priority: LINK_PRIORITY});
+			sources.push({ url: url,
+						   title: title,
+						   start: root.outerHTML.indexOf(link.outerHTML),
+						   priority: LINK_PRIORITY });
 		}
     }
 
@@ -176,8 +227,9 @@ function findByLinkElm()
 }
 
 const SEARCH_PRIORITY = 0;
-function findAllOf(html, ext)
+function findAllOf(root, ext)
 {
+	let html = root.outerHTML;
 	let sources = [];
 
 	let start = 0;
@@ -236,16 +288,56 @@ function findAllOf(html, ext)
         s = isValid(s);
         if (s)
         {
-        	add(s);
+        	add(s, c_start);
 	    }
     }
 
-    function add(s)
+    function add(s, c_start)
     {
-    	sources.push({url: s, title: document.title, priority: SEARCH_PRIORITY});
+    	sources.push({ url: s, 
+    				   title: document.title, 
+    				   start: c_start, 
+    				   priority: SEARCH_PRIORITY });
     }
 
     return sources;
+}
+
+function removeDuplicates(urls, prop, pref)
+{
+	urls = urls.sort((o1, o2) => o1.url.localeCompare(o2.url));
+	for (let i = urls.length - 1; i > 0; i-=1)
+	{
+		if (urls[i][prop] === urls[i-1][prop])
+		{
+			let j;
+			if (pref && pref(urls[i], urls[i-1]))
+			{
+				j = i;
+			}
+			else
+			{
+				j = i-1;
+			}
+			urls.splice(j, 1);
+		}
+	}
+}
+
+function concat(...arrs)
+{
+	let final = [];
+	for (let arr of arrs)
+	{
+		final = final.concat(arr);
+	}
+	return final;
+}
+
+function logUrls(msg, urls)
+{
+	console.log(msg, urls);
+	return urls.slice();
 }
 
 function isValid(url)

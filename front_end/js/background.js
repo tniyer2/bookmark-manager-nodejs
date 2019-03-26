@@ -91,7 +91,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 				let appMessage = { type: "add",
 								   tag: myTag,
 								   content: msg.meta,
-								   download: msg.cache };
+								   download: msg.cache && msg.meta.category === "image"};
 
 				port.postMessage(appMessage);
 				port.onMessage.addListener((response) => {

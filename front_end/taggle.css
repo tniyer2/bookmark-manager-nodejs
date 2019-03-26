@@ -3,6 +3,8 @@
 {
   float: left;
   width: 100%; 
+  margin: 5px;
+  padding: 0px;
 }
 
 .taggle_input 
@@ -19,7 +21,6 @@
   display: inline-block;
   white-space: nowrap;
   font-weight: 500;
-  margin-bottom: 5px;
 } 
 
 .taggle
@@ -79,12 +80,15 @@
 
 .taggle_placeholder 
 {
-  color: #CCC;
-  transition: opacity, .25s;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-      -ms-user-select: none;
-          user-select: none; 
+  position: absolute;
+  top: 50%;
+  left: 0px;
+  transform: translate(0, -50%);
+  margin-left: 5px;
+  
+  color: #939393;
+  font-size: 18px;
+  user-select: none; 
 }
 
 .taggle_input
@@ -105,19 +109,4 @@
   top: -500px;
   z-index: -1;
   visibility: hidden; 
-}
-
-/*container styles*/
-.textarea 
-{
-  border: 0;
-  background: #FDFDFD;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(255, 255, 255, 0.7);
-  min-height: 60px;
-  padding: 0px;
-  border-radius: 3px;
-  color: #555;
-  transition: all .25s;
-  cursor: text;
-  margin-bottom: 0px; 
 }

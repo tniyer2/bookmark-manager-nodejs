@@ -22,6 +22,11 @@
             <path d="M417.3 510.72C417.3 537.62 395.51 559.43 368.65 559.43C339.46 559.43 300.54 559.43 271.35 559.43C244.49 559.43 222.7 537.62 222.7 510.72C222.7 447.73 222.7 307.46 222.7 244.47C222.7 217.57 244.49 195.77 271.35 195.77C300.54 195.77 339.46 195.77 368.65 195.77C395.51 195.77 417.3 217.57 417.3 244.47C417.3 307.46 417.3 447.73 417.3 510.72Z" id="d1HoHQp36Z"/>
             <path d="M320 420.95L520 420.95L420.01 530.47L320 640L220 530.47L120 420.95L320 420.95Z" id="a4SL9YzoMy"/>
           </symbol>
+          <symbol id="icon-copy" viewBox="0 0 32 32">
+            <title>copy</title>
+            <path d="M28.681 11.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-11.5c-1.379 0-2.5 1.122-2.5 2.5v23c0 1.378 1.121 2.5 2.5 2.5h19c1.378 0 2.5-1.122 2.5-2.5v-15.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 9.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268v0zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-19c-0.271 0-0.5-0.229-0.5-0.5v-23c0-0.271 0.229-0.5 0.5-0.5 0 0 11.499-0 11.5 0v7c0 0.552 0.448 1 1 1h7v15.5z"></path>
+            <path d="M18.841 1.319c-1.612-1.182-2.393-1.319-2.841-1.319h-11.5c-1.378 0-2.5 1.121-2.5 2.5v23c0 1.207 0.86 2.217 2 2.45v-25.45c0-0.271 0.229-0.5 0.5-0.5h15.215c-0.301-0.248-0.595-0.477-0.873-0.681z"></path>
+          </symbol>
           <linearGradient id="gradient-save_start" gradientTransform="rotate(90)">
             <stop offset="20%"  stop-color="#ff1800" />
             <stop offset="80%"  stop-color="#e21600" />
@@ -37,15 +42,17 @@
         </defs>
       </svg>
       <img id="mask" class="mask mask--opaque">
-      <div id="saveMenu" class="saveMenu saveMenu--lightYellow">
-        <input id="title" type="text">
-        <div id="tags" class="textarea"></div>
+      <div id="saveMenu" class="saveMenu saveMenu--light">
+        <div class="saveMenu__title saveMenu__title--light">
+          <input id="title" type="text" placeholder="enter title...">
+        </div>
+        <div id="tagArea" class="saveMenu__tagArea saveMenu__tagArea--light"></div>
         <div class="saveMenu__buttonArea">
           <svg id="save" class="saveMenu__save saveMenu__save--anim">
-              <use xlink:href="#icon-save"></use>
+              <use href="#icon-save"></use>
           </svg>
           <svg id="bookmark" class="saveMenu__bookmark saveMenu__bookmark--anim">
-              <use xlink:href="#icon-bookmark"></use>
+              <use href="#icon-bookmark"></use>
           </svg>
         </div>
         <div id="sourceMenu" class="sourceMenu">
@@ -55,6 +62,7 @@
       </div>
       <script src="../taggle.js"></script>
       <script src="../js/utility.js"></script>
+      <script src="../js/focus.js"></script>
       <script src="../js/listCreator.js"></script>
       <script src="../js/popup.js"></script>
     </body>

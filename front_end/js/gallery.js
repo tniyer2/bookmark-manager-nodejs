@@ -55,7 +55,8 @@ function populateFeed(metaList)
 
 	for (let meta of metaList)
 	{
-		createContent(meta);
+		let content = createContent(meta);
+		glb_feed.appendChild(content);
 	}
 }
 
@@ -76,44 +77,38 @@ function createContent(meta)
 	innerBlock.classList.add("imageBlock");
 
 	let title = document.createElement("p");
-	title.classList.add("contentTitle");
+	title.classList.add("title");
 	let nameText = document.createTextNode(meta.title);
 	title.appendChild(nameText);
 
-	let content;
 	if (meta.category === "image")
 	{
-		content = document.createElement("a");
-		content.href = CONTENT_LINK + "?" + meta.id;
+		let content = document.createElement("img");
+		content.classList.add("image");
+		content.src = meta.path ? meta.path : meta.srcUrl;
 
-		let image = document.createElement("img");
-		image.classList.add("contentImage");
-		image.src = meta.path ? meta.path : meta.srcUrl;
-
-		content.appendChild(image);
 		innerBlock.appendChild(content);
 	}
-	else if (meta.category === "video" || meta.category === "web")
+	else if (meta.category === "video")
 	{
+		let content = document.createElement("video");
+		content.classList.add("video");
+		content.controls = true;
+
 		if (meta.path)
 		{
-			content = document.createElement("video");
-			innerBlock.appendChild(content);
-
-			content.controls = true;
-			content.style.width = "100%";
-			content.style.height = "100%";
-
-			source = document.createElement("source");
-			source.src = meta.path;
-			content.appendChild(source);
+			content.src = meta.path;
 		}
 		else
 		{
-			content = document.createElement("iframe");
 			content.src = meta.srcUrl;
-			innerBlock.appendChild(content);
 		}
+
+		innerBlock.appendChild(content);
+	}
+	else if (meta.category === "web")
+	{
+		// not supported for now
 	}
 	else
 	{
@@ -123,6 +118,9 @@ function createContent(meta)
 
 	contentBlock.appendChild(innerBlock);
 	contentBlock.appendChild(title);
+	contentBlock.addEventListener("click", () => {
+		document.location.href = CONTENT_LINK + "?" + meta.id;
+	});
 
-	glb_feed.appendChild(contentBlock);
+	return contentBlock;
 }

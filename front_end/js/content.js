@@ -1,6 +1,6 @@
 
 let glb_root;
-let glb_frame;
+let glb_iframe;
 
 initPopupDOM();
 
@@ -16,9 +16,9 @@ function initPopupDOM()
 	glb_root.classList.add("root");
 	glb_root.style.display = "none";
 
-	glb_frame = document.createElement("iframe");
-	glb_frame.classList.add("frame");
-		glb_root.appendChild(glb_frame);
+	glb_iframe = document.createElement("iframe");
+	glb_iframe.classList.add("frame");
+		glb_root.appendChild(glb_iframe);
 
 	document.body.insertBefore(glb_root, document.body.firstChild);
 }
@@ -36,8 +36,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 	if (msg.open)
 	{
-		glb_frame.src = chrome.runtime.getURL("html/popup.html");
-		glb_root.style.display = "block";
+		openPopup();
 	}
 	else if (msg.close)
 	{
@@ -45,6 +44,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 });
 
+function openPopup(argument) 
+{
+	glb_iframe.src = chrome.runtime.getURL("html/popup.html");
+	glb_root.style.display = "block";
+}
 function closePopup()
 {
 	glb_root.style.display = "none";
