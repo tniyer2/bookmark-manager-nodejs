@@ -2,11 +2,10 @@
 const DELETE_REDIRECT = chrome.runtime.getURL("html/gallery.html");
 const ID = getIdFromHref();
 
-const glb_main = document.getElementById("main");
-const glb_deleteButton = document.getElementById("remove");
+const el_main = document.getElementById("main");
+const el_deleteBtn = el_main.querySelector("#delete-btn");
 
-let message = {request: "pick-meta", id: ID};
-chrome.runtime.sendMessage(message, (response) => {
+chrome.runtime.sendMessage({request: "pick-meta", id: ID}, (response) => {
 
 	if (chrome.runtime.lastError)
 	{
@@ -17,8 +16,8 @@ chrome.runtime.sendMessage(message, (response) => {
 	if (response.content)
 	{
 		let content = createContent(response.content);
-		glb_main.insertBefore(content, glb_deleteButton);
-		glb_deleteButton.disabled = false;
+		el_main.insertBefore(content, el_deleteBtn);
+		el_deleteBtn.disabled = false;
 	}
 	else
 	{
@@ -26,7 +25,7 @@ chrome.runtime.sendMessage(message, (response) => {
 	}
 });
 
-glb_deleteButton.addEventListener("click", () => {
+el_deleteBtn.addEventListener("click", () => {
 	chrome.runtime.sendMessage({request: "delete-meta", id: ID}, (response) => {
 
 		if (chrome.runtime.lastError)
@@ -62,61 +61,4 @@ function getIdFromHref()
 	}
 
 	return id;
-}
-
-function createContent(meta)
-{
-	let contentBlock = document.createElement("div");
-	contentBlock.classList.add("contentBlock");
-
-	let innerBlock = document.createElement("div");
-	innerBlock.classList.add("imageBlock");
-
-	let title = document.createElement("p");
-	title.classList.add("title");
-	let nameText = document.createTextNode(meta.title);
-	title.appendChild(nameText);
-
-	if (meta.category === "image")
-	{
-		let content = document.createElement("img");
-		content.classList.add("image");
-		content.src = meta.path ? meta.path : meta.srcUrl;
-
-		innerBlock.appendChild(content);
-	}
-	else if (meta.category === "video")
-	{
-		let content = document.createElement("video");
-		content.classList.add("video");
-		content.controls = true;
-
-		if (meta.path)
-		{
-			content.src = meta.path;
-		}
-		else
-		{
-			content.src = meta.srcUrl;
-		}
-
-		innerBlock.appendChild(content);
-	}
-	else if (meta.category === "web")
-	{
-		// not supported for now
-	}
-	else
-	{
-		console.log("invalid category:", meta.category)
-		return;
-	}
-
-	contentBlock.appendChild(innerBlock);
-	contentBlock.appendChild(title);
-	contentBlock.addEventListener("click", () => {
-		document.location.href = CONTENT_LINK + "?" + meta.id;
-	});
-
-	return contentBlock;
 }

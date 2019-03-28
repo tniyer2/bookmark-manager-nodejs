@@ -1,196 +1,35 @@
 
-const glb_test = document.createElement("canvas");
-const glb_mask  = document.getElementById("mask");
-const glb_saveMenu = document.getElementById("saveMenu");
+injectCss(document.head, `css/popup-${"light"}.css`);
 
-const glb_title = document.getElementById("title");
-const glb_tagArea = document.getElementById("tagArea");
-const glb_save 	= document.getElementById("save");
-const glb_bookmark = document.getElementById("bookmark");
+(function(){
 
-const glb_sourceMenu = document.getElementById("sourceMenu");
-const glb_sourceList = document.getElementById("sourceList");
+	const el_mask = document.getElementById("mask");
 
-let dispatchFocus = () => {glb_tagArea.dispatchEvent(new Event("focus"));}
-let dispatchBlur  = () => {glb_tagArea.dispatchEvent(new Event("blur"));}
-let taggle_options = { placeholder: "enter tags...",  
-					   focusInputOnContainerClick: true,
-					   onFocusInput: dispatchFocus, 
-					   onBlurInput: dispatchBlur };
-let glb_myTaggle = new Taggle(glb_tagArea, taggle_options);
+	const el_saveMenu = document.getElementById("save-menu");
+	const el_title 		 = el_saveMenu.querySelector("#title");
+	const el_tagContainer 	 = el_saveMenu.querySelector("#tag-container");
+	const el_saveBtn 	 = el_saveMenu.querySelector("#save-btn");
+	const el_bookmarkBtn = el_saveMenu.querySelector("#bookmark-btn");
 
-let glb_saveInfo;
-let glb_docUrl;
-let glb_tabId;
+	const el_sourceMenu = document.getElementById("source-menu");
+	const el_sourceList = el_sourceMenu.querySelector("ul");
 
-let glb_selectedList;
+	const g_dispatchFocus = () => { el_tagContainer.dispatchEvent(new Event("focus")); };
+	const g_dispatchBlur  = () => { el_tagContainer.dispatchEvent(new Event("blur")); };
 
-chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
+	const g_taggleOptions = { placeholder: "enter tags...",  
+						   	  focusInputOnContainerClick: true,
+						   	  onFocusInput: g_dispatchFocus, 
+						   	  onBlurInput: g_dispatchBlur };
 
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
+	const g_taggle = new Taggle(el_tagContainer, g_taggleOptions);
 
-	let creator = new ListCreator();
-	glb_tabId = response.tabId;
+	let g_meta;
+	let g_docUrl;
+	let g_tabId;
+	let glb_selectedList;
 
-	enableBookmark();
-	glb_docUrl = response.docUrl;
-
-	let mediaTypeIsImage = response.mediaType === "image";
-	if (mediaTypeIsImage)
-	{
-		enableSave();
-		let li = _createList( response.srcUrl, 
-							  response.mediaType, 
-							  "", 
-							  "source clicked on");
-		li.click();
-
-		if (response.docUrl === response.srcUrl)
-		{
-			return;
-		}
-	}
-
-	if (response.scanInfo.list && response.scanInfo.list.length)
-	{
-		enableSave();
-		enableSaveMenu();
-		enableSourceMenu();
-
-		for (let i = 0; i < response.scanInfo.list.length; i+=1)
-		{
-			let video = response.scanInfo.list[i];
-
-			let li = _createList(video.url, "video", video.title);
-			if (!glb_saveInfo && i === 0)
-			{
-				li.click();
-			}
-		}
-	}
-	else if (response.scanInfo.single)
-	{
-		enableSave();
-		let video = response.scanInfo.single;
-
-		let li = _createList( video.url, 
-							  "video", 
-							  video.title, 
-							  { showDimensions: false, 
-							  	download: false });
-		li.click();
-	}
-	enableSaveMenu();
-
-	function _createList(srcUrl, category, title, placeholder, options)
-	{
-		if (typeof placeholder === "object")
-		{
-			options = placeholder;
-			placeholder = undefined;
-		}
-		if (!placeholder)
-		{
-			placeholder = title;
-		}
-
-		let li = creator.createList(srcUrl, category, placeholder, options);
-
-		li.addEventListener("click", (event) => {
-
-			if (glb_selectedList)
-			{
-				glb_selectedList.classList.remove("sourceMenu__tag--active");
-			}
-			glb_selectedList = li;
-			li.classList.add("sourceMenu__tag--active");
-
-			_setSaveInfo(srcUrl, category, title);
-		});
-
-		glb_sourceList.appendChild(li);
-		return li;
-	}
-
-	function _setSaveInfo(srcUrl, category, title)
-	{
-		glb_saveInfo = { srcUrl: srcUrl, 
-						 category: category };
-		glb_title.value = title;
-	}
-});
-
-glb_title.addEventListener("focus", () => {
-	glb_title.placeholder = "";
-});
-glb_title.addEventListener("blur", () => {
-	glb_title.placeholder = "enter title...";
-});
-
-addClassOnAwesomeFocus(glb_title, glb_title.parentElement, "focus");
-addClassOnAwesomeFocus(glb_tagArea, glb_tagArea, "focus");
-
-function addClassOnAwesomeFocus(target, element, classname)
-{
-	new awesomeFocus(target, () => {
-		if (!element.classList.contains(classname))
-		{
-			element.classList.add(classname);
-		}
-	}, () => {
-		if (element.classList.contains(classname))
-		{
-			element.classList.remove(classname);
-		}
-	});
-}
-
-function enableSourceMenu()
-{
-	glb_saveMenu.classList.add("saveMenu--shiftLeft");
-	glb_sourceMenu.style.display = "block";
-}
-function enableSaveMenu(){ glb_saveMenu.style.display = "flex"; }
-function enableSave(){ glb_save.style.display = "inline-block"; }
-function enableBookmark(){ glb_bookmark.style.display = "inline-block"; }
-
-// mask closes popup
-glb_mask.addEventListener("click", () => {
-	closePopup();
-});
-
-// save button
-glb_save.addEventListener("click", function evt(){
-
-	glb_save.removeEventListener("click", evt);
-	saveMeta(glb_saveInfo.srcUrl, glb_saveInfo.category, true);
-});
-
-// bookmark button
-glb_bookmark.addEventListener("click", function evt(){
-
-	glb_bookmark.removeEventListener("click", evt);
-	saveMeta(glb_docUrl, "web", false);
-});
-
-async function saveMeta(srcUrl, category, cache)
-{
-	let meta = {
-		title: glb_title.value,
-		tags: glb_myTaggle.getTags().values,
-		category: category,
-		date: getMinutes(),
-		srcUrl: srcUrl,
-		docUrl: glb_docUrl
-	};
-
-	let msg = {request: "add-meta", meta: meta, cache: cache};
-
-	chrome.runtime.sendMessage(msg, (response) => {
+	chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 
 		if (chrome.runtime.lastError)
 		{
@@ -198,26 +37,158 @@ async function saveMeta(srcUrl, category, cache)
 			return;
 		}
 
-		if (response.success)
+		g_tabId = response.tabId;
+		g_docUrl = response.docUrl;
+		enableBookmark();
+		enableSaveMenu();
+
+		let sourceList = new SourceList(el_sourceList);
+		let mediaTypeIsImage = response.mediaType === "image";
+
+		if (mediaTypeIsImage)
 		{
-			closePopup();
+			enableSave();
+
+			let options = { title: "source clicked on",
+							type: "image",
+							showDimensions: true };
+			let li = _addSource(response.srcUrl, "image", "", options);
+
+			if (response.srcUrl === response.docUrl)
+			{
+				return;
+			}
 		}
-		else
+
+		if (response.scanInfo.list && response.scanInfo.list.length)
 		{
-			console.warn("Could not handle response:", response);
+			enableSave();
+			enableSourceMenu();
+
+			for (let i = 0; i < response.scanInfo.list.length; i+=1)
+			{
+				let video = response.scanInfo.list[i];
+
+				let options = { title: video.title,
+								type: "video", 
+								showDimensions: true };
+
+				let li = _addSource(video.url, "video", video.title, options);
+			}
+		}
+		else if (response.scanInfo.single)
+		{
+			enableSave();
+			let video = response.scanInfo.single;
+
+			let options = { title: video.title,
+							showDimensions: false, 
+							download: false };
+
+			let li = _addSource( video.url, "video", video.title, options);
+		}
+
+		function _addSource(srcUrl, category, title, options)
+		{
+			options.onSelect = (elm) => {
+				elm.classList.add("active");
+				_setState(srcUrl, category, title);
+			};
+			options.onDeselect = (elm) => {
+				elm.classList.remove("active");
+			};
+
+			sourceList.addSourceElement(srcUrl, options);
+		}
+
+		function _setState(srcUrl, category, title)
+		{
+			g_meta = { srcUrl: srcUrl, 
+					   category: category };
+			el_title.value = title;
 		}
 	});
-}
 
-function closePopup()
-{
-	chrome.tabs.sendMessage(glb_tabId, {to: "content.js", close: true});
-}
+	el_title.addEventListener("focus", () => {
+		el_title.placeholder = "";
+	});
+	el_title.addEventListener("blur", () => {
+		el_title.placeholder = "enter title...";
+	});
 
-// Returns the minutes passed since the Unix Epoch.
-function getMinutes()
-{
-	let milli = new Date().getTime();
-	let minutes = Math.floor(milli / (1000 * 60));
-	return minutes;
-}
+	styleOnFocus(el_title, el_title.parentElement, "focus");
+	styleOnFocus(el_tagContainer, el_tagContainer, "focus");
+
+	function enableSourceMenu()
+	{
+		el_saveMenu.classList.add("saveMenu--shiftLeft");
+		el_sourceMenu.style.display = "block";
+	}
+	function enableSaveMenu(){ el_saveMenu.style.display = "flex"; }
+	function enableSave(){ el_saveBtn.style.display = "inline-block"; }
+	function enableBookmark(){ el_bookmarkBtn.style.display = "inline-block"; }
+
+	// mask closes popup
+	el_mask.addEventListener("click", () => {
+		closePopup();
+	});
+
+	// save button
+	el_saveBtn.addEventListener("click", function evt(){
+
+		el_saveBtn.removeEventListener("click", evt);
+		saveMeta(g_meta.srcUrl, g_meta.category, true);
+	});
+
+	// bookmark button
+	el_bookmarkBtn.addEventListener("click", function evt(){
+
+		el_bookmarkBtn.removeEventListener("click", evt);
+		saveMeta(g_docUrl, "web", false);
+	});
+
+	async function saveMeta(srcUrl, category, cache)
+	{
+		let meta = {
+			title: el_title.value,
+			tags: g_taggle.getTags().values,
+			category: category,
+			date: getMinutes(),
+			srcUrl: srcUrl,
+			docUrl: g_docUrl
+		};
+
+		let msg = {request: "add-meta", meta: meta, cache: cache};
+
+		chrome.runtime.sendMessage(msg, (response) => {
+
+			if (chrome.runtime.lastError)
+			{
+				console.warn(chrome.runtime.lastError.message);
+				return;
+			}
+
+			if (response.success)
+			{
+				closePopup();
+			}
+			else
+			{
+				console.warn("Could not handle response:", response);
+			}
+		});
+	}
+
+	function closePopup()
+	{
+		chrome.tabs.sendMessage(g_tabId, {to: "content.js", close: true});
+	}
+
+	// Returns the minutes passed since the Unix Epoch.
+	function getMinutes()
+	{
+		let milli = new Date().getTime();
+		let minutes = Math.floor(milli / (1000 * 60));
+		return minutes;
+	}
+}).call(this);

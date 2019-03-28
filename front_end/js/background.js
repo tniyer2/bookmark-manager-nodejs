@@ -1,9 +1,9 @@
 
 const DESKTOP_APPLICATION_NAME = "tagger_plus_desktop";
-const DEFAULT_QUERY  = "all";
+const DEFAULT_QUERY  = "dsc=date";
 const APP_ID_PREFIX  = "app_";
 
-const glb_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
+const g_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
 
 // Listens to messages.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 	else if (msg.request === "get-status")
 	{
-		glb_connector.getStatus(sendResponse, e => console.warn(e));
+		g_connector.getStatus(sendResponse, e => console.warn(e));
 
 		return true;
 	}
@@ -50,8 +50,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 		(async () => {
 
-			port = await wrap(glb_connector.connect
-						 	.bind(glb_connector))
+			port = await wrap(g_connector.connect
+						 	.bind(g_connector))
 							.catch(e => console.warn(e));
 
 			if (port)
@@ -81,8 +81,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	{
 		(async () => {
 
-			let port = await wrap(glb_connector.connect
-							 .bind(glb_connector))
+			let port = await wrap(g_connector.connect
+							 .bind(g_connector))
 							 .catch(e => console.warn(e));
 
 			if (port)
@@ -160,8 +160,8 @@ async function pickMeta(id, mode, genTag, successCallback, errorCallback)
 
 	if (fromApp(id))
 	{
-		let port = await wrap(glb_connector.connect
-					 	 .bind(glb_connector))
+		let port = await wrap(g_connector.connect
+					 	 .bind(g_connector))
 						 .catch(e => console.warn(e));
 
 		if (port)

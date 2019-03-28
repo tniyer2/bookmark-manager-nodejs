@@ -1,18 +1,18 @@
 
 const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES - 1000;
 
-let glb_meta;
+let g_meta;
 
 // success: {meta: result of query}
 // error: badQuery
 async function getMetaLocally(q, successCallback, errorCallback)
 {
-	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
+	if (!g_meta) g_meta = await wrap(load).catch(e => errorCallback(e));
 
 	let result;
 	try
 	{
-		result = query(glb_meta.slice(), q);
+		result = query(g_meta.slice(), q);
 	}
 	catch (e)
 	{
@@ -26,10 +26,10 @@ async function getMetaLocally(q, successCallback, errorCallback)
 // success: success
 async function addMetaLocally(meta, successCallback, errorCallback)
 {
-	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
+	if (!g_meta) g_meta = await wrap(load).catch(e => errorCallback(e));
 
 	meta.id = getRandomString();
-	glb_meta.push(meta);
+	g_meta.push(meta);
 
 	let success = await wrap(save).catch(e => errorCallback(e));
 	if (success) successCallback({success: true});
@@ -40,7 +40,7 @@ async function deleteMetaLocally(id, successCallback, errorCallback)
 {
 	let index = await wrap(_pick, id).catch(e => errorCallback(e));
 
-	glb_meta.splice(index, 1);
+	g_meta.splice(index, 1);
 	let success = await wrap(save).catch(e => errorCallback(e));
 	if (success) successCallback({success: true});
 }
@@ -49,7 +49,7 @@ async function deleteMetaLocally(id, successCallback, errorCallback)
 async function pickMetaLocally(id, successCallback, errorCallback)
 {
 	let index = await wrap(_pick, id).catch(e => errorCallback(e));
-	let content = glb_meta[index];
+	let content = g_meta[index];
 
 	successCallback({content: content});
 }
@@ -58,9 +58,9 @@ async function pickMetaLocally(id, successCallback, errorCallback)
 // error: badQuery
 async function _pick(id, successCallback, errorCallback)
 {
-	if (!glb_meta) glb_meta = await wrap(load).catch(e => errorCallback(e));
+	if (!g_meta) g_meta = await wrap(load).catch(e => errorCallback(e));
 
-	let index = getId(glb_meta, id);
+	let index = getId(g_meta, id);
 
 	if (index === -1)
 	{
@@ -111,7 +111,7 @@ async function load(successCallback, errorCallback)
 async function save(successCallback, errorCallback)
 {
 	let serialized = "";
-	for (let obj of glb_meta)
+	for (let obj of g_meta)
 	{
 		serialized += JSON.stringify(obj) + "\n";
 	}

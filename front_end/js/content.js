@@ -1,26 +1,31 @@
 
-let glb_root;
-let glb_iframe;
+let el_root;
+let el_iframe;
 
-initPopupDOM();
+injectPopup();
 
-function initPopupDOM()
+function injectPopup()
+{
+	injectCss(document.head, "css/content.css");
+
+	el_root = document.createElement("div");
+	el_root.classList.add("root");
+	el_root.style.display = "none";
+
+	el_iframe = document.createElement("iframe");
+	el_iframe.classList.add("frame");
+		el_root.appendChild(el_iframe);
+
+	document.body.insertBefore(el_root, document.body.firstChild);
+}
+
+function injectCss(parent, relativeUrl)
 {
 	let ss  = document.createElement("link");
 	ss.rel  = "stylesheet";
 	ss.type = "text/css";
-	ss.href = chrome.runtime.getURL("css/content.css");
-	document.head.appendChild(ss);
-
-	glb_root = document.createElement("div");
-	glb_root.classList.add("root");
-	glb_root.style.display = "none";
-
-	glb_iframe = document.createElement("iframe");
-	glb_iframe.classList.add("frame");
-		glb_root.appendChild(glb_iframe);
-
-	document.body.insertBefore(glb_root, document.body.firstChild);
+	ss.href = chrome.runtime.getURL(relativeUrl);
+	parent.appendChild(ss);
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -46,10 +51,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 function openPopup(argument) 
 {
-	glb_iframe.src = chrome.runtime.getURL("html/popup.html");
-	glb_root.style.display = "block";
+	el_iframe.src = chrome.runtime.getURL("html/popup.html");
+	el_root.style.display = "block";
 }
 function closePopup()
 {
-	glb_root.style.display = "none";
+	el_root.style.display = "none";
 }

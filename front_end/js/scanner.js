@@ -3,12 +3,12 @@ const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
 const FOCUSED_URL_PRIORITY = 5;
 
-let glb_clicked;
+let g_lastClickedElement;
 
 document.documentElement.addEventListener("mousedown", (e) => {
 	if (e.button === 2)
 	{
-		glb_clicked = e.target;
+		g_lastClickedElement = e.target;
 	}
 });
 
@@ -38,13 +38,13 @@ function scanPage()
 
 	let final = scan(document.documentElement);
 
-	if (glb_clicked)
+	if (g_lastClickedElement)
 	{
-		findUnderElement(glb_clicked, final, (found) => {
+		findUnderElement(g_lastClickedElement, final, (found) => {
 			found.priority += FOCUSED_URL_PRIORITY;
 		});
 	}
-	glb_clicked = null;
+	g_lastClickedElement = null;
 
 	mySort(final);
 

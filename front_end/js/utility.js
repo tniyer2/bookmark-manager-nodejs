@@ -9,6 +9,27 @@
 		});
 	};
 
+	// Binds a function to an object and then wraps in a Promise
+	this.bindWrap = function(f, self, ...args) {
+
+		f = f.bind(self);
+
+		return new Promise((resolve, reject) => {
+			f(...args, response => resolve(response),
+					   error => reject(error));
+		});
+	};
+
+	// Appends a link element referencing a css file to an element.
+	this.injectCss = function (element, chromeUrl) {
+
+		let link  = document.createElement("link");
+		link.rel  = "stylesheet";
+		link.type = "text/css";
+		link.href = chrome.runtime.getURL(chromeUrl);
+		element.appendChild(link);
+	}
+
 	// returns a filename from a url
 	// if split is true, returns [filename, ext]
 	this.parseFileName = function(pathname, split) {

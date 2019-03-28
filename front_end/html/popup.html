@@ -1,8 +1,8 @@
   <!DOCTYPE html>
   <html>
     <head>
-      <link rel="stylesheet" type="text/css" href="../css/popup.css">
-      <link rel="stylesheet" type="text/css" href="../taggle.css">
+      <link rel="stylesheet" type="text/css" href="../css/popup-light.css">
+      <link rel="stylesheet" type="text/css" href="../css/popup-core.css">
     </head>
     <body>
       <svg style="position:absolute;width:0px;height:0px;">
@@ -41,29 +41,29 @@
           </linearGradient>
         </defs>
       </svg>
-      <img id="mask" class="mask mask--opaque">
-      <div id="saveMenu" class="saveMenu saveMenu--light">
-        <div class="saveMenu__title saveMenu__title--light">
+      <img id="mask" class="mask mask--theme">
+      <div id="save-menu" class="save-menu save-menu--theme">
+        <div class="save-menu__title save-menu__title--theme">
           <input id="title" type="text" placeholder="enter title...">
         </div>
-        <div id="tagArea" class="saveMenu__tagArea saveMenu__tagArea--light"></div>
-        <div class="saveMenu__buttonArea">
-          <svg id="save" class="saveMenu__save saveMenu__save--anim">
+        <div id="tag-container" class="save-menu__tag-container save-menu__tag-container--theme"></div>
+        <div class="save-menu__button-area">
+          <svg id="save-btn" class="save-menu__save-btn save-menu__save-btn--anim">
               <use href="#icon-save"></use>
           </svg>
-          <svg id="bookmark" class="saveMenu__bookmark saveMenu__bookmark--anim">
+          <svg id="bookmark-btn" class="save-menu__bookmark-btn save-menu__bookmark-btn--anim">
               <use href="#icon-bookmark"></use>
           </svg>
         </div>
-        <div id="sourceMenu" class="sourceMenu">
-          <ul id="sourceList" class="sourceMenu__list">
+        <div id="source-menu" class="source-menu">
+          <ul class="source-menu__list">
           </ul>
         </div>
       </div>
-      <script src="../taggle.js"></script>
+      <script src="../js/taggle.js"></script>
       <script src="../js/utility.js"></script>
-      <script src="../js/focus.js"></script>
-      <script src="../js/listCreator.js"></script>
+      <script src="../js/awesomeFocus.js"></script>
+      <script src="../js/sourceList.js"></script>
       <script src="../js/popup.js"></script>
     </body>
   </html>
