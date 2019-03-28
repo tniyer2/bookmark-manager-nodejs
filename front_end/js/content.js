@@ -1,31 +1,23 @@
 
-let el_root;
 let el_iframe;
 
 injectPopup();
 
 function injectPopup()
 {
-	injectCss(document.head, "css/content.css");
-
-	el_root = document.createElement("div");
-	el_root.classList.add("root");
-	el_root.style.display = "none";
-
 	el_iframe = document.createElement("iframe");
-	el_iframe.classList.add("frame");
-		el_root.appendChild(el_iframe);
+	el_iframe.style = `position: fixed;
+					   width: 100%;
+					   height: 100%;
+					   top: 0px;
+					   left: 0px;
+					   z-index: 1000;
+					  
+					   outline: none;
+					   background: none;
+					   border: none;`;
 
-	document.body.insertBefore(el_root, document.body.firstChild);
-}
-
-function injectCss(parent, relativeUrl)
-{
-	let ss  = document.createElement("link");
-	ss.rel  = "stylesheet";
-	ss.type = "text/css";
-	ss.href = chrome.runtime.getURL(relativeUrl);
-	parent.appendChild(ss);
+	document.body.insertBefore(el_iframe, document.body.firstChild);
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -36,25 +28,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.check)
 	{
 		sendResponse(true);
-		return;
 	}
-
-	if (msg.open)
+	else if (msg.open)
 	{
 		openPopup();
 	}
-	else if (msg.close)
+	else if(msg.close)
 	{
 		closePopup();
 	}
 });
 
-function openPopup(argument) 
+function openPopup() 
 {
 	el_iframe.src = chrome.runtime.getURL("html/popup.html");
-	el_root.style.display = "block";
+	el_iframe.style.display = "block";
 }
 function closePopup()
 {
-	el_root.style.display = "none";
+	el_iframe.src = null;
+	el_iframe.style.display = "none";
 }

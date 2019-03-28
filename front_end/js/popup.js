@@ -3,8 +3,6 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 
 (function(){
 
-	const el_mask = document.getElementById("mask");
-
 	const el_saveMenu = document.getElementById("save-menu");
 	const el_title 		 = el_saveMenu.querySelector("#title");
 	const el_tagContainer 	 = el_saveMenu.querySelector("#tag-container");
@@ -27,7 +25,13 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 	let g_meta;
 	let g_docUrl;
 	let g_tabId;
-	let glb_selectedList;
+
+	document.documentElement.addEventListener("click", () => {
+		closePopup();
+	});
+	el_saveMenu.addEventListener("click", (e) => {
+		e.stopPropagation();
+	});
 
 	chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
 
@@ -37,8 +41,8 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 			return;
 		}
 
-		g_tabId = response.tabId;
 		g_docUrl = response.docUrl;
+		g_tabId = response.tabId;
 		enableBookmark();
 		enableSaveMenu();
 
@@ -127,11 +131,6 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 	function enableSaveMenu(){ el_saveMenu.style.display = "flex"; }
 	function enableSave(){ el_saveBtn.style.display = "inline-block"; }
 	function enableBookmark(){ el_bookmarkBtn.style.display = "inline-block"; }
-
-	// mask closes popup
-	el_mask.addEventListener("click", () => {
-		closePopup();
-	});
 
 	// save button
 	el_saveBtn.addEventListener("click", function evt(){

@@ -1,8 +1,7 @@
 
-.mask--theme
+html
 {
-  background-color: #000000;
-  opacity: 0.75;
+  background-color: hsla(0, 0%, 0%, 0.75);
 }
 
 .save-menu--theme

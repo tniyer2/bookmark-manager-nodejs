@@ -4,6 +4,7 @@ const DEFAULT_QUERY  = "dsc=date";
 const APP_ID_PREFIX  = "app_";
 
 const g_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
+let g_popupInfo;
 
 // Listens to messages.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -12,11 +13,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	{
 		let response = {};
 
-		response.srcUrl = glb_popupInfo.srcUrl;
+		response.srcUrl = g_popupInfo.srcUrl;
 		response.docUrl = sender.tab.url;
-		response.scanInfo  = glb_popupInfo.scanInfo;
-		response.mediaType = glb_popupInfo.mediaType;
-		response.tabId	   = sender.tab.id;
+		response.scanInfo  = g_popupInfo.scanInfo;
+		response.mediaType = g_popupInfo.mediaType;
+		response.tabId = sender.tab.id;
 
 		sendResponse(response);
 	}
@@ -214,7 +215,7 @@ chrome.contextMenus.removeAll(() => {
 // Activates popup when context menu item "Save" is clicked.
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 
-	glb_popupInfo = { srcUrl: info.srcUrl,
+	g_popupInfo = { srcUrl: info.srcUrl,
 					  mediaType: info.mediaType };
 
 	chrome.tabs.sendMessage(tab.id, {to: "scanner.js", scan: true}, (scanInfo) => {
@@ -225,7 +226,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 			return;
 		}
 
-		glb_popupInfo.scanInfo = scanInfo;
+		g_popupInfo.scanInfo = scanInfo;
 		sendMessageToScript(tab.id, { to: "content.js", 
 									  script: "js/content.js", 
 									  open: true });

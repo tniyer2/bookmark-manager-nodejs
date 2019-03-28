@@ -2,6 +2,8 @@
 java_server
 node_modules
 
+front_end/svgs
+
 back_end/**/meta/*
 back_end/**/resources/*
 
