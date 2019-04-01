@@ -1,62 +1,60 @@
 
-injectCss(document.head, `css/popup-${"light"}.css`);
+injectCss(document.head, `css/popup-theme-${"light"}.css`);
+injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 (function(){
 
-	const el_saveMenu = document.getElementById("save-menu");
-	const el_title 		 = el_saveMenu.querySelector("#title");
-	const el_tagContainer 	 = el_saveMenu.querySelector("#tag-container");
-	const el_saveBtn 	 = el_saveMenu.querySelector("#save-btn");
-	const el_bookmarkBtn = el_saveMenu.querySelector("#bookmark-btn");
+	let COMMA_CODE = 188;
+    let TAB_CODE = 9;
 
+	const cl_activeSource = "active";
+
+	const el_saveMenu = document.getElementById("save-menu");
+	const el_title 		  = el_saveMenu.querySelector("#title");
+	const el_tagContainer = el_saveMenu.querySelector("#tag-container");
+	const el_saveBtn 	  = el_saveMenu.querySelector("#save-btn");
+	const el_bookmarkBtn  = el_saveMenu.querySelector("#bookmark-btn");
 	const el_sourceMenu = document.getElementById("source-menu");
 	const el_sourceList = el_sourceMenu.querySelector("ul");
 
-	const g_dispatchFocus = () => { el_tagContainer.dispatchEvent(new Event("focus")); };
-	const g_dispatchBlur  = () => { el_tagContainer.dispatchEvent(new Event("blur")); };
-
-	const g_taggleOptions = { placeholder: "enter tags...",  
-						   	  focusInputOnContainerClick: true,
-						   	  onFocusInput: g_dispatchFocus, 
-						   	  onBlurInput: g_dispatchBlur };
-
+	const TAG_CHAR_LIMIT = 30;
+	const stopBubble = (evt) => { evt.stopPropagation() };
+	const g_taggleOptions = { placeholder: "enter tags...",
+							  tabIndex: 1, 
+							  submitKeys: [COMMA_CODE] };
 	const g_taggle = new Taggle(el_tagContainer, g_taggleOptions);
 
-	let g_meta;
-	let g_docUrl;
-	let g_tabId;
+	let g_meta, 
+		g_docUrl, 
+		g_tabId;
 
-	document.documentElement.addEventListener("click", () => {
-		closePopup();
-	});
-	el_saveMenu.addEventListener("click", (e) => {
-		e.stopPropagation();
-	});
+	attachMaskEvents();
+	attachButtonEvents();
+	attachStyleEvents();
 
-	chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
+	initTaggleInput(g_taggle.getInput());
+	createAutoComplete();
 
-		if (chrome.runtime.lastError)
-		{
-			console.warn(chrome.runtime.lastError.message);
-			return;
-		}
+	(async () => {
+		let response = await wrap(getPopupInfo);
 
 		g_docUrl = response.docUrl;
 		g_tabId = response.tabId;
-		enableBookmark();
-		enableSaveMenu();
+		enableElement(el_bookmarkBtn);
+		enableElement(el_saveMenu);
 
 		let sourceList = new SourceList(el_sourceList);
 		let mediaTypeIsImage = response.mediaType === "image";
 
 		if (mediaTypeIsImage)
 		{
-			enableSave();
+			enableElement(el_saveBtn);
 
 			let options = { title: "source clicked on",
 							type: "image",
 							showDimensions: true };
-			let li = _addSource(response.srcUrl, "image", "", options);
+			options = extendOptions(options, response.srcUrl, "image", "");
+			sourceList.addSourceElement(response.srcUrl, options);
 
 			if (response.srcUrl === response.docUrl)
 			{
@@ -66,96 +64,55 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 
 		if (response.scanInfo.list && response.scanInfo.list.length)
 		{
-			enableSave();
-			enableSourceMenu();
+			enableElement(el_saveBtn);
+			enableElement(el_sourceMenu);
 
-			for (let i = 0; i < response.scanInfo.list.length; i+=1)
+			for (let i = 0, l = response.scanInfo.list.length; i < l; i+=1)
 			{
 				let video = response.scanInfo.list[i];
-
 				let options = { title: video.title,
 								type: "video", 
 								showDimensions: true };
-
-				let li = _addSource(video.url, "video", video.title, options);
+				options = extendOptions(options, video.url, "video", video.title);
+				sourceList.addSourceElement(video.url, options);
 			}
 		}
 		else if (response.scanInfo.single)
 		{
-			enableSave();
-			let video = response.scanInfo.single;
+			enableElement(el_saveBtn);
 
+			let video = response.scanInfo.single;
 			let options = { title: video.title,
 							showDimensions: false, 
 							download: false };
-
-			let li = _addSource( video.url, "video", video.title, options);
+			options = extendOptions(options, video.url, "video", video.title);
+			sourceList.addSourceElement(video.url, options);
 		}
+	})();
 
-		function _addSource(srcUrl, category, title, options)
-		{
-			options.onSelect = (elm) => {
-				elm.classList.add("active");
-				_setState(srcUrl, category, title);
-			};
-			options.onDeselect = (elm) => {
-				elm.classList.remove("active");
-			};
-
-			sourceList.addSourceElement(srcUrl, options);
-		}
-
-		function _setState(srcUrl, category, title)
-		{
-			g_meta = { srcUrl: srcUrl, 
-					   category: category };
-			el_title.value = title;
-		}
-	});
-
-	el_title.addEventListener("focus", () => {
-		el_title.placeholder = "";
-	});
-	el_title.addEventListener("blur", () => {
-		el_title.placeholder = "enter title...";
-	});
-
-	styleOnFocus(el_title, el_title.parentElement, "focus");
-	styleOnFocus(el_tagContainer, el_tagContainer, "focus");
-
-	function enableSourceMenu()
+	function getPopupInfo(successCallback, errorCallback)
 	{
-		el_saveMenu.classList.add("saveMenu--shiftLeft");
-		el_sourceMenu.style.display = "block";
+		chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
+			if (chrome.runtime.lastError)
+			{
+				console.warn(chrome.runtime.lastError.message);
+				errorCallback(null);
+			}
+			else
+			{
+				successCallback(response);
+			}
+		});
 	}
-	function enableSaveMenu(){ el_saveMenu.style.display = "flex"; }
-	function enableSave(){ el_saveBtn.style.display = "inline-block"; }
-	function enableBookmark(){ el_bookmarkBtn.style.display = "inline-block"; }
 
-	// save button
-	el_saveBtn.addEventListener("click", function evt(){
-
-		el_saveBtn.removeEventListener("click", evt);
-		saveMeta(g_meta.srcUrl, g_meta.category, true);
-	});
-
-	// bookmark button
-	el_bookmarkBtn.addEventListener("click", function evt(){
-
-		el_bookmarkBtn.removeEventListener("click", evt);
-		saveMeta(g_docUrl, "web", false);
-	});
-
-	async function saveMeta(srcUrl, category, cache)
+	function saveMeta(srcUrl, category, cache)
 	{
-		let meta = {
-			title: el_title.value,
-			tags: g_taggle.getTags().values,
-			category: category,
-			date: getMinutes(),
-			srcUrl: srcUrl,
-			docUrl: g_docUrl
-		};
+		let meta = { title: el_title.value,
+					 tags: g_taggle.getTags().values,
+					 category: category,
+					 date: new Date().getMinutes(),
+					 srcUrl: srcUrl,
+					 docUrl: g_docUrl };
 
 		let msg = {request: "add-meta", meta: meta, cache: cache};
 
@@ -183,11 +140,90 @@ injectCss(document.head, `css/popup-${"light"}.css`);
 		chrome.tabs.sendMessage(g_tabId, {to: "content.js", close: true});
 	}
 
-	// Returns the minutes passed since the Unix Epoch.
-	function getMinutes()
+	function initTaggleInput(input)
 	{
-		let milli = new Date().getTime();
-		let minutes = Math.floor(milli / (1000 * 60));
-		return minutes;
+		input.maxLength = TAG_CHAR_LIMIT;
+
+		input.addEventListener("focus", () => {
+			el_tagContainer.dispatchEvent(new Event("focus"));
+		});
+		input.addEventListener("blur", () => {
+			el_tagContainer.dispatchEvent(new Event("blur"));			
+		});
+	}
+
+	function createAutoComplete()
+	{
+		let testValues = [ "rimiru", 
+						   "slime", 
+						   "gobiru", 
+						   "goblin", 
+						   "gobta", 
+						   "rigird" ];
+		let list = document.createElement("ul");
+		list.classList.add("save-menu__autoc-list");
+		list.classList.add("noshow");
+		el_tagContainer.appendChild(list);
+
+		let input = g_taggle.getInput();
+		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
+		let confirmInput = () => { input.dispatchEvent(confirmEvent); }; 
+
+		let autoc = new autoComplete(input, list, testValues, confirmInput);
+	}
+
+	function extendOptions(options, srcUrl, category, title)
+	{
+		options.onSelect = (li) => {
+			li.classList.add(cl_activeSource);
+			setState(srcUrl, category, title);
+		};
+		options.onDeselect = (li) => {
+			li.classList.remove(cl_activeSource);
+		};
+
+		return options;
+	}
+
+	function setState(srcUrl, category, title)
+	{
+		g_meta = { srcUrl: srcUrl, 
+				   category: category };
+		el_title.value = title;
+	}
+
+	function attachMaskEvents()
+	{
+		el_saveMenu.addEventListener("click", stopBubble);
+		el_sourceMenu.addEventListener("click", stopBubble);
+		document.documentElement.addEventListener("click", closePopup);
+	}
+
+	function attachButtonEvents()
+	{
+		el_saveBtn.addEventListener("click", () => {
+			saveMeta(g_meta.srcUrl, g_meta.category, true);
+		}, {once: true});
+		el_bookmarkBtn.addEventListener("click", () => {
+			saveMeta(g_docUrl, "web", false);
+		}, {once: true});
+	}
+
+	function attachStyleEvents()
+	{
+		styleOnFocus(el_title, el_title.parentElement, "focus");
+		styleOnFocus(el_tagContainer, el_tagContainer, "focus");
+
+		el_title.addEventListener("focus", () => {
+			el_title.placeholder = "";
+		});
+		el_title.addEventListener("blur", () => {
+			el_title.placeholder = "enter title...";
+		});
+	}
+
+	function enableElement(elm)
+	{
+		elm.classList.remove("noshow");
 	}
 }).call(this);

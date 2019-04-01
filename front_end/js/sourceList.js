@@ -16,7 +16,9 @@
 	const DEFAULTS = { allowCopy: true,
 					   allowDownload: true,
 					   type: "",
+					   // {param li} selected element 
 					   onSelect: g_noop,
+					   // {param li} deselected element 
 					   onDeselect: g_noop,
 					   showDimensions: false,
 					   showExtension: true,

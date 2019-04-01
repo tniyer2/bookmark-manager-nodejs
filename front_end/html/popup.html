@@ -36,28 +36,33 @@
           </linearGradient>
         </defs>
       </svg>
-      <div id="save-menu" class="save-menu save-menu--theme">
-        <div class="save-menu__title save-menu__title--theme">
-          <input id="title" type="text" placeholder="enter title...">
+      <div id="root" class="root">
+        <div class="sizer1"></div>
+        <div id="save-menu" class="save-menu save-menu--theme noshow">
+          <div class="save-menu__title save-menu__title--theme">
+            <input id="title" type="text" placeholder="enter title...">
+          </div>
+          <div id="tag-container" class="save-menu__tag-container save-menu__tag-container--theme"></div>
+          <div class="save-menu__button-area">
+            <svg id="save-btn" class="save-menu__save-btn save-menu__save-btn--anim noshow">
+                <use href="#icon-save"></use>
+            </svg>
+            <svg id="bookmark-btn" class="save-menu__bookmark-btn save-menu__bookmark-btn--anim noshow">
+                <use href="#icon-bookmark"></use>
+            </svg>
+          </div>
         </div>
-        <div id="tag-container" class="save-menu__tag-container save-menu__tag-container--theme"></div>
-        <div class="save-menu__button-area">
-          <svg id="save-btn" class="save-menu__save-btn save-menu__save-btn--anim">
-              <use href="#icon-save"></use>
-          </svg>
-          <svg id="bookmark-btn" class="save-menu__bookmark-btn save-menu__bookmark-btn--anim">
-              <use href="#icon-bookmark"></use>
-          </svg>
-        </div>
-        <div id="source-menu" class="source-menu">
-          <ul class="source-menu__list">
-          </ul>
+        <div class="sizer2"></div>
+        <div id="source-menu" class="source-menu noshow">
+        <ul class="source-menu__list">
+        </ul>
         </div>
       </div>
       <script src="../js/taggle.js"></script>
       <script src="../js/utility.js"></script>
       <script src="../js/awesomeFocus.js"></script>
       <script src="../js/sourceList.js"></script>
+      <script src="../js/autoComplete.js"></script>
       <script src="../js/popup.js"></script>
     </body>
   </html>

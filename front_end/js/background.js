@@ -15,11 +15,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 		response.srcUrl = g_popupInfo.srcUrl;
 		response.docUrl = sender.tab.url;
-		response.scanInfo  = g_popupInfo.scanInfo;
 		response.mediaType = g_popupInfo.mediaType;
 		response.tabId = sender.tab.id;
 
-		sendResponse(response);
+		chrome.tabs.sendMessage(sender.tab.id, {to: "scanner.js", scan: true}, (scanInfo) => {
+
+			if (chrome.runtime.lastError) 
+			{
+				console.warn(chrome.runtime.lastError.message);
+				return;
+			}
+
+			response.scanInfo = scanInfo;
+			sendResponse(response);
+		});
+
+		return true;
 	}
 	else if (msg.request === "get-status")
 	{
@@ -216,21 +227,11 @@ chrome.contextMenus.removeAll(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 	g_popupInfo = { srcUrl: info.srcUrl,
-					  mediaType: info.mediaType };
+					mediaType: info.mediaType };
 
-	chrome.tabs.sendMessage(tab.id, {to: "scanner.js", scan: true}, (scanInfo) => {
-
-		if (chrome.runtime.lastError) 
-		{
-			console.warn(chrome.runtime.lastError.message);
-			return;
-		}
-
-		g_popupInfo.scanInfo = scanInfo;
-		sendMessageToScript(tab.id, { to: "content.js", 
-									  script: "js/content.js", 
-									  open: true });
-	});
+	sendMessageToScript(tab.id, { to: "content.js", 
+								  script: "js/content.js", 
+								  open: true });
 });
 
 // Sends message to a script. Injects script if necessary.
