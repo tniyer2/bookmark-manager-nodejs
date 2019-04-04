@@ -147,16 +147,18 @@
 	function search(meta, q)
 	{
 		ratios = {};
-		for (let elm of meta)
+		for (let m of meta)
 		{
-			ratios[elm.id] = ratio(q, elm.title);
+			ratios[m.id] = ratio(q, m.title);
 		}
 
-		meta.sort((first, second) =>
-			ratios[second.id] - ratios[first.id]
-		);
+		meta.sort((first, second) => {
+			return ratios[second.id] - ratios[first.id];
+		});
 
-		meta = meta.filter(obj => ratios[obj.id] > SEARCH_TOLERANCE);
+		meta = meta.filter((obj) => {
+			return ratios[obj.id] > SEARCH_TOLERANCE;
+		});
 
 		return meta;
 	}
@@ -218,6 +220,19 @@
 	{
 		// console.log("title: " + x);
 		// console.log("query: " + y);
+
+		if (!isString(x) || !isString(y))
+		{
+			throw new Error(`invalid params. x: ${x}, y: ${y}`);
+		}
+		else if (!x && y || x && !y)
+		{
+			return 0;
+		}
+		else if (x === y)
+		{
+			return 100;
+		}
 
 		let split = s => s.split(/\s/).filter(i => i);
 		let xterms = split(x);

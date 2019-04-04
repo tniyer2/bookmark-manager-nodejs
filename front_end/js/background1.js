@@ -5,24 +5,28 @@
 	const APP_ID_PREFIX = "app_";
 
 	const g_connector = new AppConnector(DESKTOP_APPLICATION_NAME);
-	const g_dataManager = new DataManager();
-	let g_popupInfo;
+	let g_recentPopupInfo;
+	let g_allPopupInfo = {};
 
 	// Listens to messages.
 	chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		(async () => {
-			if (msg.request === "get-popupInfo")
+			if (msg.request === "get-popup-info")
 			{
-				let response = {};
+				let info = {};
 
-				response.srcUrl = g_popupInfo.srcUrl;
-				response.docUrl = sender.tab.url;
-				response.mediaType = g_popupInfo.mediaType;
-				response.tabId = sender.tab.id;
+				info.srcUrl = g_recentPopupInfo.srcUrl;
+				info.docUrl = sender.tab.url;
+				info.mediaType = g_recentPopupInfo.mediaType;
+				info.tabId = sender.tab.id;
 
-				response.scanInfo = await wrap(requestScanInfo, sender.tab.id);
-				response.tags = await wrap(getTags, sender);
-				sendResponse(response);
+				info.scanInfo = await wrap(requestScanInfo, sender.tab.id);
+				info.tags = await wrap(getTags, sender);
+
+				info.popupId = makeTag(sender.tab.id, "get-popup-info");
+				g_allPopupInfo[info.popupId] = info;
+
+				sendResponse(info);
 			}
 			else if (msg.request === "get-meta")
 			{
@@ -31,11 +35,22 @@
 			}
 			else if (msg.request === "add-meta")
 			{
+				let info = g_allPopupInfo[msg.popupId];
+
+				msg.meta.docUrl = info.docUrl;
+				if (msg.meta.srcUrl === "srcUrl")
+				{
+					msg.meta.srcUrl = info.srcUrl;
+				}
+				else if (msg.meta.srcUrl === "docUrl")
+				{
+					msg.meta.srcUrl = info.docUrl;
+				}
 				addContent(msg.meta, msg.cache, sender, sendResponse);
 			}
 			else if (msg.request === "find-meta")
 			{
-				findContent(msg.id, "get", sender, sendResponse);
+				findContent(msg.id, "find", sender, sendResponse);
 			}
 			else if (msg.request === "delete-meta")
 			{
@@ -72,8 +87,8 @@
 	// Activates popup when context menu item "Save" is clicked.
 	chrome.contextMenus.onClicked.addListener((info, tab) => {
 
-		g_popupInfo = { srcUrl: info.srcUrl,
-						mediaType: info.mediaType };
+		g_recentPopupInfo = { srcUrl: info.srcUrl,
+							  mediaType: info.mediaType };
 
 		sendMessageToScript(tab.id, { to: "content.js", 
 									  script: "js/content.js", 
@@ -121,8 +136,8 @@
 			});
 		}
 
-		bindWrap(g_dataManager.do, g_dataManager, "get", query)
-		.then(addResult, addResult);
+		let op = await DataManager.Operator;
+		op.getContent(query, addResult, addResult);
 	}
 
 	async function addContent(content, cache, sender, successCallback, errorCallback)
@@ -149,18 +164,18 @@
 		}
 		else
 		{
-			bindWrap(g_dataManager.do, g_dataManager, "add", content)
-			.then(successCallback, successCallback);
+			let op = await DataManager.Operator;
+			op.addContent(content, successCallback, successCallback);
 		}
 	}
 
-	// mode can be 'get' or 'delete'
+	// mode can be 'get' or 'delete'.
 	async function findContent(contentId, mode, sender, successCallback, errorCallback)
 	{
-		let requestType = mode === "get" 	? "find":
-						  mode === "delete" ? "delete":
-						  null;
-		if (!requestType)
+		let modeIsFind   = mode === "find";
+		let modeIsDelete = mode === "delete";
+
+		if (!modeIsFind && !modeIsDelete)
 		{
 			console.warn("mode should not be:", mode);
 			errorCallback(null);
@@ -175,8 +190,8 @@
 
 			if (port)
 			{
-				let myTag = makeTag(sender.tab.id, requestType);
-				let request = { type: requestType,
+				let myTag = makeTag(sender.tab.id, mode);
+				let request = { type: mode,
 								tag: myTag,
 								id: contentId };
 
@@ -190,20 +205,30 @@
 			}
 			else
 			{
-				console.warn(`Cannot connect to app. Connection required for ${mode} mode`);
+				console.warn(`Cannot connect to app. Connection required 
+							  for '${mode}' mode.`);
 				successCallback({nmError: true});
 			}
 		}
 		else
 		{
-			bindWrap(g_dataManager.do, g_dataManager, requestType, contentId)
-			.then(successCallback, successCallback);
+			let op = await DataManager.Operator;
+			if (modeIsFind)
+			{
+				op.findContent(contentId, successCallback, successCallback);
+			}
+			else if (modeIsDelete)
+			{
+				op.deleteContent(contentId, successCallback, successCallback);
+			}
+			else {/*should already be handled*/}
 		}
 	}
 
 	async function getTags(sender, successCallback, errorCallback)
 	{
-		let localTags = await bindWrap(g_dataManager.do, g_dataManager, "tags");
+		let op = await DataManager.Operator;
+		let localTags = op.tags;
 
 		let port = await wrap(g_connector.connect
 						 .bind(g_connector))
@@ -267,7 +292,7 @@
 		});
 	}
 
-	// Returns true if id is prefixed with APP_ID_PREFIX
+	// Returns true if id is prefixed with APP_ID_PREFIX.
 	function fromApp(contentId)
 	{
 		let sub = contentId.substring(0, 4);

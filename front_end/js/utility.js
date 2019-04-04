@@ -3,7 +3,13 @@
 
 	this.noop = function(){};
 
-	this.isUdf = function(arg){return typeof arg === "undefined";};
+	this.isUdf = function(arg) {
+		return typeof arg === "undefined";
+	};
+
+	this.isString = function(x) {
+  		return Object.prototype.toString.call(x) === "[object String]";
+	};
 
 	// Wraps a function in a Promise
 	this.wrap = function(f, ...args) {
@@ -31,7 +37,7 @@
 			bound.push(f.bind(self));
 		});
 		return bound;
-	}
+	};
 
 	// Combines the keys of multiple objects into one object.
 	// @param the objects.
@@ -49,7 +55,7 @@
         }
 
         return master;
-    }
+    };
 
     // @param element the element to append the <link> to.
     // @param chromeUrl the url of the css in the chrome extension.
@@ -60,7 +66,7 @@
 		link.type = "text/css";
 		link.href = chrome.runtime.getURL(chromeUrl);
 		element.appendChild(link);
-	}
+	};
 
 	// Applies css classes to an element.
 	// @param classes can be an array of strings or a string.
@@ -76,7 +82,7 @@
 				element.classList.add(classes[i]);
 			}
 		}
-	}
+	};
 
 	// Parses a filepath from a url.
 	// @return the filepath or [filename, ext] if split is true.

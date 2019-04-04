@@ -54,23 +54,23 @@ html
 }
 
 /*css relating to the svg buttons*/
-.save-menu__save-btn.anim
+.save-menu__save-svg.anim
 {
   fill: url('#gradient-save_start');
   transform: rotate(0deg);
   transition: transform 0.3s ease-in-out;
 }
-.save-menu__save-btn.anim:hover
+.save-menu__save-svg.anim:hover
 {
   fill: url('#gradient-save_end');
   transform: rotate(90deg);
   transition: transform 0.3s ease-in-out;
 }
-.save-menu__bookmark-btn.anim
+.save-menu__bookmark-svg.anim
 {
   fill: #101214;
 }
-.save-menu__bookmark-btn.anim:hover
+.save-menu__bookmark-svg.anim:hover
 {
   fill: url('#gradient-bookmark_end');
 }

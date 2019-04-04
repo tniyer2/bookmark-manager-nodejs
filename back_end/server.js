@@ -49,7 +49,8 @@ class NativeMessagingServer
 		    	let request;
 		    	try
 		    	{
-		    		request = JSON.parse(buff.toString("utf8", 4));
+		    		let s = buff.toString("utf8", 4);
+		    		request = JSON.parse(s);
 		    	}
 		    	catch (e)
 		    	{

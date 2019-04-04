@@ -119,63 +119,29 @@
 		const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES - 1000;
 		const TAGS_KEY = "tags";
 
-		return class {
-			constructor()
+		let INNER_INSTANCE; 
+
+		this.Inner = class {
+			constructor(meta)
 			{
 				this._tagTracker = new TagCounter();
+
+				meta.forEach((content) => {
+					content[TAGS_KEY].forEach((tag) => {
+						this._tagTracker.increment(tag);
+					});
+				});
+				this._meta = meta;
 			}
 
-			_getTags(successCallback, errorCallback)
+			get tags()
 			{
-				successCallback(this._tagTracker.tags);
+				return this._tagTracker.tags;
 			}
 
-			async do()
-			{
-				console.log("arguments:", arguments);
-				let len = arguments.length; 
-				if (len < 3)
-				{
-					throw new Error("There should be at least 3 arguments.");
-				}
-
-				let type = arguments[0];
-				let successCallback = arguments[len-2];
-				let errorCallback = arguments[len-1];
-
-				let subArgs = [];
-				for (let i = 1; i < len-2; i+=1)
-				{
-					subArgs.push(arguments[i]);
-				}
-
-				let f = bindAll(this, this._getContent, this._addContent, 
-									  this._deleteContent, this._findContent, 
-									  this._getTags);
-				let m = type === "get"    ? f[0]:
-						type === "add"    ? f[1]:
-						type === "delete" ? f[2]:
-						type === "find"   ? f[3]:
-						type === "tags"   ? f[4]:
-						null;
-				if (!m)
-				{
-					throw new Error(`type is not valid: '${type}'`); 
-				}
-				else
-				{
-					if (isUdf(this._meta))
-					{
-						this._meta = await bindWrap(this._load, this).catch(errorCallback);
-						if (isUdf(this._meta)) return;
-					}
-					m(...subArgs, successCallback, errorCallback);
-				}
-			}
-
-			// success: {queried content}
-			// error: badQuery
-			async _getContent(q, successCallback, errorCallback)
+			// success: {meta}
+			// error: {badQuery}
+			async getContent(q, successCallback, errorCallback)
 			{
 				let result;
 				try
@@ -193,53 +159,68 @@
 			}
 
 			// success: {success}
-			async _addContent(content, successCallback, errorCallback)
+			// error: from save
+			async addContent(content, successCallback, errorCallback)
 			{
 				content.id = getRandomString();
 				this._meta.push(content);
 
-				let success = await bindWrap(this._save, this).catch(errorCallback);
-				if (success)
-				{
-					let tags = content[TAGS_KEY];
-					tags.forEach((tag) => {
-						this._tagTracker.increment(tag);
-					});
-					successCallback({success: true});
-				}
+				let success = await wrap(save, this._meta).catch(errorCallback);
+				if (isUdf(success)) return;
+
+				let tags = content[TAGS_KEY];
+				tags.forEach((tag) => {
+					this._tagTracker.increment(tag);
+				});
+
+				successCallback({success: true});
 			}
 
 			// success: {success}
-			async _deleteContent(contentId, successCallback, errorCallback)
+			// error: from _searchId, from save
+			async deleteContent(contentId, successCallback, errorCallback)
 			{
-				let i = this._searchId(contentId);
+				let i;
+				try {
+					i = this._searchId(contentId);
+				} catch(e) {
+					errorCallback(e);
+					return;
+				}
 				let content = this._meta[i];
 
 				this._meta.splice(i, 1);
 
-				let success = await bindWrap(this._save, this).catch(errorCallback);
-				if (success)
-				{
-					let tags = content[TAGS_KEY];
-					tags.forEach((tag) => {
-						this._tagTracker.decrement(tag);
-					});
+				let success = await wrap(save, this._meta).catch(errorCallback);
+				if (isUdf(success)) return;
 
-					successCallback({success: true});
-				}
+				let tags = content[TAGS_KEY];
+				tags.forEach((tag) => {
+					this._tagTracker.decrement(tag);
+				});
+
+				successCallback({success: true});
 			}
 
 			// success: {content}
-			async _findContent(contentId, successCallback, errorCallback)
+			// error: from _searchId
+			async findContent(contentId, successCallback, errorCallback)
 			{
-				let i = this._searchId(contentId);
+				let i;
+				try {
+					i = this._searchId(contentId);
+				} catch(e) {
+					errorCallback(e);
+					return;
+				}
+
 				let content = this._meta[i];
 
 				successCallback({content: content});
 			}
 
 			// success: index of content with contentId
-			// error: null, {badQuery}
+			// error: {error}, {badQuery}
 			_searchId(contentId)
 			{
 				let index = getId(this._meta, contentId);
@@ -247,99 +228,117 @@
 				if (Number.isNaN(index))
 				{
 					console.warn("index is not of type Number:", index);
-					throw new Error(null);
+					throw {error: true};
 				}
 				else if (index === -1)
 				{
 					let e = `Could not find content with id: '${contentId}'`;
 					console.warn(e);
-					throw new Error({badQuery: true});
+					throw {badQuery: true};
 				}
 				else if (index < 0 || index >= this._meta.length)
 				{
 					console.warn(`index is out of range. 
 								  this._meta.length: ${this._meta.length}, 
 								  index: ${index}`);
-					throw new Error(null);
+					throw {error: true};
 				}
 				else
 				{
 					return index;
 				}
 			}
+		};
 
-			// success: meta
-			// error: {error}
-			async _load(successCallback, errorCallback)
+		this.Outer = function(){};
+		Object.defineProperty(this.Outer, "Operator", { get: () => {
+			return new Promise((resolve, reject) => {
+				if (INNER_INSTANCE)
+				{
+					resolve(INNER_INSTANCE);
+				}
+				else
+				{
+					(async () => {
+						let meta = await wrap(load).catch(reject);
+						if (isUdf(meta)) return;
+
+						INNER_INSTANCE = new Inner(meta);
+						resolve(INNER_INSTANCE);
+					})();
+				}
+			});
+		}});
+
+		return this.Outer;
+
+		// success: meta
+		// error: {error}
+		async function load(successCallback, errorCallback)
+		{
+			let data = await getKeyWrapper("meta").catch(errorCallback);
+			if (isUdf(data)) return;
+
+			let serialized = data.meta;
+			if (!serialized)
 			{
-				let data = await getKeyWrapper("meta").catch(errorCallback);
-				if (isUdf(data)) return;
-				let serialized = data.meta;
-				if (!serialized)
-				{
-					successCallback([]);
-					return;
-				}
-
-				let meta = [];
-				let parts = serialized.split("\n").filter(i => i);
-				for (let i = 0, l = parts.length; i < l; i+=1)
-				{
-					let s = parts[i];
-					try
-					{
-						let obj = JSON.parse(s);
-						meta.push(obj);
-					}
-					catch (e)
-					{
-						console.warn(e);
-						errorCallback({error: true});
-						return;
-					}
-				}
-
-				meta.forEach((content) => {
-					content[TAGS_KEY].forEach((tag) => {
-						this._tagTracker.increment(tag);
-					});
-				});
-
-				successCallback(meta);
+				successCallback([]);
+				return;
 			}
 
-			// success: true
-			// error: {error}, {memoryError}
-			async _save(successCallback, errorCallback)
+			let meta = [];
+			let list = serialized.split("\n").filter(o => o);
+			for (let i = 0, l = list.length; i < l; i+=1)
 			{
-				let serialized = "";
-				for (let content of this._meta)
+				let s = list[i];
+				try
 				{
-					serialized += JSON.stringify(content) + "\n";
+					let content = JSON.parse(s);
+					meta.push(content);
 				}
-
-				if (serialized.length > LOCAL_QUOTA)
+				catch (e)
 				{
-					errorCallback({memoryError: true});
+					console.warn(e);
+					errorCallback({error: true});
 					return;
 				}
-
-				chrome.storage.local.set({meta: serialized}, (response) => {
-					if (chrome.runtime.lastError)
-					{
-						console.warn(chrome.runtime.lastError.message);
-						errorCallback({error: true});
-					}
-					else
-					{
-						successCallback(true);
-					}
-				});
 			}
+
+			successCallback(meta);
 		}
 
-		// success: data retrieved from storage
-		// error: error
+		// success: true
+		// error: {error}, {memoryError}
+		async function save(meta, successCallback, errorCallback)
+		{
+			let serialized = "";
+			for (let i = 0, l = meta.length; i < l; i+=1)
+			{
+				let content = meta[i];
+				serialized += JSON.stringify(content) + "\n";
+			}
+
+			if (serialized.length > LOCAL_QUOTA)
+			{
+				errorCallback({memoryError: true});
+				return;
+			}
+
+			chrome.storage.local.set({meta: serialized}, (response) => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+					errorCallback({error: true});
+				}
+				else
+				{
+					successCallback(true);
+				}
+			});
+		}
+
+		// success: object with keys
+		// error: {error}
 		function getKeyWrapper(keys)
 		{
 			return new Promise((resolve, reject) => {

@@ -39,18 +39,24 @@
       <div id="root" class="root">
         <div class="sizer1"></div>
         <div id="save-menu" class="save-menu theme noshow">
+          <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
           <div class="save-menu__title-box theme">
-            <input id="title" class="save-menu__title theme" type="text" placeholder="enter title...">
+            <input tabindex="0" id="title" class="save-menu__title theme" type="text" placeholder="enter title...">
           </div>
           <div id="tag-container" class="save-menu__tag-container theme"></div>
           <div class="save-menu__button-area">
-            <svg id="save-btn" class="save-menu__save-btn anim noshow">
-                <use href="#icon-save"></use>
-            </svg>
-            <svg id="bookmark-btn" class="save-menu__bookmark-btn anim noshow">
-                <use href="#icon-bookmark"></use>
-            </svg>
+            <btn id="save-btn" class="noshow">
+              <svg class="save-menu__save-svg anim">
+                  <use href="#icon-save"></use>
+              </svg>
+            </btn>
+            <btn id="bookmark-btn" class="noshow">
+              <svg class="save-menu__bookmark-svg anim">
+                  <use href="#icon-bookmark"></use>
+              </svg>
+            </btn>
           </div>
+          <div tabindex="0" id="focus-guard-end" class="focus-guard"></div>
         </div>
         <div class="sizer2"></div>
         <div id="source-menu" class="source-menu noshow">

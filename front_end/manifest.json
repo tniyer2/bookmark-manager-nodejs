@@ -10,13 +10,12 @@
 		"128": "icons/icon128.png"
 	},
 
-	"permissions": [ "tabs", 
-					 "storage", 
-					 "contextMenus", 
-					 "activeTab", 
-					 "nativeMessaging",
+	"permissions": [ "nativeMessaging",
 					 "downloads",
-					 "http://localhost/" ],
+					 "contextMenus",
+					 "tabs",
+					 "activeTab", 
+					 "storage" ],
 	"background": 
 	{
 		"scripts": [ "js/utility.js",

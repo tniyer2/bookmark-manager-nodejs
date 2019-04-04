@@ -92,7 +92,7 @@ let Widgets = {};
 			{
 				return this._selected;
 			}
-			// obj should have property li and property data
+			// obj should be {li, data}
 			set selected(obj)
 			{
 				if (this._selected)
@@ -215,7 +215,7 @@ let Widgets = {};
 				let elm = document.createElement("img");
 				elm.src = url;
 
-				elm.addEventListener("load", () => {
+				elm.addEventListener("loadedmetadata", () => {
 					callback(elm.naturalWidth, elm.naturalHeight);
 					this._el_test.removeChild(elm);
 				});
@@ -346,7 +346,6 @@ let Widgets = {};
 
 			set selected(elm)
 			{
-				console.log("element selected");
 				if (this._el_selected)
 				{
 					this._el_selected.classList.remove(cl_activeLi);
@@ -359,7 +358,6 @@ let Widgets = {};
 
 				if (elm)
 				{
-					console.log("active added to selected");
 					elm.classList.add(cl_activeLi);
 				}
 				this._el_selected = elm;

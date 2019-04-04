@@ -33,6 +33,14 @@ body
   display: inline-block;
   width: 50px;
 }
+.focus-guard
+{
+  display: block;
+  margin: 0;
+  padding: 0;
+  width: 0px;
+  height: 0px;
+}
 
 /*the menu for saving content*/
 .save-menu
@@ -106,14 +114,14 @@ body
   flex-direction: row;
   justify-content: space-around;
 }
-.save-menu__save-btn
+.save-menu__save-svg
 {
   display: inline-block;
   width: 80px;
   height: 80px;
   cursor: pointer;
 }
-.save-menu__bookmark-btn
+.save-menu__bookmark-svg
 {
   display: inline-block;
   width: 80px;

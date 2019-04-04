@@ -19,12 +19,12 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	const TAG_CHARCTER_LIMIT = 30;
 	const COMMA_CODE = 188;
 	const g_taggleOptions = { placeholder: "enter tags...",
-							  tabIndex: 1, 
+							  tabIndex: 0, 
 							  submitKeys: [COMMA_CODE] };
 	const g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
 
 	let g_meta, 
-		g_docUrl, 
+		g_popupId, 
 		g_tabId;
 
 	attachMaskEvents();
@@ -36,7 +36,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		if (isUdf(response)) return;
 
 		g_tabId = response.tabId;
-		g_docUrl = response.docUrl;
+		g_popupId = response.popupId;
 
 		enableElement(el_bookmarkBtn);
 		enableElement(el_saveMenu);
@@ -51,10 +51,12 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 					 tags: g_taggle.getTags().values,
 					 category: category,
 					 date: new Date().getMinutes(),
-					 srcUrl: srcUrl,
-					 docUrl: g_docUrl };
+					 srcUrl: srcUrl };
 
-		let msg = {request: "add-meta", meta: meta, cache: cache};
+		let msg = { request: "add-meta", 
+					meta: meta, 
+					cache: cache, 
+					popupId: g_popupId };
 
 		chrome.runtime.sendMessage(msg, (response) => {
 
@@ -77,7 +79,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function getPopupInfo(successCallback, errorCallback)
 	{
-		chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
+		chrome.runtime.sendMessage({request: "get-popup-info"}, (response) => {
 			if (chrome.runtime.lastError)
 			{
 				console.warn(chrome.runtime.lastError.message);
@@ -138,12 +140,13 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		if (isImage)
 		{
 			enableElement(el_saveBtn);
+			// enableElement(el_sourceMenu);
 
 			let options = { title: "source clicked on",
 							type: "image",
 							showDimensions: true,
 							data: {
-								srcUrl: srcUrl,
+								srcUrl: "srcUrl",
 								category: "image",
 								title: ""
 							}};
@@ -199,13 +202,26 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function attachButtonEvents()
 	{
-		el_saveBtn.addEventListener("click", () => {
+		let save = () => {
 			saveMeta(g_meta.srcUrl, g_meta.category, true);
-		}, {once: true});
+		};
+		let bookmark = () => {
+			saveMeta("docUrl", "web", false);
+		};
+		let ifKey = (f) => {
+			return (evt) => {
+				if (evt.key === " " || evt.key === "Enter")
+				{
+					f();
+				}
+			}
+		};
 
-		el_bookmarkBtn.addEventListener("click", () => {
-			saveMeta(g_docUrl, "web", false);
-		}, {once: true});
+		el_saveBtn.addEventListener("click", save, {once: true});
+		el_saveBtn.addEventListener("keydown", ifKey(save), {once: true});
+
+		el_bookmarkBtn.addEventListener("click", bookmark, {once: true});
+		el_saveBtn.addEventListener("keydown", ifKey(bookmark), {once: true});
 	}
 
 	function attachStyleEvents()
@@ -218,6 +234,19 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		});
 		el_title.addEventListener("blur", () => {
 			el_title.placeholder = "enter title...";
+		});
+
+		fgs = el_saveMenu.querySelector("#focus-guard-start");
+		fge = el_saveMenu.querySelector("#focus-guard-end");
+
+		fgs.addEventListener("focus", () => {
+			g_taggle.getInput().focus();
+		});
+		el_title.addEventListener("focus", () => fgs.tabIndex = 0);
+		el_title.addEventListener("blur", () => fgs.tabIndex = -1);
+
+		fge.addEventListener("focus", () => {
+			el_title.focus();
 		});
 	}
 
