@@ -5,7 +5,7 @@ const ID = getIdFromHref();
 const el_main = document.getElementById("main");
 const el_deleteBtn = el_main.querySelector("#delete-btn");
 
-chrome.runtime.sendMessage({request: "pick-meta", id: ID}, (response) => {
+chrome.runtime.sendMessage({request: "find-meta", id: ID}, (response) => {
 
 	if (chrome.runtime.lastError)
 	{

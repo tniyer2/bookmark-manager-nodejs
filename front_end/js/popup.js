@@ -4,10 +4,9 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 (function(){
 
-	let COMMA_CODE = 188;
-    let TAB_CODE = 9;
-
-	const cl_activeSource = "active";
+    const cl_hide = "noshow";
+	const cl_autoComplete = [ "save-menu__auto-complete", 
+							  "save-menu__auto-complete--theme" ];
 
 	const el_saveMenu = document.getElementById("save-menu");
 	const el_title 		  = el_saveMenu.querySelector("#title");
@@ -17,12 +16,12 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	const el_sourceMenu = document.getElementById("source-menu");
 	const el_sourceList = el_sourceMenu.querySelector("ul");
 
-	const TAG_CHAR_LIMIT = 30;
-	const stopBubble = (evt) => { evt.stopPropagation() };
+	const TAG_CHARCTER_LIMIT = 30;
+	const COMMA_CODE = 188;
 	const g_taggleOptions = { placeholder: "enter tags...",
 							  tabIndex: 1, 
 							  submitKeys: [COMMA_CODE] };
-	const g_taggle = new Taggle(el_tagContainer, g_taggleOptions);
+	const g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
 
 	let g_meta, 
 		g_docUrl, 
@@ -32,78 +31,19 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	attachButtonEvents();
 	attachStyleEvents();
 
-	initTaggleInput(g_taggle.getInput());
-	createAutoComplete();
-
 	(async () => {
-		let response = await wrap(getPopupInfo);
+		let response = await wrap(getPopupInfo).catch(noop);
+		if (isUdf(response)) return;
 
-		g_docUrl = response.docUrl;
 		g_tabId = response.tabId;
+		g_docUrl = response.docUrl;
+
 		enableElement(el_bookmarkBtn);
 		enableElement(el_saveMenu);
-
-		let sourceList = new SourceList(el_sourceList);
-		let mediaTypeIsImage = response.mediaType === "image";
-
-		if (mediaTypeIsImage)
-		{
-			enableElement(el_saveBtn);
-
-			let options = { title: "source clicked on",
-							type: "image",
-							showDimensions: true };
-			options = extendOptions(options, response.srcUrl, "image", "");
-			sourceList.addSourceElement(response.srcUrl, options);
-
-			if (response.srcUrl === response.docUrl)
-			{
-				return;
-			}
-		}
-
-		if (response.scanInfo.list && response.scanInfo.list.length)
-		{
-			enableElement(el_saveBtn);
-			enableElement(el_sourceMenu);
-
-			for (let i = 0, l = response.scanInfo.list.length; i < l; i+=1)
-			{
-				let video = response.scanInfo.list[i];
-				let options = { title: video.title,
-								type: "video", 
-								showDimensions: true };
-				options = extendOptions(options, video.url, "video", video.title);
-				sourceList.addSourceElement(video.url, options);
-			}
-		}
-		else if (response.scanInfo.single)
-		{
-			enableElement(el_saveBtn);
-
-			let video = response.scanInfo.single;
-			let options = { title: video.title,
-							showDimensions: false, 
-							download: false };
-			options = extendOptions(options, video.url, "video", video.title);
-			sourceList.addSourceElement(video.url, options);
-		}
+		createAutoComplete(response.tags);
+		createSourceList(response.srcUrl, response.docUrl, 
+						 response.scanInfo, response.mediaType === "image");
 	})();
-
-	function getPopupInfo(successCallback, errorCallback)
-	{
-		chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				errorCallback(null);
-			}
-			else
-			{
-				successCallback(response);
-			}
-		});
-	}
 
 	function saveMeta(srcUrl, category, cache)
 	{
@@ -135,14 +75,33 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		});
 	}
 
-	function closePopup()
+	function getPopupInfo(successCallback, errorCallback)
 	{
-		chrome.tabs.sendMessage(g_tabId, {to: "content.js", close: true});
+		chrome.runtime.sendMessage({request: "get-popupInfo"}, (response) => {
+			if (chrome.runtime.lastError)
+			{
+				console.warn(chrome.runtime.lastError.message);
+				errorCallback(null);
+			}
+			else
+			{
+				successCallback(response);
+			}
+		});
 	}
 
-	function initTaggleInput(input)
+	function closePopup()
 	{
-		input.maxLength = TAG_CHAR_LIMIT;
+		let message = {to: "content.js", close: true};
+		chrome.tabs.sendMessage(g_tabId, message);
+	}
+
+	function createTaggle(container, options)
+	{
+		let taggle = new Taggle(container, options);
+		let input = taggle.getInput();
+
+		input.maxLength = TAG_CHARCTER_LIMIT;
 
 		input.addEventListener("focus", () => {
 			el_tagContainer.dispatchEvent(new Event("focus"));
@@ -150,50 +109,89 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		input.addEventListener("blur", () => {
 			el_tagContainer.dispatchEvent(new Event("blur"));			
 		});
+
+		return taggle;
 	}
 
-	function createAutoComplete()
+	function createAutoComplete(tags)
 	{
-		let testValues = [ "rimiru", 
-						   "slime", 
-						   "gobiru", 
-						   "goblin", 
-						   "gobta", 
-						   "rigird" ];
 		let list = document.createElement("ul");
-		list.classList.add("save-menu__autoc-list");
-		list.classList.add("noshow");
+		addClasses(list, cl_autoComplete);
 		el_tagContainer.appendChild(list);
 
 		let input = g_taggle.getInput();
 		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
-		let confirmInput = () => { input.dispatchEvent(confirmEvent); }; 
+		let confirmInput = () => { input.dispatchEvent(confirmEvent); };
 
-		let autoc = new autoComplete(input, list, testValues, confirmInput);
+		new Widgets.AutoComplete(input, list, tags, confirmInput);
 	}
 
-	function extendOptions(options, srcUrl, category, title)
+	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
 	{
-		options.onSelect = (li) => {
-			li.classList.add(cl_activeSource);
-			setState(srcUrl, category, title);
-		};
-		options.onDeselect = (li) => {
-			li.classList.remove(cl_activeSource);
-		};
+		let setMeta = (li, data) => {
+			g_meta = { srcUrl: data.srcUrl, 
+					   category: data.category };
+			el_title.value = data.title;
+		}
+		let manager = new Widgets.ListManager(el_sourceList, {onSelect: setMeta});
 
-		return options;
-	}
+		if (isImage)
+		{
+			enableElement(el_saveBtn);
 
-	function setState(srcUrl, category, title)
-	{
-		g_meta = { srcUrl: srcUrl, 
-				   category: category };
-		el_title.value = title;
+			let options = { title: "source clicked on",
+							type: "image",
+							showDimensions: true,
+							data: {
+								srcUrl: srcUrl,
+								category: "image",
+								title: ""
+							}};
+			manager.addSource(srcUrl, options);
+
+			if (srcUrl === docUrl)
+			{
+				return;
+			}
+		}
+
+		if (scanInfo.list && scanInfo.list.length)
+		{
+			enableElement(el_saveBtn);
+			enableElement(el_sourceMenu);
+
+			scanInfo.list.forEach((video) => {
+				let options = { title: video.title,
+								type: "video", 
+								showDimensions: true,
+								data: {
+									srcUrl: video.url,
+									category: "video",
+									title: video.title
+								}};
+				manager.addSource(video.url, options);
+			});
+		}
+		else if (scanInfo.single)
+		{
+			enableElement(el_saveBtn);
+
+			let video = scanInfo.single;
+			let options = { title: video.title,
+							showDimensions: false, 
+							download: false, 
+							data: {
+								srcUrl: video.url,
+								category: "video",
+								title: video.title
+							}};
+			manager.addSource(video.url, options);
+		}
 	}
 
 	function attachMaskEvents()
 	{
+		let stopBubble = (evt) => { evt.stopPropagation(); };
 		el_saveMenu.addEventListener("click", stopBubble);
 		el_sourceMenu.addEventListener("click", stopBubble);
 		document.documentElement.addEventListener("click", closePopup);
@@ -204,6 +202,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		el_saveBtn.addEventListener("click", () => {
 			saveMeta(g_meta.srcUrl, g_meta.category, true);
 		}, {once: true});
+
 		el_bookmarkBtn.addEventListener("click", () => {
 			saveMeta(g_docUrl, "web", false);
 		}, {once: true});
@@ -211,8 +210,8 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function attachStyleEvents()
 	{
-		styleOnFocus(el_title, el_title.parentElement, "focus");
-		styleOnFocus(el_tagContainer, el_tagContainer, "focus");
+		Widgets.styleOnFocus(el_title, el_title.parentElement, "focus");
+		Widgets.styleOnFocus(el_tagContainer, el_tagContainer, "focus");
 
 		el_title.addEventListener("focus", () => {
 			el_title.placeholder = "";
@@ -224,6 +223,6 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function enableElement(elm)
 	{
-		elm.classList.remove("noshow");
+		elm.classList.remove(cl_hide);
 	}
 }).call(this);

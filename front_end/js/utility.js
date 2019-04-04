@@ -1,5 +1,10 @@
 
 (function(){
+
+	this.noop = function(){};
+
+	this.isUdf = function(arg){return typeof arg === "undefined";};
+
 	// Wraps a function in a Promise
 	this.wrap = function(f, ...args) {
 
@@ -20,7 +25,34 @@
 		});
 	};
 
-	// Appends a link element referencing a css file to an element.
+	this.bindAll = function(self, ...funcs) {
+		let bound = [];
+		funcs.forEach((f) => {
+			bound.push(f.bind(self));
+		});
+		return bound;
+	}
+
+	// Combines the keys of multiple objects into one object.
+	// @param the objects.
+	// @returns an object with the combined keys.
+	this.extend = function() {
+
+        var master = {};
+        for (var i = 0, l = arguments.length; i < l; i++) {
+            var object = arguments[i];
+            for (var key in object) {
+                if (object.hasOwnProperty(key)) {
+                    master[key] = object[key];
+                }
+            }
+        }
+
+        return master;
+    }
+
+    // @param element the element to append the <link> to.
+    // @param chromeUrl the url of the css in the chrome extension.
 	this.injectCss = function (element, chromeUrl) {
 
 		let link  = document.createElement("link");
@@ -30,12 +62,28 @@
 		element.appendChild(link);
 	}
 
-	// returns a filename from a url
-	// if split is true, returns [filename, ext]
+	// Applies css classes to an element.
+	// @param classes can be an array of strings or a string.
+	this.addClasses = function(element, classes) {
+		if (typeof classes === "string")
+		{
+			element.classList.add(classes);
+		}
+		else
+		{
+			for (let i = 0, l = classes.length; i < l; i+=1)
+			{
+				element.classList.add(classes[i]);
+			}
+		}
+	}
+
+	// Parses a filepath from a url.
+	// @return the filepath or [filename, ext] if split is true.
 	this.parseFileName = function(pathname, split) {
 
-		const full = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
-		let matches = pathname.match(full);
+		const rgx = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
+		let matches = pathname.match(rgx);
 
 		if (matches && matches.length > 0)
 		{
@@ -54,6 +102,47 @@
 		else
 		{
 			return null;
+		}
+	};
+
+	// Keeps track of how many times a tag exists.
+	this.TagCounter = class{
+		constructor()
+		{
+			this._master = {};
+		}
+
+		get tags()
+		{
+			return Object.keys(this._master);
+		}
+
+		increment(key)
+		{
+			if (!this._master.hasOwnProperty(key))
+			{
+				this._master[key] = 1;
+			}
+			else
+			{
+				this._master[key] += 1;
+			}
+		}
+
+		decrement(key)
+		{
+			if (this._master.hasOwnProperty(key))
+			{
+				let val = this._master[key];
+				if (val === 1)
+				{
+					delete this._master[key];
+				}
+				else
+				{
+					this._master[key] -= 1;
+				}
+			}
 		}
 	};
 }).call(this);

@@ -1,44 +1,83 @@
 
 const fs = require("fs");
 const console = require("console");
+const {TagCounter} = require("../front_end/js/utility.js");
+
+const TAGS_KEY = "tags";
 
 class MetaLoader
 {
 	constructor(metaPath)
 	{
-		this.metaPath = metaPath;
+		this._metaPath = metaPath;
+		this._tracker = new TagCounter();
+	}
+
+	get meta()
+	{
+		return this._meta;
+	}
+
+	get tags()
+	{
+		return this._tracker.tags;
+	}
+
+	add(content)
+	{
+		this._meta.push(content);
+		content[TAGS_KEY].forEach((tag) => {
+			this._tracker.increment(tag);
+		});
+	}
+
+	remove(index)
+	{
+		let content = this._meta[index];
+		content[TAGS_KEY].forEach((tag) => {
+			this._tracker.decrement(tag);
+		});
+		this._meta.splice(index, 1);
 	}
 
 	loadSync()
 	{
 		console.log("MetaLoader: loading meta");
-		let meta = [];
 
-		if (!fs.existsSync(this.metaPath))
+		this._meta = [];
+
+		if (!fs.existsSync(this._metaPath))
 		{
-			fs.writeFileSync(this.metaPath, "");
-			return meta;
+			fs.writeFileSync(this._metaPath, "");
+			return;
 		}
 
-		let s = fs.readFileSync(this.metaPath, {encoding: "utf8"});
-		if (!s) return meta;
-
-		let full = JSON.parse(s);
-		for (let obj of full.list)
+		let serializedData = fs.readFileSync(this._metaPath, {encoding: "utf8"});
+		if (!serializedData)
 		{
-			meta.push(obj);
+			return;
 		}
 
-		return meta;
+		let data = JSON.parse(serializedData);
+		for (let content of data.meta)
+		{
+			this._meta.push(content);
+		}
+
+		this._meta.forEach((content) => {
+			content[TAGS_KEY].forEach((tag) => {
+				this._tracker.increment(tag);
+			});
+		});
 	}
 
-	saveSync(meta)
+	saveSync()
 	{
 		console.log("MetaLoader: saving meta");
 
-		let full = {list: meta};
-		let s = JSON.stringify(full);
-		fs.writeFileSync(this.metaPath, s);
+		let data = {meta: this._meta};
+		let serializedData = JSON.stringify(data);
+		fs.writeFileSync(this._metaPath, serializedData);
 	}
 }
 

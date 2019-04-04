@@ -1,4 +1,11 @@
 
+/*utilities*/
+.noshow
+{
+  display: none !important;
+}
+
+/*top-level elements*/
 html
 {
   width: 100%;
@@ -7,10 +14,6 @@ html
 body
 {
   margin: 0;
-}
-.noshow
-{
-  display: none !important;
 }
 .root
 {
@@ -31,6 +34,7 @@ body
   width: 50px;
 }
 
+/*the menu for saving content*/
 .save-menu
 {
   display: inline-flex;
@@ -44,63 +48,58 @@ body
   border-radius: 17px;
   user-select: none;
 }
-.save-menu__form
-{
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-.save-menu__title
+
+/*css relating to the title*/
+.save-menu__title-box
 {
   margin-top: 10px;
   border-radius: 3px;
   padding: 3px;
 }
-.save-menu__title input
+.save-menu__title
 {
   font-size: 14px;
   width: 100%;
   border: none;
   background: inherit;
 }
-.save-menu__title input:focus
+.save-menu__title:focus
 {
   outline: none;
 }
+
+/*css relating to the tags*/
 .save-menu__tag-container
 {
   position: relative;
+
   min-height: auto;
-  padding: 0px;
   margin-top: auto;
   margin-bottom: auto;
+  padding: 0px;
 
   border-radius: 3px;
   cursor: text;
 }
-.save-menu__autoc-list
+.save-menu__auto-complete
 {
   position: absolute;
   top: 100%;
   left: 0px;
-  z-index: 2;
+  z-index: 1;
 
   width: 100%;
   margin: 0;
   padding: 0;
 
-  border: 1px solid black;
   list-style-type: none;
 }
-.save-menu__autoc-li
-{
-  background: white;
-  border: 1px solid grey;
-}
-.save-menu__autoc-li.active
-{
-  background: red;
-}
+.save-menu__auto-complete-li
+{}
+.save-menu__auto-complete-li.active
+{}
+
+/*css relating to the svg buttons*/
 .save-menu__button-area
 {
   display: flex;
@@ -122,7 +121,7 @@ body
   cursor: pointer;
 }
 
-
+/*the menu on which alternative sources(video) are listed*/
 .source-menu
 {
   display: inline-block;
@@ -169,10 +168,6 @@ body
 
 }
 .source-menu__download
-{
-
-}
-.source-menu__cache
 {
 
 }

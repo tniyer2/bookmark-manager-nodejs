@@ -16,12 +16,12 @@ const APP_ID_PREFIX	= "app_";
 
 class NativeMessagingServer
 {
-	constructor(metaLoader, portPath)
+	constructor(loader, portPath)
 	{
-		this.metaLoader = metaLoader;
-		this.meta = metaLoader.loadSync();
+		loader.loadSync();
+		this._loader = loader;
 
-		this.portPath = portPath;
+		this._portPath = portPath;
 	}
 
 	run()
@@ -45,8 +45,8 @@ class NativeMessagingServer
 
 		    stream.on("data", (buff) => {
 		    	console.log("NM Server: on data");
-		    	let request;
 
+		    	let request;
 		    	try
 		    	{
 		    		request = JSON.parse(buff.toString("utf8", 4));
@@ -57,11 +57,12 @@ class NativeMessagingServer
 		    		return;
 		    	}
 
-		    	let handle = request.type === "get"    ?  (r, cb) => this.get(r, cb):
-					    	 request.type === "add"    ?  (r, cb) => this.add(r, cb):
-					    	 request.type === "update" ?  (r, cb) => this.update(r, cb):
-					    	 request.type === "pick"   ?  (r, cb) => this.pick(r, cb):
-					    	 request.type === "delete" ?  (r, cb) => this.remove(r, cb):
+		    	let handle = request.type === "get"    ?  (r, cb) => this._get(r, cb):
+					    	 request.type === "add"    ?  (r, cb) => this._add(r, cb):
+					    	 request.type === "update" ?  (r, cb) => this._update(r, cb):
+					    	 request.type === "find"   ?  (r, cb) => this._pick(r, cb):
+					    	 request.type === "delete" ?  (r, cb) => this._remove(r, cb):
+					    	 request.type === "tags"   ?  (r, cb) => this._getTags(r, cb):
 					    	 (r, cb) => this.handleInvalid(r, cb);
 
 				let syncResponse = handle(request, writeObject);
@@ -78,7 +79,7 @@ class NativeMessagingServer
 		    let lbuf = Buffer.alloc(4);
 			lbuf.writeInt32LE(port, 0);
 
-		    fs.writeFileSync(this.portPath, lbuf);
+		    fs.writeFileSync(this._portPath, lbuf);
 		});
 
 		tcpServer.on("error", (err) => {
@@ -94,23 +95,23 @@ class NativeMessagingServer
 		});
 	}
 
-	get(request, callback)
+	_get(request, callback)
 	{
 		console.log("NM Server: client requested meta");
 		console.log("\t", "query:", request.query);
 
-		let result = searcher.query(this.meta, request.query);
+		let result = searcher.query(this._loader.meta, request.query);
 		console.log("\t", "meta has been sent");
 
 		return {tag: request.tag, meta: result};
 	}
 
-	add(request, callback)
+	_add(request, callback)
 	{
-		console.log("NM Server: adding content to meta:", "'" + request.content.title + "'");
+		console.log(`NM Server: adding content to meta: '${request.content.title}'`);
 
 		let content = request.content;
-		content.id  = APP_ID_PREFIX + searcher.getRandomString();
+		content.id = APP_ID_PREFIX + searcher.getRandomString();
 
 		if (request.download === true)
 		{
@@ -124,52 +125,50 @@ class NativeMessagingServer
 				await wrap(d.download.bind(d));
 
 				content.path = d.getPath();
-				this.metaLoader.saveSync(this.meta);
+				this._loader.saveSync();
 			})();
 		}
 
-		this.meta.push(content);
+		this._loader.add(content);
 		console.log("\t", "content has been added");
 
-		this.metaLoader.saveSync(this.meta);
+		this._loader.saveSync();
 
 		return {tag: request.tag, success: true};
 	}
 
-	update(request, callback)
+	_update(request, callback)
 	{
 		throw new Error("handling update requests is not implemented.");
 	}
 
-	pick(request, callback)
+	_pick(request, callback)
 	{
 		console.log("NM Server: retrieving", request.id);
 
-		let index = searcher.getId(this.meta, request.id);
-
+		let index = searcher.getId(this._loader.meta, request.id);
 		if (index === -1)
 		{
-			console.warn("\t", "Could not find element with id:", "'" + request.id + "'");
+			console.warn("\t", `Could not find element with id: ${request.id}`);
 			return {tag: request.tag, badQuery: true};
 		}
 
-		let content = this.meta[index];
+		let content = this._loader.meta[index];
 		return {tag: request.tag, content: content};
 	}
 
-	remove(request, callback)
+	_remove(request, callback)
 	{
 		console.log("NM Server: removing", request.id);
 
-		let index = searcher.getId(this.meta, request.id);
-
+		let index = searcher.getId(this._loader.meta, request.id);
 		if (index === -1)
 		{
-			console.warn("\t", "Could not find element with id:", "'" + request.id + "'");
+			console.warn("\t", `Could not find element with id: '${request.id}'`);
 			return {tag: request.tag, badQuery: true};
 		}
 
-		let filePath = this.meta[index].path;
+		let filePath = this._loader.meta[index].path;
 		if (filePath)
 		{
 			fs.unlink(filePath, (err) => {
@@ -177,14 +176,19 @@ class NativeMessagingServer
 			});
 		}
 
-		this.meta.splice(index, 1);
+		this._loader.remove(index);
 		console.log("\t", "removed", request.id);
 
-		this.metaLoader.saveSync(this.meta);
+		this._loader.saveSync();
 		return {tag: request.tag, success: true};
 	}
 
-	handleInvalid(request, callback)
+	_getTags(request, callback)
+	{
+		return {tag: request.tag, tags: this._loader.tags};
+	}
+
+	_handleInvalid(request, callback)
 	{
 		let e = "NM Server: client sent invalid request type:" +
 				"'" + request.type + "'";

@@ -19,11 +19,10 @@
 					 "http://localhost/" ],
 	"background": 
 	{
-		"scripts": [ "js/utility.js", 
+		"scripts": [ "js/utility.js",
 					 "js/query.js", 
-					 "js/storage.js", 
-					 "js/connector.js", 
-					 "js/background.js" ],
+					 "js/background2.js", 
+					 "js/background1.js" ],
 		"persistent": false
 	},
 	"content_scripts": [{
