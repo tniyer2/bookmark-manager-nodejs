@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 });
 
-function openPopup() 
+function openPopup()
 {
 	el_iframe.src = chrome.runtime.getURL("html/popup.html");
 	el_iframe.addEventListener("load", () => {

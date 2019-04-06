@@ -6,13 +6,14 @@ const path    = require("path");
 const buffer  = require("buffer");
 const console = require("console");
 
-const getDownloader = require("./downloader.js");
+const getDownloader = require("./downloader");
 
-const searcher = require("../front_end/js/query.js");
-const {wrap} = require("../front_end/js/utility.js");
+const {Searcher} = require("../front_end/js/query");
+const {wrap, getRandomString, searchId} = require("../front_end/js/utility");
 
 const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
+const ID_LENGTH = 40;
 
 class NativeMessagingServer
 {
@@ -50,6 +51,7 @@ class NativeMessagingServer
 		    	try
 		    	{
 		    		let s = buff.toString("utf8", 4);
+		    		// console.log("unparsed data:", s);
 		    		request = JSON.parse(s);
 		    	}
 		    	catch (e)
@@ -61,8 +63,8 @@ class NativeMessagingServer
 		    	let handle = request.type === "get"    ?  (r, cb) => this._get(r, cb):
 					    	 request.type === "add"    ?  (r, cb) => this._add(r, cb):
 					    	 request.type === "update" ?  (r, cb) => this._update(r, cb):
-					    	 request.type === "find"   ?  (r, cb) => this._pick(r, cb):
-					    	 request.type === "delete" ?  (r, cb) => this._remove(r, cb):
+					    	 request.type === "find"   ?  (r, cb) => this._find(r, cb):
+					    	 request.type === "delete" ?  (r, cb) => this._delete(r, cb):
 					    	 request.type === "tags"   ?  (r, cb) => this._getTags(r, cb):
 					    	 (r, cb) => this.handleInvalid(r, cb);
 
@@ -99,12 +101,9 @@ class NativeMessagingServer
 	_get(request, callback)
 	{
 		console.log("NM Server: client requested meta");
-		console.log("\t", "query:", request.query);
-
-		let result = searcher.query(this._loader.meta, request.query);
 		console.log("\t", "meta has been sent");
 
-		return {tag: request.tag, meta: result};
+		return {tag: request.tag, meta: this._loader.meta};
 	}
 
 	_add(request, callback)
@@ -112,7 +111,7 @@ class NativeMessagingServer
 		console.log(`NM Server: adding content to meta: '${request.content.title}'`);
 
 		let content = request.content;
-		content.id = APP_ID_PREFIX + searcher.getRandomString();
+		content.id = APP_ID_PREFIX + getRandomString(ID_LENGTH);
 
 		if (request.download === true)
 		{
@@ -143,14 +142,15 @@ class NativeMessagingServer
 		throw new Error("handling update requests is not implemented.");
 	}
 
-	_pick(request, callback)
+	_find(request, callback)
 	{
 		console.log("NM Server: retrieving", request.id);
 
-		let index = searcher.getId(this._loader.meta, request.id);
-		if (index === -1)
-		{
-			console.warn("\t", `Could not find element with id: ${request.id}`);
+		let index;
+		try {
+			index = searchId(this._loader.meta, request.id);
+		} catch (e)  {
+			console.warn("\t", e);
 			return {tag: request.tag, badQuery: true};
 		}
 
@@ -158,14 +158,15 @@ class NativeMessagingServer
 		return {tag: request.tag, content: content};
 	}
 
-	_remove(request, callback)
+	_delete(request, callback)
 	{
 		console.log("NM Server: removing", request.id);
 
-		let index = searcher.getId(this._loader.meta, request.id);
-		if (index === -1)
-		{
-			console.warn("\t", `Could not find element with id: '${request.id}'`);
+		let index;
+		try {
+			index = searchId(this._loader.meta, request.id);
+		} catch (e)  {
+			console.warn("\t", e);
 			return {tag: request.tag, badQuery: true};
 		}
 

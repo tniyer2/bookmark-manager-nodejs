@@ -54,8 +54,8 @@
 
 	function scan(root)
 	{
-		let urls = concat( findAllOf(root, ".mp4"), 
-						   findAllOf(root, ".flv"), 
+		let urls = concat( findAllOf(root, ".mp4"),
+						   findAllOf(root, ".flv"),
 						   findAllOf(root, ".mov"),
 						   findByLinkElm(root),
 						   findByVideoElm(root) );
@@ -159,25 +159,22 @@
 			addUrl(url, title, root.outerHTML.indexOf(link.outerHTML));
 
 			let elms = link.querySelectorAll("source");
-			for (let i = 0; i < elms.length; i+=1)
-			{
-				let elm = elms[i];
-
+			elms.forEach((elm) => {
 				let src = isValid(elm.src);
 				if (src)
-				{ 
+				{
 					addUrl(src, title, root.outerHTML.indexOf(elm.outerHTML));
 				}
-			}
+			});
 		}
 
 		function addUrl(url, title, start)
 		{
 			if (url)
 			{
-				sources.push({ url: url, 
-							   title: title, 
-							   start: start, 
+				sources.push({ url: url,
+							   title: title,
+							   start: start,
 							   priority: VIDEO_PRIORITY });
 			}
 		}
@@ -236,7 +233,7 @@
 	    while (true)
 	    {
 	        let i = html.indexOf(ext, start);
-	        if (i < 0)
+	        if (i === -1)
 	        {
 	        	break;
 	        }
@@ -246,7 +243,7 @@
 	        let sq = html.indexOf("\'", i);
 	        let character = null;
 	        let c_end;
-	        if (dq > i && sq > i) 
+	        if (dq > i && sq > i)
 	        {
 	            if (dq > sq)
 	            {
@@ -256,7 +253,7 @@
 	            else
 	            {
 	                character = "\"";
-	                c_end = dq
+	                c_end = dq;
 	            }
 	        }
 	        else if (dq > i)
@@ -264,7 +261,7 @@
 	            character = "\"";
 	            c_end = dq;
 	        }
-	        else if (sq > i) 
+	        else if (sq > i)
 	        {
 	            character = "\'";
 	            c_end = sq;
@@ -294,9 +291,9 @@
 
 	    function add(s, c_start)
 	    {
-	    	sources.push({ url: s, 
-	    				   title: document.title, 
-	    				   start: c_start, 
+	    	sources.push({ url: s,
+	    				   title: document.title,
+	    				   start: c_start,
 	    				   priority: SEARCH_PRIORITY });
 	    }
 
@@ -349,13 +346,13 @@
 		{
 			return false;
 		}
-		if (	url.indexOf("http://") === -1 
+		if (	url.indexOf("http://") === -1
 			&& url.indexOf("https://") === -1)
 		{
 			return false;
 		}
-	    if (   url.indexOf(".mp4") === -1 
-	    	&& url.indexOf(".flv") === -1 
+	    if (   url.indexOf(".mp4") === -1
+	    	&& url.indexOf(".flv") === -1
 	    	&& url.indexOf(".mov") === -1)
 	    {
 	        return false;

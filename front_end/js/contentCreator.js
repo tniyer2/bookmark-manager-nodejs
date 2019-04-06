@@ -2,7 +2,7 @@
 (function(){
 
 	this.createContent = function(meta) {
-		
+
 		let contentBlock = document.createElement("div");
 		contentBlock.classList.add("content-block");
 
@@ -46,7 +46,7 @@
 		}
 		else
 		{
-			console.log("invalid category:", meta.category)
+			console.log("invalid category:", meta.category);
 			return;
 		}
 
@@ -54,5 +54,5 @@
 		contentBlock.appendChild(title);
 
 		return contentBlock;
-	}
+	};
 }).call(this);

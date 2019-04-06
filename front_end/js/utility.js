@@ -1,14 +1,33 @@
 
 (function(){
 
-	this.noop = function(){};
+	this.noop = function(){}; // eslint-disable-line no-empty-function
 
 	this.isUdf = function(arg) {
 		return typeof arg === "undefined";
 	};
 
-	this.isString = function(x) {
-  		return Object.prototype.toString.call(x) === "[object String]";
+	this.makeTag = function() {
+		let tag = "";
+		for (let i = 0, l = arguments.length; i < l; i+=1)
+		{
+			tag += arguments[i];
+		}
+		tag += new Date().getTime();
+		return tag;
+	};
+
+	const alphaNumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	this.getRandomString = function(len) {
+		let s = "";
+		let anLen = alphaNumeric.length;
+		for (let i = 0; i < len; i+=1)
+		{
+			let rand = Math.floor(Math.random() * anLen);
+			s += alphaNumeric.charAt(rand);
+		}
+
+		return s;
 	};
 
 	// Wraps a function in a Promise
@@ -21,9 +40,9 @@
 	};
 
 	// Binds a function to an object and then wraps in a Promise
-	this.bindWrap = function(f, self, ...args) {
+	this.bindWrap = function(f, me, ...args) {
 
-		f = f.bind(self);
+		f = f.bind(me);
 
 		return new Promise((resolve, reject) => {
 			f(...args, response => resolve(response),
@@ -31,10 +50,10 @@
 		});
 	};
 
-	this.bindAll = function(self, ...funcs) {
+	this.bindAll = function(me, ...funcs) {
 		let bound = [];
 		funcs.forEach((f) => {
-			bound.push(f.bind(self));
+			bound.push(f.bind(me));
 		});
 		return bound;
 	};
@@ -45,7 +64,7 @@
 	this.extend = function() {
 
         var master = {};
-        for (var i = 0, l = arguments.length; i < l; i++) {
+        for (var i = 0, l = arguments.length; i < l; i+=1) {
             var object = arguments[i];
             for (var key in object) {
                 if (object.hasOwnProperty(key)) {
@@ -108,6 +127,24 @@
 		else
 		{
 			return null;
+		}
+	};
+
+	// @return index of content with contentId
+	// @throws {error}, {badQuery}
+	this.searchId = function(meta, contentId) {
+		let index = meta.findIndex((m) => {
+			return m.id === contentId;
+		})
+
+		if (index === -1)
+		{
+			let e = `Could not find content with id: '${contentId}'`;
+			throw new Error(e);
+		}
+		else
+		{
+			return index;
 		}
 	};
 

@@ -5,7 +5,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 (function(){
 
     const cl_hide = "noshow";
-	const cl_autoComplete = [ "save-menu__auto-complete", 
+	const cl_autoComplete = [ "save-menu__auto-complete",
 							  "save-menu__auto-complete--theme" ];
 
 	const el_saveMenu = document.getElementById("save-menu");
@@ -19,12 +19,12 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	const TAG_CHARCTER_LIMIT = 30;
 	const COMMA_CODE = 188;
 	const g_taggleOptions = { placeholder: "enter tags...",
-							  tabIndex: 0, 
+							  tabIndex: 0,
 							  submitKeys: [COMMA_CODE] };
 	const g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
 
-	let g_meta, 
-		g_popupId, 
+	let g_meta,
+		g_popupId,
 		g_tabId;
 
 	attachMaskEvents();
@@ -41,7 +41,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		enableElement(el_bookmarkBtn);
 		enableElement(el_saveMenu);
 		createAutoComplete(response.tags);
-		createSourceList(response.srcUrl, response.docUrl, 
+		createSourceList(response.srcUrl, response.docUrl,
 						 response.scanInfo, response.mediaType === "image");
 	})();
 
@@ -50,12 +50,12 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		let meta = { title: el_title.value,
 					 tags: g_taggle.getTags().values,
 					 category: category,
-					 date: new Date().getMinutes(),
+					 date: Date.now(),
 					 srcUrl: srcUrl };
 
-		let msg = { request: "add-meta", 
-					meta: meta, 
-					cache: cache, 
+		let msg = { request: "add-meta",
+					meta: meta,
+					cache: cache,
 					popupId: g_popupId };
 
 		chrome.runtime.sendMessage(msg, (response) => {
@@ -73,6 +73,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 			else
 			{
 				console.warn("Could not handle response:", response);
+				closePopup();
 			}
 		});
 	}
@@ -109,7 +110,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 			el_tagContainer.dispatchEvent(new Event("focus"));
 		});
 		input.addEventListener("blur", () => {
-			el_tagContainer.dispatchEvent(new Event("blur"));			
+			el_tagContainer.dispatchEvent(new Event("blur"));
 		});
 
 		return taggle;
@@ -131,10 +132,10 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
 	{
 		let setMeta = (li, data) => {
-			g_meta = { srcUrl: data.srcUrl, 
+			g_meta = { srcUrl: data.srcUrl,
 					   category: data.category };
 			el_title.value = data.title;
-		}
+		};
 		let manager = new Widgets.ListManager(el_sourceList, {onSelect: setMeta});
 
 		if (isImage)
@@ -165,7 +166,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 			scanInfo.list.forEach((video) => {
 				let options = { title: video.title,
-								type: "video", 
+								type: "video",
 								showDimensions: true,
 								data: {
 									srcUrl: video.url,
@@ -181,8 +182,8 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 			let video = scanInfo.single;
 			let options = { title: video.title,
-							showDimensions: false, 
-							download: false, 
+							showDimensions: false,
+							download: false,
 							data: {
 								srcUrl: video.url,
 								category: "video",
@@ -214,7 +215,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 				{
 					f();
 				}
-			}
+			};
 		};
 
 		el_saveBtn.addEventListener("click", save, {once: true});
@@ -242,12 +243,11 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		fgs.addEventListener("focus", () => {
 			g_taggle.getInput().focus();
 		});
-		el_title.addEventListener("focus", () => fgs.tabIndex = 0);
-		el_title.addEventListener("blur", () => fgs.tabIndex = -1);
-
 		fge.addEventListener("focus", () => {
 			el_title.focus();
 		});
+		el_title.addEventListener("focus", () => {fgs.tabIndex = 0;});
+		el_title.addEventListener("blur", () => {fgs.tabIndex = -1;});
 	}
 
 	function enableElement(elm)

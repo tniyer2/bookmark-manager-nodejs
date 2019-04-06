@@ -36,7 +36,7 @@ let Widgets = {};
 			this._target.removeEventListener("mouseenter", this._onfocus);
 			this._target.removeEventListener("mouseleave", this._onblur);
 		}
-	}
+	};
 
 	this.styleOnFocus = function(target, elm, cl) {
 		new self.AwesomeFocus(target, () => {
@@ -50,7 +50,7 @@ let Widgets = {};
 				elm.classList.remove(cl);
 			}
 		});
-	}
+	};
 
 	this.ListManager = (function(){
 		const SVGNS   = "http://www.w3.org/2000/svg";
@@ -64,9 +64,9 @@ let Widgets = {};
 		const cl_downloadBtn = "source-menu__download";
 		const cl_svg  = ["source-menu__svg", "theme"];
 
-		const CLASS_DEFAULTS = { selectFirst: true, 
+		const CLASS_DEFAULTS = { selectFirst: true,
 								 // @param li selected element
-								 // @param data data associated with the element  
+								 // @param data data associated with the element
 								 onSelect: noop,
 								 // same signature
 								 onDeselect: noop };
@@ -75,7 +75,7 @@ let Widgets = {};
 								  type: "",
 								  showDimensions: false,
 								  showExtension: true,
-								  title: "source", 
+								  title: "source",
 								  data: null };
 
 		return class {
@@ -132,7 +132,7 @@ let Widgets = {};
 				if (sourceOptions.showDimensions === true)
 				{
 					(async () => {
-						let tag = await bindWrap(this._createDimensionsTag, this, 
+						let tag = await bindWrap(this._createDimensionsTag, this,
 												 srcUrl, sourceOptions.type);
 						el_tagList.appendChild(tag);
 					})();
@@ -174,7 +174,7 @@ let Widgets = {};
 
 				if (ext)
 				{
-					let elm = this._createTag(ext) 
+					let elm = this._createTag(ext);
 					return elm;
 				}
 				else
@@ -311,7 +311,7 @@ let Widgets = {};
 			{
 				chrome.downloads.download({url: url});
 			}
-		}
+		};
 	}).call(this);
 
 	this.AutoComplete = (function(){
@@ -320,7 +320,7 @@ let Widgets = {};
 		const cl_li = [ "save-menu__auto-complete-li", "theme" ];
 		const cl_activeLi = "active";
 
-		const g_evaluate = (b, s) => { return shortestMatch(b, s, false); };
+		const g_evaluate = (b, s) => { return shortestMatch(b, s, true); };
 
 		return class {
 			constructor(input, list, values, onConfirm)
@@ -396,8 +396,7 @@ let Widgets = {};
 						}
 					}
 					else
-					{
-						if (this.selected.previousSibling)
+					if (this.selected.previousSibling)
 						{
 							this.selected = this.selected.previousSibling;
 						}
@@ -405,7 +404,6 @@ let Widgets = {};
 						{
 							this.selected = null;
 						}
-					}
 				}
 				else
 				{
@@ -417,7 +415,7 @@ let Widgets = {};
 			{
 				if (value)
 				{
-					this._el_input.value = value;	
+					this._el_input.value = value;
 				}
 
 				this._onConfirm();
@@ -566,7 +564,7 @@ let Widgets = {};
 				this._hide();
 				this._clearList();
 			}
-		}
+		};
 
 		function timesFound(bigString, smallString)
 		{

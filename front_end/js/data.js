@@ -2,12 +2,12 @@
 (function(){
 
 	this.AppConnector = (function(){
-		const APP_TIMEOUT = 1000;
 
 		return class {
-			constructor(appName)
+			constructor(appName, timeout)
 			{
 				this._appName = appName;
+				this._timeout = timeout;
 			}
 
 			async connect(successCallback)
@@ -60,7 +60,7 @@
 				let timeoutId = setTimeout(() => {
 					port.onDisconnect.removeListener(l);
 					successCallback(port);
-				}, APP_TIMEOUT);
+				}, this._timeout);
 
 				let port = chrome.runtime.connectNative(this._appName);
 				port.onDisconnect.addListener(l);
@@ -92,7 +92,7 @@
 				function l(response, port)
 				{
 					if (response.tag !== "status")
-					{ 
+					{
 						return;
 					}
 
@@ -112,14 +112,15 @@
 					}
 				}
 			}
-		}
+		};
 	}).call(this);
 
-	this.DataManager = (function(){
+	const DataManager = (function(){
 		const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES - 1000;
 		const TAGS_KEY = "tags";
+		const ID_LENGTH = 40;
 
-		let INNER_INSTANCE; 
+		let INNER_INSTANCE;
 
 		this.Inner = class {
 			constructor(meta)
@@ -139,30 +140,16 @@
 				return this._tagTracker.tags;
 			}
 
-			// success: {meta}
-			// error: {badQuery}
-			async getContent(q, successCallback, errorCallback)
+			get meta()
 			{
-				let result;
-				try
-				{
-					result = query(this._meta.slice(), q);
-				}
-				catch (e)
-				{
-					console.warn(e);
-					errorCallback({badQuery: true});
-					return;
-				}
-
-				successCallback({meta: result});
+				return this._meta;
 			}
 
 			// success: {success}
-			// error: from save
+			// error: errors from save
 			async addContent(content, successCallback, errorCallback)
 			{
-				content.id = getRandomString();
+				content.id = getRandomString(ID_LENGTH);
 				this._meta.push(content);
 
 				let success = await wrap(save, this._meta).catch(errorCallback);
@@ -177,17 +164,22 @@
 			}
 
 			// success: {success}
-			// error: from _searchId, from save
+			// error: {error}, errors from searchId, errors from save
 			async deleteContent(contentId, successCallback, errorCallback)
 			{
 				let i;
 				try {
-					i = this._searchId(contentId);
+					i = searchId(this._meta, contentId);
 				} catch(e) {
 					errorCallback(e);
 					return;
 				}
 				let content = this._meta[i];
+				if (!content)
+				{
+					errorCallback({error: true});
+					return;
+				}
 
 				this._meta.splice(i, 1);
 
@@ -203,55 +195,35 @@
 			}
 
 			// success: {content}
-			// error: from _searchId
+			// error: {error}, errors from searchId
 			async findContent(contentId, successCallback, errorCallback)
 			{
 				let i;
 				try {
-					i = this._searchId(contentId);
+					i = searchId(this._meta, contentId);
 				} catch(e) {
+					console.warn(e);
 					errorCallback(e);
 					return;
 				}
 
 				let content = this._meta[i];
-
-				successCallback({content: content});
-			}
-
-			// success: index of content with contentId
-			// error: {error}, {badQuery}
-			_searchId(contentId)
-			{
-				let index = getId(this._meta, contentId);
-
-				if (Number.isNaN(index))
+				console.log("i:", i);
+				console.log("meta:", this._meta);
+				console.log("content:", content);
+				if (content)
 				{
-					console.warn("index is not of type Number:", index);
-					throw {error: true};
-				}
-				else if (index === -1)
-				{
-					let e = `Could not find content with id: '${contentId}'`;
-					console.warn(e);
-					throw {badQuery: true};
-				}
-				else if (index < 0 || index >= this._meta.length)
-				{
-					console.warn(`index is out of range. 
-								  this._meta.length: ${this._meta.length}, 
-								  index: ${index}`);
-					throw {error: true};
+					successCallback({content: content});
 				}
 				else
 				{
-					return index;
+					errorCallback({error: true});
 				}
 			}
 		};
 
-		this.Outer = function(){};
-		Object.defineProperty(this.Outer, "Operator", { get: () => {
+		this.Outer = {};
+		Object.defineProperty(this.Outer, "instance", { get: () => {
 			return new Promise((resolve, reject) => {
 				if (INNER_INSTANCE)
 				{
@@ -354,6 +326,195 @@
 					}
 				});
 			});
+		}
+	}).call(this);
+
+	this.RequestManager = (function(){
+		const APP_ID_PREFIX = "app_";
+
+		return class {
+			constructor(connector)
+			{
+				this._connector = connector;
+			}
+
+			async getContent(sender, successCallback, errorCallback)
+			{
+				let port;
+				let final = {};
+				let blockAddResult = false;
+
+				function addResult(v, a)
+				{
+					if (!v)
+					{
+						blockAddResult = true;
+						console.log("result should not be " + v);
+						errorCallback(null);
+						return;
+					}
+					if (blockAddResult)
+					{
+						return;
+					}
+
+					let s = a ? "app" : "local";
+					final[s] = v;
+					if ((!port && final.local) ||
+						(port && final.local && final.app))
+					{
+						successCallback(final);
+					}
+				}
+
+				port = await wrap(this._connector.connect
+							 .bind(this._connector))
+							 .catch(e => console.warn(e));
+
+				if (port)
+				{
+					let myTag = makeTag(sender.tab.id, "get");
+					let request = { type: "get",
+									tag: myTag };
+
+					port.postMessage(request);
+					port.onMessage.addListener((response) => {
+						if (response.tag === myTag)
+						{
+							addResult(response, true);
+						}
+					});
+				}
+
+				let dm = await DataManager.instance;
+				addResult({meta: dm.meta});
+			}
+
+			async addContent(content, cache, sender, successCallback, errorCallback)
+			{
+				let port = await wrap(this._connector.connect
+						 		 .bind(this._connector))
+						 		 .catch(e => console.warn(e));
+
+				if (port)
+				{
+					let myTag = makeTag(sender.tab.id, "add");
+					let appMessage = { type: "add",
+									   tag: myTag,
+									   content: content,
+									   download: cache };
+
+					console.log("content:", content);
+					port.postMessage(appMessage);
+					port.onMessage.addListener((response) => {
+						if (response.tag === myTag)
+						{
+							successCallback(response);
+						}
+					});
+				}
+				else
+				{
+					let dm = await DataManager.instance;
+					dm.addContent(content, successCallback, successCallback);
+				}
+			}
+
+			// mode can be 'get' or 'delete'.
+			async findContent(contentId, mode, sender, successCallback, errorCallback)
+			{
+				let modeIsFind   = mode === "find";
+				let modeIsDelete = mode === "delete";
+
+				if (!modeIsFind && !modeIsDelete)
+				{
+					console.warn("mode should not be:", mode);
+					errorCallback(null);
+					return;
+				}
+
+				if (fromApp(contentId))
+				{
+					let port = await wrap(this._connector.connect
+									 .bind(this._connector))
+									 .catch(e => console.warn(e));
+
+					if (port)
+					{
+						let myTag = makeTag(sender.tab.id, mode);
+						let request = { type: mode,
+										tag: myTag,
+										id: contentId };
+
+						port.postMessage(request);
+						port.onMessage.addListener((response) => {
+							if (response.tag === myTag)
+							{
+								successCallback(response);
+							}
+						});
+					}
+					else
+					{
+						console.warn(`Cannot connect to app. Connection required 
+									  for '${mode}' mode.`);
+						successCallback({nmError: true});
+					}
+				}
+				else
+				{
+					let dm = await DataManager.instance;
+					if (modeIsFind)
+					{
+						dm.findContent(contentId, successCallback, successCallback);
+					}
+					else if (modeIsDelete)
+					{
+						dm.deleteContent(contentId, successCallback, successCallback);
+					}
+					else {/*should already be handled*/}
+				}
+			}
+
+			async getTags(sender, successCallback, errorCallback)
+			{
+				let dm = await DataManager.instance;
+				let localTags = dm.tags;
+
+				let port = await wrap(this._connector.connect
+								 .bind(this._connector))
+								 .catch(e => console.warn(e));
+				if (port)
+				{
+					let myTag = makeTag(sender.tab.id, "tags");
+					let request = { type: "tags",
+									tag: myTag };
+
+					port.postMessage(request);
+					port.onMessage.addListener((response) => {
+						if (response.tag === myTag)
+						{
+							let obj = {};
+							let f = (tag) => {obj[tag] = true;};
+							localTags.forEach(f);
+							response.tags.forEach(f);
+							let tags = Object.keys(obj);
+							successCallback(tags);
+						}
+					});
+				}
+				else
+				{
+					successCallback(localTags);
+				}
+			}
+		};
+
+		// Returns true if id is prefixed with APP_ID_PREFIX.
+		function fromApp(contentId)
+		{
+			let sub = contentId.substring(0, 4);
+			return sub === APP_ID_PREFIX;
 		}
 	}).call(this);
 

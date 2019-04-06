@@ -19,9 +19,8 @@
 	"background": 
 	{
 		"scripts": [ "js/utility.js",
-					 "js/query.js", 
-					 "js/background2.js", 
-					 "js/background1.js" ],
+					 "js/data.js", 
+					 "js/background.js" ],
 		"persistent": false
 	},
 	"content_scripts": [{

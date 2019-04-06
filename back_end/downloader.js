@@ -6,7 +6,7 @@ const https = require("https");
 const parseDataUri = require("parse-data-uri");
 const fileType = require("file-type");
 
-const {wrap, parseFileName} = require("../front_end/js/utility.js");
+const {wrap, parseFileName, noop} = require("../front_end/js/utility.js");
 
 function getDownloader(srcUrl, filePath)
 {
@@ -45,7 +45,9 @@ class HttpDownloader
 	{
 		if (!this.ext)
 		{
-			this.ext = await wrap(this._getRemoteExtension.bind(this));
+			this.ext = await wrap(this._getRemoteExtension.bind(this)).catch(() => {
+				this.ext = "";
+			});
 		}
 
 		let wStream = fs.createWriteStream(this.filePath + this.ext);
@@ -59,8 +61,8 @@ class HttpDownloader
 				wStream.close(() => successCallback(true));
 			});
 		}).on("error", (err) => {
-			fs.unlink(this.filePath);
-			errorCallback(err);
+			fs.unlink(this.filePath, noop);
+			errorCallback({downloadError: err});
 		});
 	}
 
@@ -82,12 +84,20 @@ class HttpDownloader
 				const buf = rStream.read(fileType.minimumBytes);
 				rStream.destroy();
 
+				if (buf === null)
+				{
+					console.warn("Could not get file type from remote.");
+					errorCallback(null);
+					return;
+				}
+
 				let ft  = fileType(buf);
 				let ext = "." + ft.ext;
 				successCallback(ext);
 			});
 		}).on("error", (err) => {
-			errorCallback(err);
+			console.warn(err);
+			errorCallback(null);
 		});
 	}
 

@@ -2,14 +2,15 @@
 (function(){
 
 	const CONTENT_LINK  = "singleView.html";
+	const DEFAULT_QUERY = "dsc=date";
 
 	let el_feed = document.getElementById("feed");
 	let el_searchBox = document.getElementById("search");
 
-	getMeta();
+	getMeta(DEFAULT_QUERY);
 	function getMeta(q)
 	{
-		chrome.runtime.sendMessage({request: "get-meta", query: q}, (response) => {
+		chrome.runtime.sendMessage({request: "get-meta"}, (response) => {
 
 			if (chrome.runtime.lastError)
 			{
@@ -17,36 +18,42 @@
 				return;
 			}
 
-			if (response.local || response.app)
+			if (response.local && response.app)
 			{
-				if (response.local)
-				{
-					populateFeed(response.local.meta);
-				}
-
-				if (response.app)
-				{
-					populateFeed(response.app.meta);
-				}
+				let m = response.local.meta;
+				m = m.concat(response.app.meta);
+				_populate(m);
+			}
+			else if (response.local)
+			{
+				_populate(response.local.meta);
+			}
+			else if (response.app)
+			{
+				_populate(response.app.meta);
 			}
 			else
 			{
 				console.warn("Could not handle response:", response);
 			}
+
+			function _populate(meta)
+			{
+				meta = Searcher.query(meta, q);
+				populate(meta);
+			}
 		});
 	}
 
-	el_searchBox.addEventListener("keypress", (e) => {
-		if (!e) e = window.event;
-		let keyCode = e.keyCode || e.which;
-		if (keyCode == '13')
+	el_searchBox.addEventListener("keydown", (evt) => {
+		if (evt.key === "Enter" && el_searchBox.value)
 		{
 			clearFeed();
 			getMeta(el_searchBox.value);
 		}
 	});
 
-	function populateFeed(metaList)
+	function populate(metaList)
 	{
 		if (!metaList)
 		{
