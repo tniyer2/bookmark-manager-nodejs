@@ -2,7 +2,7 @@
 (function(){
 
 	const CONTENT_LINK  = "singleView.html";
-	const DEFAULT_QUERY = "dsc=date";
+	const DEFAULT_QUERY = {dsc: "date"};
 
 	let el_feed = document.getElementById("feed");
 	let el_searchBox = document.getElementById("search");
@@ -49,7 +49,8 @@
 		if (evt.key === "Enter" && el_searchBox.value)
 		{
 			clearFeed();
-			getMeta(el_searchBox.value);
+			let map = Searcher.parse(el_searchBox.value);
+			getMeta(map);
 		}
 	});
 

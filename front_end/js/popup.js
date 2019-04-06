@@ -4,6 +4,9 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 (function(){
 
+	// caching stops after this limit
+	const VIDEO_DURATION_LIMIT = 120;
+
     const cl_hide = "noshow";
 	const cl_autoComplete = [ "save-menu__auto-complete",
 							  "save-menu__auto-complete--theme" ];
@@ -25,7 +28,8 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	let g_meta,
 		g_popupId,
-		g_tabId;
+		g_tabId,
+		g_cache;
 
 	attachMaskEvents();
 	attachButtonEvents();
@@ -67,6 +71,10 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 			}
 
 			if (response.success)
+			{
+				closePopup();
+			}
+			else if (response.memoryError)
 			{
 				closePopup();
 			}
@@ -136,8 +144,9 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 					   category: data.category };
 			el_title.value = data.title;
 		};
-		let manager = new Widgets.ListManager(el_sourceList, {onSelect: setMeta});
-
+		let manager = new Widgets.ListManager(el_sourceList, 
+											  { selectFirst: false,
+												onSelect: setMeta });
 		if (isImage)
 		{
 			enableElement(el_saveBtn);
@@ -152,6 +161,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 								title: ""
 							}};
 			manager.addSource(srcUrl, options);
+			setMeta(null, options.data);
 
 			if (srcUrl === docUrl)
 			{
@@ -181,15 +191,9 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 			enableElement(el_saveBtn);
 
 			let video = scanInfo.single;
-			let options = { title: video.title,
-							showDimensions: false,
-							download: false,
-							data: {
-								srcUrl: video.url,
-								category: "video",
-								title: video.title
-							}};
-			manager.addSource(video.url, options);
+			setMeta(null, { srcUrl: video.url,
+							category: "video",
+							title: video.title });
 		}
 	}
 
@@ -203,26 +207,26 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function attachButtonEvents()
 	{
+		let attachSave = () => {
+			el_saveBtn.addEventListener("click", save, {once: true});
+		};
+
 		let save = () => {
-			saveMeta(g_meta.srcUrl, g_meta.category, true);
+			if (g_meta)
+			{
+				saveMeta(g_meta.srcUrl, g_meta.category, g_cache);
+			}
+			else
+			{
+				attachSave();
+			}
 		};
 		let bookmark = () => {
 			saveMeta("docUrl", "web", false);
 		};
-		let ifKey = (f) => {
-			return (evt) => {
-				if (evt.key === " " || evt.key === "Enter")
-				{
-					f();
-				}
-			};
-		};
 
-		el_saveBtn.addEventListener("click", save, {once: true});
-		el_saveBtn.addEventListener("keydown", ifKey(save), {once: true});
-
+		attachSave();
 		el_bookmarkBtn.addEventListener("click", bookmark, {once: true});
-		el_saveBtn.addEventListener("keydown", ifKey(bookmark), {once: true});
 	}
 
 	function attachStyleEvents()

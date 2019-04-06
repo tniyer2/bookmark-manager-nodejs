@@ -151,7 +151,7 @@ class NativeMessagingServer
 			index = searchId(this._loader.meta, request.id);
 		} catch (e)  {
 			console.warn("\t", e);
-			return {tag: request.tag, badQuery: true};
+			return {tag: request.tag, content: null};
 		}
 
 		let content = this._loader.meta[index];
@@ -167,7 +167,7 @@ class NativeMessagingServer
 			index = searchId(this._loader.meta, request.id);
 		} catch (e)  {
 			console.warn("\t", e);
-			return {tag: request.tag, badQuery: true};
+			return {tag: request.tag, content: null};
 		}
 
 		let filePath = this._loader.meta[index].path;

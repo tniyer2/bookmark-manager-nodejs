@@ -32,7 +32,14 @@
 	function serveRequest(msg, sender, sendResponse)
 	{
 		let onErr = (e) => {
-			sendResponse(e);
+			if (!e)
+			{
+				sendResponse({error: true});
+			}
+			else
+			{
+				sendResponse(e);
+			}
 		};
 
 		if (msg.request === "get-popup-info")

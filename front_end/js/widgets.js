@@ -83,6 +83,7 @@ let Widgets = {};
 			{
 				this._el_list = list;
 				this._data = [];
+				this._numOfSources = 0;
 
 				this._options = extend(CLASS_DEFAULTS, options);
 				this._el_test = document.createElement("canvas");
@@ -106,8 +107,11 @@ let Widgets = {};
 				this._selected = obj;
 			}
 
-			addSource(srcUrl, sourceOptions)
+			async addSource(srcUrl, sourceOptions)
 			{
+				let order = this._numOfSources;
+				this._numOfSources += 1;
+
 				sourceOptions = extend(SOURCE_DEFAULTS, sourceOptions);
 
 				const el_source = document.createElement("li");
@@ -129,13 +133,35 @@ let Widgets = {};
 					}
 				}
 
-				if (sourceOptions.showDimensions === true)
+				let sourceMeta;
+				if (sourceOptions.type === "image")
 				{
-					(async () => {
-						let tag = await bindWrap(this._createDimensionsTag, this,
-												 srcUrl, sourceOptions.type);
+					sourceMeta = await bindWrap(this._testImageDimensions, 
+								   		  		this, srcUrl)
+												.catch(noop);
+					sourceMeta.text = sourceMeta.width + "x" + sourceMeta.height;
+				}
+				else if (sourceOptions.type === "video")
+				{
+					sourceMeta = await bindWrap(this._testVideoDimensions, 
+										  		this, srcUrl)
+												.catch(noop);
+					sourceMeta.text = sourceMeta.height + "p";
+				}
+				else 
+				{
+					console.warn("sourceOptions.type is not 'image' or 'video':", 
+								 sourceOptions.type);
+				}
+
+				if (!isUdf(sourceMeta))
+				{
+					sourceOptions.data.sourceMeta = sourceMeta;
+					if (sourceOptions.showDimensions === true)
+					{
+						let tag = this._createTag(sourceMeta.text);
 						el_tagList.appendChild(tag);
-					})();
+					}
 				}
 
 				if (sourceOptions.allowCopy === true)
@@ -151,20 +177,24 @@ let Widgets = {};
 				}
 
 				let selectedData = {li: el_source, data: sourceOptions.data};
-				if (this._options.selectFirst === true)
+				if (this._options.selectFirst === true && !this.selected)
 				{
-					if (!this.selected)
-					{
-						this.selected = selectedData;
-					}
+					this.selected = selectedData;
 				}
 
 				el_source.addEventListener("click", () => {
 					this.selected = selectedData;
 				});
 
-				this._el_list.appendChild(el_source);
-				return el_source;
+				if (order === this._el_list.childNodes.length)
+				{
+					this._el_list.appendChild(el_source);
+				}
+				else
+				{
+					let child = this._el_list.childNodes[order];
+					this._el_list.insertBefore(el_source, child);
+				}
 			}
 
 			_createExtensionTag(url)
@@ -183,60 +213,40 @@ let Widgets = {};
 				}
 			}
 
-			_createDimensionsTag(url, type, successCallback, errorCallback)
-			{
-				if (type === "image")
-				{
-					this._testImageDimensions(url, (w, h) => {
-						console.log(`image loaded (${w}, ${h}):`, url);
-
-						let tag = this._createTag(w + "x" + h);
-						successCallback(tag);
-					});
-				}
-				else if (type === "video")
-				{
-					this._testVideoDimensions(url, (w, h) => {
-						console.log(`video loaded (${w}, ${h}):`, url);
-
-						let tag = this._createTag(h + "p");
-						successCallback(tag);
-					});
-				}
-				else
-				{
-					let e = "type should not be " + type;
-					errorCallback(new Error(e));
-				}
-			}
-
-			_testImageDimensions(url, callback)
+			_testImageDimensions(url, successCallback, errorCallback)
 			{
 				let elm = document.createElement("img");
 				elm.src = url;
 
 				elm.addEventListener("loadedmetadata", () => {
-					callback(elm.naturalWidth, elm.naturalHeight);
+					let info = { width: elm.naturalWidth, 
+								 height: elm.naturalHeight };
+					successCallback(info);
 					this._el_test.removeChild(elm);
 				});
 				elm.addEventListener("error", (e) => {
 					console.warn(e);
+					errorCallback(null);
 				});
 
 				this._el_test.appendChild(elm);
 			}
 
-			_testVideoDimensions(url, callback)
+			_testVideoDimensions(url, successCallback, errorCallback)
 			{
 				let elm = document.createElement("video");
 				elm.src = url;
 
 				elm.addEventListener("loadedmetadata", () => {
-					callback(elm.videoWidth, elm.videoHeight);
+					let info = { width: elm.videoWidth, 
+								 height: elm.videoHeight,
+								 duration: elm.duration };
+					successCallback(info);
 					this._el_test.removeChild(elm);
 				});
 				elm.addEventListener("error", (e) => {
 					console.warn(e);
+					errorCallback(null);
 				});
 
 				this._el_test.appendChild(elm);

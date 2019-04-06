@@ -192,13 +192,10 @@
 
 		const STRING_KEYS = ["id", "title", "category", "srcUrl", "docUrl"];
 		const NUMBER_KEYS = ["date", "bytes"];
-		const SEND_RAW = "all";
 		const SEARCH_TOLERANCE = 70;
 
-		this.query = function(meta, q) {
-			if (q === SEND_RAW) return meta;
+		this.prototype.query = function(meta, map) {
 
-			let map = parseQuery(q);
 			let filter = genFilter(map);
 			let sortInfo = genComparator(map);
 
@@ -224,10 +221,7 @@
 
 			return meta;
 		};
-		return this;
-
-		function parseQuery(q)
-		{
+		this.prototype.parse = function(q) {
 			let map = {};
 			for (let keyPair of q.split("&"))
 			{
@@ -243,7 +237,8 @@
 			}
 
 			return map;
-		}
+		};
+		return new this();
 
 		function genFilter(map)
 		{
@@ -391,5 +386,5 @@
 
 			return f;
 		}
-	}).call({});
+	}).call(function(){});
 }).call(this);

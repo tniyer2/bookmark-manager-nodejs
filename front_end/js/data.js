@@ -116,13 +116,12 @@
 	}).call(this);
 
 	const DataManager = (function(){
-		const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES - 1000;
 		const TAGS_KEY = "tags";
 		const ID_LENGTH = 40;
 
 		let INNER_INSTANCE;
 
-		this.Inner = class {
+		const Inner = class {
 			constructor(meta)
 			{
 				this._tagTracker = new TagCounter();
@@ -153,7 +152,11 @@
 				this._meta.push(content);
 
 				let success = await wrap(save, this._meta).catch(errorCallback);
-				if (isUdf(success)) return;
+				if (isUdf(success))
+				{
+					this._meta.pop(); 
+					return;
+				}
 
 				let tags = content[TAGS_KEY];
 				tags.forEach((tag) => {
@@ -177,7 +180,7 @@
 				let content = this._meta[i];
 				if (!content)
 				{
-					errorCallback({error: true});
+					errorCallback(null);
 					return;
 				}
 
@@ -217,13 +220,12 @@
 				}
 				else
 				{
-					errorCallback({error: true});
+					errorCallback(null);
 				}
 			}
 		};
 
-		this.Outer = {};
-		Object.defineProperty(this.Outer, "instance", { get: () => {
+		Object.defineProperty(this, "instance", { get: () => {
 			return new Promise((resolve, reject) => {
 				if (INNER_INSTANCE)
 				{
@@ -241,8 +243,7 @@
 				}
 			});
 		}});
-
-		return this.Outer;
+		return this;
 
 		// success: meta
 		// error: {error}
@@ -271,7 +272,7 @@
 				catch (e)
 				{
 					console.warn(e);
-					errorCallback({error: true});
+					errorCallback(null);
 					return;
 				}
 			}
@@ -290,17 +291,11 @@
 				serialized += JSON.stringify(content) + "\n";
 			}
 
-			if (serialized.length > LOCAL_QUOTA)
-			{
-				errorCallback({memoryError: true});
-				return;
-			}
-
 			chrome.storage.local.set({meta: serialized}, (response) => {
 				if (chrome.runtime.lastError)
 				{
 					console.warn(chrome.runtime.lastError.message);
-					errorCallback({error: true});
+					errorCallback({memoryError: true});
 				}
 				else
 				{
@@ -318,7 +313,7 @@
 					if (chrome.runtime.lastError)
 					{
 						console.warn(chrome.runtime.lastError.message);
-						reject({error: true});
+						reject(null);
 					}
 					else
 					{
@@ -327,7 +322,7 @@
 				});
 			});
 		}
-	}).call(this);
+	}).call(function(){});
 
 	this.RequestManager = (function(){
 		const APP_ID_PREFIX = "app_";
@@ -386,7 +381,9 @@
 					});
 				}
 
-				let dm = await DataManager.instance;
+				let dm = await DataManager.instance.catch(errorCallback);
+				if (isUdf(dm)) return;
+
 				addResult({meta: dm.meta});
 			}
 
@@ -415,8 +412,10 @@
 				}
 				else
 				{
-					let dm = await DataManager.instance;
-					dm.addContent(content, successCallback, successCallback);
+					let dm = await DataManager.instance.catch(errorCallback);
+					if (isUdf(dm)) return;
+
+					dm.addContent(content, successCallback, errorCallback);
 				}
 			}
 
@@ -458,19 +457,21 @@
 					{
 						console.warn(`Cannot connect to app. Connection required 
 									  for '${mode}' mode.`);
-						successCallback({nmError: true});
+						errorCallback({nmError: true});
 					}
 				}
 				else
 				{
-					let dm = await DataManager.instance;
+					let dm = await DataManager.instance.catch(errorCallback);
+					if (isUdf(dm)) return;
+
 					if (modeIsFind)
 					{
-						dm.findContent(contentId, successCallback, successCallback);
+						dm.findContent(contentId, successCallback, errorCallback);
 					}
 					else if (modeIsDelete)
 					{
-						dm.deleteContent(contentId, successCallback, successCallback);
+						dm.deleteContent(contentId, successCallback, errorCallback);
 					}
 					else {/*should already be handled*/}
 				}
@@ -478,7 +479,9 @@
 
 			async getTags(sender, successCallback, errorCallback)
 			{
-				let dm = await DataManager.instance;
+				let dm = await DataManager.instance.catch(errorCallback);
+				if (isUdf(dm)) return;
+
 				let localTags = dm.tags;
 
 				let port = await wrap(this._connector.connect
@@ -498,6 +501,7 @@
 							let f = (tag) => {obj[tag] = true;};
 							localTags.forEach(f);
 							response.tags.forEach(f);
+
 							let tags = Object.keys(obj);
 							successCallback(tags);
 						}
