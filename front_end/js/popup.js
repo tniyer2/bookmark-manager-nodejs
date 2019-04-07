@@ -28,8 +28,8 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	let g_meta,
 		g_popupId,
-		g_tabId,
-		g_cache;
+		g_tabId;
+	let g_cache = false;
 
 	attachMaskEvents();
 	attachButtonEvents();
@@ -140,9 +140,27 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
 	{
 		let setMeta = (li, data) => {
+			console.log("data:", data);
+
 			g_meta = { srcUrl: data.srcUrl,
 					   category: data.category };
 			el_title.value = data.title;
+			if (data.category === "image")
+			{
+				g_cache = true;
+			}
+			else if (data.category === "video")
+			{
+				if (data.sourceMeta && 
+					data.sourceMeta.duration <= VIDEO_DURATION_LIMIT)
+				{
+					g_cache = true;
+				}
+				else
+				{
+					g_cache = false;
+				}
+			}
 		};
 		let manager = new Widgets.ListManager(el_sourceList, 
 											  { selectFirst: false,

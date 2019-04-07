@@ -9,7 +9,7 @@ const console = require("console");
 const getDownloader = require("./downloader");
 
 const {Searcher} = require("../front_end/js/query");
-const {wrap, getRandomString, searchId} = require("../front_end/js/utility");
+const {wrap, getRandomString, searchId, bindAll} = require("../front_end/js/utility");
 
 const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
@@ -30,18 +30,18 @@ class NativeMessagingServer
 		let tcpServer = net.createServer((stream) => {
 		    console.log("NM Server: on connection");
 
-	    	let writeObject = (jsonifiable) => {
-	    		if (!jsonifiable)
-	    		{
-	    			return;
-	    		}
-	    		let s = JSON.stringify(jsonifiable);
-	    		let length = s.length;
+		    let writeObject = (jsonifiable) => {
+			    if (jsonifiable)
+				{
+					let json = JSON.stringify(jsonifiable);
+					let len = json.length;
 
-				let lbuf = Buffer.alloc(4);
-				lbuf.writeInt32LE(length, 0);
-				stream.write(lbuf);
-				stream.write(s);
+					let lbuf = Buffer.alloc(4);
+					lbuf.writeInt32LE(len, 0);
+
+					stream.write(lbuf);
+					stream.write(json);
+				}
 			};
 
 		    stream.on("data", (buff) => {
@@ -60,19 +60,23 @@ class NativeMessagingServer
 		    		return;
 		    	}
 
-		    	let handle = request.type === "get"    ?  (r, cb) => this._get(r, cb):
-					    	 request.type === "add"    ?  (r, cb) => this._add(r, cb):
-					    	 request.type === "update" ?  (r, cb) => this._update(r, cb):
-					    	 request.type === "find"   ?  (r, cb) => this._find(r, cb):
-					    	 request.type === "delete" ?  (r, cb) => this._delete(r, cb):
-					    	 request.type === "tags"   ?  (r, cb) => this._getTags(r, cb):
-					    	 (r, cb) => this.handleInvalid(r, cb);
+		    	let f = bindAll( this, this._get, this._add, 
+		    					 this._update, this._find, 
+		    					 this._delete, this._getTags, 
+		    					 this._handleInvalid );
+		    	let t = request.type;
+		    	let handle = t === "get" 	? f[0]:
+		    				 t === "add" 	? f[1]:
+		    				 t === "update" ? f[2]:
+		    				 t === "find" 	? f[3]:
+		    				 t === "delete" ? f[4]:
+		    				 t === "tags" 	? f[5]:
+		    				 f[6];
 
 				let syncResponse = handle(request, writeObject);
 				writeObject(syncResponse);
 		    });
 		});
-
 		tcpServer.listen(0, "localhost", () => {
 		    console.log("NM Server: on listening");
 
@@ -84,17 +88,14 @@ class NativeMessagingServer
 
 		    fs.writeFileSync(this._portPath, lbuf);
 		});
-
 		tcpServer.on("error", (err) => {
 			console.log("NM Server:", err);
 			tcpServer.close();
 		});
-
 		tcpServer.on("close", (hadError) => {
-			if (hadError)
-				console.log("NM Server: closed with transmission error");
-			else
-				console.log("NM Server: closed");
+			let m = `NM Server: closed
+					${hadError ? " with transmission error" : ""}`;
+			console.log(m);
 		});
 	}
 
