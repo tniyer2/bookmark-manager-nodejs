@@ -34,13 +34,13 @@ class NativeMessagingServer
 			    if (jsonifiable)
 				{
 					let json = JSON.stringify(jsonifiable);
-					let len = json.length;
+					let buf = Buffer.from(json, "utf8");
 
 					let lbuf = Buffer.alloc(4);
-					lbuf.writeInt32LE(len, 0);
+					lbuf.writeInt32LE(buf.length, 0);
 
 					stream.write(lbuf);
-					stream.write(json);
+					stream.write(buf);
 				}
 			};
 
@@ -51,7 +51,6 @@ class NativeMessagingServer
 		    	try
 		    	{
 		    		let s = buff.toString("utf8", 4);
-		    		// console.log("unparsed data:", s);
 		    		request = JSON.parse(s);
 		    	}
 		    	catch (e)

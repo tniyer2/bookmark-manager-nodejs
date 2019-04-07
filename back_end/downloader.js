@@ -8,15 +8,18 @@ const fileType = require("file-type");
 
 const {wrap, parseFileName, noop} = require("../front_end/js/utility.js");
 
+// @param srcUrl a url object of the resource to be downloaded.
+// @param filePath path of the file without a file extension.
+// 				   the extension is added on after the download. 
 function getDownloader(srcUrl, filePath)
 {
 	if (srcUrl.protocol === "http:")
 	{
-		return new HttpDownloader(srcUrl, http, filePath);
+		return new HttpDownloader(http, srcUrl, filePath);
 	}
 	else if (srcUrl.protocol === "https:")
 	{
-		return new HttpDownloader(srcUrl, https, filePath);
+		return new HttpDownloader(https, srcUrl, filePath);
 	}
 	else if (srcUrl.protocol === "data:")
 	{
@@ -24,16 +27,18 @@ function getDownloader(srcUrl, filePath)
 	}
 	else
 	{
-		throw new Error(srcUrl.protocol, "is not supported. Only 'http', 'https', and 'data' are supported.");
+		let m = `${srcUrl.protocol} is not supported. 
+				Only 'http', 'https', and 'data' are supported.`
+		throw new Error(m);
 	}
 }
 
 class HttpDownloader
 {
-	constructor(srcUrl, protocol, filePath)
+	constructor(protocol, srcUrl, filePath)
 	{
-		this.srcUrl   = srcUrl;
 		this.protocol = protocol;
+		this.srcUrl   = srcUrl;
 		this.filePath = filePath;
 		this.headers  = {"User-Agent": "Mozilla/5.0"};
 

@@ -82,9 +82,13 @@ body
   position: relative;
 
   min-height: auto;
+  max-height: 120px;
   margin-top: auto;
   margin-bottom: auto;
   padding: 0px;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
 
   border-radius: 3px;
   cursor: text;
