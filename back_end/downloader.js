@@ -6,7 +6,7 @@ const https = require("https");
 const parseDataUri = require("parse-data-uri");
 const fileType = require("file-type");
 
-const {wrap, parseFileName, noop} = require("../front_end/js/utility.js");
+const {wrap, bindWrap, parseFileName, noop} = require("../front_end/js/utility.js");
 
 // @param srcUrl a url object of the resource to be downloaded.
 // @param filePath path of the file without a file extension.
@@ -37,28 +37,30 @@ class HttpDownloader
 {
 	constructor(protocol, srcUrl, filePath)
 	{
-		this.protocol = protocol;
-		this.srcUrl   = srcUrl;
-		this.filePath = filePath;
-		this.headers  = {"User-Agent": "Mozilla/5.0"};
+		this._protocol = protocol;
+		this._srcUrl   = srcUrl;
+		this._filePath = filePath;
+		this._headers  = {"User-Agent": "Mozilla/5.0"};
 
 		let arr = parseFileName(srcUrl.pathname, true);
-		this.ext = arr ? arr[1] : null;
+		this._ext = arr ? arr[1] : null;
 	}
 
+	// success: true
+	// error: null
 	async download(successCallback, errorCallback)
 	{
-		if (!this.ext)
+		if (!this._ext)
 		{
-			this.ext = await wrap(this._getRemoteExtension.bind(this)).catch(() => {
-				this.ext = "";
+			this._ext = await bindWrap(this._getRemoteExtension, this).catch(() => {
+				this._ext = "";
 			});
 		}
 
-		let wStream = fs.createWriteStream(this.filePath + this.ext);
+		let wStream = fs.createWriteStream(this._filePath + this._ext);
 
-		this.protocol.get(this.srcUrl, {headers: this.headers}, (rStream) => {
-			console.log("download: connecting to", this.srcUrl.toString());
+		this._protocol.get(this._srcUrl, {headers: this._headers}, (rStream) => {
+			console.log("download: connecting to", this._srcUrl.toString());
 
 			rStream.pipe(wStream);
 			wStream.on("finish", () => {
@@ -66,23 +68,23 @@ class HttpDownloader
 				wStream.close(() => successCallback(true));
 			});
 		}).on("error", (err) => {
-			fs.unlink(this.filePath, noop);
-			errorCallback({downloadError: err});
+			console.warn(err);
+			fs.unlink(this._filePath, noop);
+			errorCallback(null);
 		});
 	}
 
+	// success: the file extension
+	// error: null
 	_getRemoteExtension(successCallback, errorCallback)
 	{
 		let firstTime = true;
 
-		this.protocol.get(this.srcUrl, {headers: this.headers}, (rStream) => {
+		this._protocol.get(this._srcUrl, {headers: this._headers}, (rStream) => {
 			rStream.on("readable", () => {
-				if (firstTime)
-				{
+				if (firstTime) {
 					firstTime = false;
-				}
-				else
-				{
+				} else {
 					return;
 				}
 
@@ -91,12 +93,17 @@ class HttpDownloader
 
 				if (buf === null)
 				{
-					console.warn("Could not get file type from remote.");
+					console.warn("Could not get fileType.minimumBytes from remote.");
 					errorCallback(null);
 					return;
 				}
 
 				let ft  = fileType(buf);
+				if (!ft)
+				{
+					errorCallback(null);
+					return;
+				}
 				let ext = "." + ft.ext;
 				successCallback(ext);
 			});
@@ -106,9 +113,9 @@ class HttpDownloader
 		});
 	}
 
-	getPath()
+	get filePath()
 	{
-		return fs.realpathSync(this.filePath + this.ext);
+		return fs.realpathSync(this._filePath + this._ext);
 	}
 }
 
@@ -116,38 +123,40 @@ class DataURIDownloader
 {
 	constructor(srcUrl, filePath)
 	{
-		let errorMessage = "Could not parse Data URI";
-
-		this.srcUrl   = srcUrl;
-		this.filePath = filePath;
+		this._srcUrl   = srcUrl;
+		this._filePath = filePath;
 
 		let parsed = parseDataUri(srcUrl.toString());
-		this.data = parsed.data;
+		this._data = parsed.data;
 
 		let slash = parsed.mimeType.indexOf("/");
 		if (slash === -1)
 		{
-			throw new Error(errorMessage);
+			throw new Error(`Could not parse mimeType into 
+							type and subtype: ${parsed.mimeType}`);
 		}
 
 		let type = parsed.mimeType.substring(0, slash);
 		if (type !== "image" && type !== "video")
 		{
-			throw new Error(errorMessage);
+			throw new Error(`type of data uri is not 'image' or 'video': ${type}`);
 		}
 
-		let ext  = parsed.mimeType.substring(slash+1);
-		this.ext = "." + ext;
+		let ext = parsed.mimeType.substring(slash+1);
+		this._ext = "." + ext;
 	}
 
+	// success: true
+	// error: null
 	download(successCallback, errorCallback)
 	{
 		console.log("downloading data uri:");
 
-		fs.writeFile(this.filePath + this.ext, this.data, (err) => {
+		fs.writeFile(this._filePath + this._ext, this._data, (err) => {
 			if (err)
 			{
-				errorCallback(err);
+				console.warn(err);
+				errorCallback(null);
 			}
 			else
 			{
@@ -157,9 +166,9 @@ class DataURIDownloader
 		});
 	}
 
-	getPath()
+	get filePath()
 	{
-		return fs.realpathSync(this.filePath + this.ext);
+		return fs.realpathSync(this._filePath + this._ext);
 	}
 }
 

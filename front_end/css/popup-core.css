@@ -87,8 +87,9 @@ body
   margin-bottom: auto;
   padding: 0px;
 
+  /*
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: scroll;*/
 
   border-radius: 3px;
   cursor: text;

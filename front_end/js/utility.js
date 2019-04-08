@@ -13,7 +13,7 @@
 		{
 			tag += arguments[i];
 		}
-		tag += new Date().getTime();
+		tag += Date.now();
 		return tag;
 	};
 

@@ -9,7 +9,7 @@ const console = require("console");
 const getDownloader = require("./downloader");
 
 const {Searcher} = require("../front_end/js/query");
-const {wrap, getRandomString, searchId, bindAll} = require("../front_end/js/utility");
+const {wrap, bindWrap, bindAll, getRandomString, searchId} = require("../front_end/js/utility");
 
 const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
@@ -101,7 +101,6 @@ class NativeMessagingServer
 	_get(request, callback)
 	{
 		console.log("NM Server: client requested meta");
-		console.log("\t", "meta has been sent");
 
 		return {tag: request.tag, meta: this._loader.meta};
 	}
@@ -122,9 +121,13 @@ class NativeMessagingServer
 				let filePath = path.join(RESOURCES_PATH, fileName);
 
 				let d = getDownloader(srcUrl, filePath);
-				await wrap(d.download.bind(d));
-
-				content.path = d.getPath();
+				try {
+					await bindWrap(d.download, d);
+				} catch (e) {
+					return;
+				}
+				
+				content.path = d.filePath;
 				this._loader.saveSync();
 			})();
 		}
@@ -151,7 +154,7 @@ class NativeMessagingServer
 			index = searchId(this._loader.meta, request.id);
 		} catch (e)  {
 			console.warn("\t", e);
-			return {tag: request.tag, content: null};
+			return {tag: request.tag, error: e};
 		}
 
 		let content = this._loader.meta[index];
@@ -167,7 +170,7 @@ class NativeMessagingServer
 			index = searchId(this._loader.meta, request.id);
 		} catch (e)  {
 			console.warn("\t", e);
-			return {tag: request.tag, content: null};
+			return {tag: request.tag, error: e};
 		}
 
 		let filePath = this._loader.meta[index].path;
