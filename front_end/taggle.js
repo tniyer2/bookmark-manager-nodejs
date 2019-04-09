@@ -307,6 +307,7 @@
         };
         this.list = document.createElement('ul');
         this.inputLi = document.createElement('li');
+        this.inputLi.className = "taggle_inputLi";
         this.input = document.createElement('input');
         this.sizer = document.createElement('div');
         this.pasting = false;

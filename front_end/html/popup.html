@@ -22,43 +22,44 @@
             <title>download</title>
             <path d="M16 31l15-15h-9v-16h-12v16h-9z"></path>
           </symbol>
-          <linearGradient id="gradient-save_start" gradientTransform="rotate(90)">
+          <linearGradient id="gradient-light1" gradientTransform="rotate(90)">
+            <stop offset="20%"  stop-color="#b5b5b5" />
+            <stop offset="80%"  stop-color="#a3a3a3" />
+          </linearGradient>
+          <linearGradient id="gradient-light2" gradientTransform="rotate(90)">
             <stop offset="20%"  stop-color="#ff1800" />
             <stop offset="80%"  stop-color="#e21600" />
           </linearGradient>
-          <linearGradient id="gradient-save_end" gradientTransform="rotate(90)">
-            <stop offset="20%"  stop-color="#0070e0" />
-            <stop offset="80%"  stop-color="#0062c4" />
-          </linearGradient>
-          <linearGradient id="gradient-bookmark_end" gradientTransform="rotate(90)">
+          <linearGradient id="gradient-light3" gradientTransform="rotate(90)">
             <stop offset="20%"  stop-color="#0070e0" />
             <stop offset="80%"  stop-color="#0062c4" />
           </linearGradient>
         </defs>
       </svg>
       <div id="root" class="root">
-        <div class="sizer1"></div>
-        <div id="save-menu" class="save-menu theme noshow">
+        <div id="sizer" class="sizer noshow"></div>
+        <div id="save-menu" class="save-menu noshow">
           <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
-          <div class="save-menu__title-box theme">
-            <input tabindex="0" id="title" class="save-menu__title theme" type="text" placeholder="enter title...">
+          <div class="save-menu__title-box awesomeShadow">
+            <input tabindex="0" id="title" class="save-menu__title" type="text" placeholder="enter title...">
           </div>
-          <div id="tag-container" class="save-menu__tag-container theme"></div>
+          <div style="position:relative; margin-top: 20px; margin-bottom: auto;">
+            <div id="tag-container" class="save-menu__tag-container awesomeShadow"></div>
+          </div>
           <div class="save-menu__button-area">
             <btn id="save-btn" class="save-menu__save-btn noshow">
-              <svg class="save-menu__save-svg anim">
+              <svg class="save-menu__save-svg">
                   <use href="#icon-save"></use>
               </svg>
             </btn>
             <btn id="bookmark-btn" class="save-menu__bookmark-btn noshow">
-              <svg class="save-menu__bookmark-svg anim">
+              <svg class="save-menu__bookmark-svg">
                   <use href="#icon-bookmark"></use>
               </svg>
             </btn>
           </div>
           <div tabindex="0" id="focus-guard-end" class="focus-guard"></div>
         </div>
-        <div class="sizer2"></div>
         <div id="source-menu" class="source-menu noshow">
         <ul class="source-menu__list">
         </ul>

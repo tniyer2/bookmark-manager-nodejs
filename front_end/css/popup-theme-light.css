@@ -1,86 +1,75 @@
 
 /*top-level elements*/
-html
-{
-  background-color: hsla(0, 0%, 0%, 0.75);
+html {
+  background-color: hsla(0, 0%, 0%, 0.65); }
+
+
+/*modifiers*/
+.awesomeShadow {
+  border: 0.5px solid #939393;
+  box-shadow: 0px 2px 5px 0px #bfbfbf;
 }
+.awesomeShadow.focus {
+  box-shadow: 0px 2px 5px 2px #bfbfbf;
+}
+
 
 /*the menu for saving content*/
-.save-menu.theme
-{
-  background-color: #f2f2f2;
-  border: 4px solid #4c4c4c;
-}
+.save-menu {
+  border: 2.5px solid #545454;
+  background-color: white; }
+
 
 /*css relating to the title*/
-.save-menu__title-box.theme
-{
-  background: #fdfdfd;
-  border: 0.5px solid #939393;
-  box-shadow: 0px 1px 5px 0px #bfbfbf;
-}
-.save-menu__title-box.theme.focus
-{
-  box-shadow: 0px 0.35px 5px 2px #9e9c9c;
-}
-.save-menu__title.theme::placeholder
-{
-  color: #939393;
-}
+.save-menu__title-box {
+  background: white; }
+.save-menu__title::placeholder {
+  color: #939393; }
+
 
 /*css relating to the tags*/
-.save-menu__tag-container.theme
-{
-  background: #fdfdfd;
-  border: 0.5px solid #939393;
-  box-shadow: 0px 1px 5px 0px #bfbfbf;
-}
-.save-menu__tag-container.theme.focus
-{
-  box-shadow: 0px 0.35px 5px 2px #9e9c9c;
-}
-.save-menu__auto-complete.theme
-{
-  border: 1px solid black;
-}
-.save-menu__auto-complete-li.theme
-{
+.save-menu__tag-container {
+  background: white; }
+.taggle_placeholder {
+    color: #939393; }
+.taggle {
+  background: #E2E1DF; }
+.taggle:hover {
+  background: #ccc; }
+.taggle_hot {
+  background: #cac8c4 !important; }
+.save-menu__auto-complete {
+  border: 0.5px solid #939393; }
+.save-menu__auto-complete::-webkit-scrollbar-track { 
+  background-color: #b5b5b5; }
+.save-menu__auto-complete::-webkit-scrollbar-thumb { 
+  background-color: #878787; }
+.save-menu__auto-complete-li {
   background: white;
-  border: 1px solid grey;
-}
-.save-menu__auto-complete-li.theme.active
-{
-  background: red;
-}
+  color: #939393;
+  font-weight: 400; }
+.save-menu__auto-complete-li.active {
+  background: #d8d8d8; 
+  color: #727272; }
+
 
 /*css relating to the svg buttons*/
-.save-menu__save-svg.anim
-{
-  fill: url('#gradient-save_start');
-}
-.save-menu__save-svg.anim:hover
-{
-  fill: url('#gradient-save_end');
-}
-.save-menu__bookmark-svg.anim
-{
-  fill: #101214;
-}
-.save-menu__bookmark-svg.anim:hover
-{
-  fill: url('#gradient-bookmark_end');
-}
+.save-menu__save-svg {
+  fill: url('#gradient-light1'); }
+.save-menu__save-svg:hover {
+  fill: url('#gradient-light2'); }
+.save-menu__bookmark-svg {
+  fill: url('#gradient-light1'); }
+.save-menu__bookmark-svg:hover {
+  fill: url('#gradient-light3'); }
 
-/*the menu on which alternative sources(video) are listed*/
-.source-menu__source.active
-{
-  background: red;
-}
-.source-menu__tag.theme
-{
-  
-}
-.source-menu__svg.theme
-{
-  fill: black;
-}
+
+/*the menu where the sources are listed*/
+.source-menu {
+  background: #FDFDFD; }
+.source-menu__source.active {
+  background: red; }
+.source-menu__tag {
+  background: blue; }
+.source-menu__svg {
+  fill: black; }

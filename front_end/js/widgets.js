@@ -3,6 +3,15 @@ let Widgets = {};
 (function(){
 	let self = this;
 
+	this.onKeyDown = function(elm, key, callback) {
+		elm.addEventListener("keydown", (evt) => {
+			if (evt.key === key)
+			{
+				callback(evt);
+			}
+		});
+	}
+
 	this.AwesomeFocus = class {
 		constructor(target, onfocus, onblur)
 		{
@@ -59,10 +68,10 @@ let Widgets = {};
 		const cl_source = "source-menu__source";
 		const cl_activeSource = "active";
 		const cl_tagList = "source-menu__tag-list";
-		const cl_tag  = ["source-menu__tag", "theme"];
+		const cl_tag  = "source-menu__tag";
 		const cl_copyBtn = "source-menu__copy";
 		const cl_downloadBtn = "source-menu__download";
-		const cl_svg  = ["source-menu__svg", "theme"];
+		const cl_svg  = "source-menu__svg";
 
 		const CLASS_DEFAULTS = { selectFirst: true,
 								 // @param li selected element
@@ -327,7 +336,7 @@ let Widgets = {};
 	this.AutoComplete = (function(){
 
 		const cl_hide = "noshow";
-		const cl_li = [ "save-menu__auto-complete-li", "theme" ];
+		const cl_li = "save-menu__auto-complete-li";
 		const cl_activeLi = "active";
 
 		const g_evaluate = (b, s) => { return shortestMatch(b, s, true); };
@@ -385,7 +394,6 @@ let Widgets = {};
 					if (newValues.length > 0)
 					{
 						this._setList(newValues);
-						this._show();
 					}
 					else
 					{
@@ -406,7 +414,8 @@ let Widgets = {};
 						}
 					}
 					else
-					if (this.selected.previousSibling)
+					{
+						if (this.selected.previousSibling)
 						{
 							this.selected = this.selected.previousSibling;
 						}
@@ -414,10 +423,19 @@ let Widgets = {};
 						{
 							this.selected = null;
 						}
+					}
 				}
 				else
 				{
-					this.selected = this._el_list.firstChild;
+					if (inward)
+					{
+						this.selected = this._el_list.firstChild;
+					}
+				}
+
+				if (this.selected)
+				{
+					this.selected.scrollIntoView({block: "nearest"});
 				}
 			}
 
@@ -441,35 +459,18 @@ let Widgets = {};
 					this._close();
 				});
 
-				this._el_input.addEventListener("keydown", (evt) => {
-					if (evt.key === "ArrowUp")
-					{
-						evt.preventDefault();
-						this._scroll(false);
-					}
-					else if (evt.key === "ArrowDown")
-					{
-						evt.preventDefault();
-						this._scroll(true);
-					}
-					else if (evt.key === "Enter")
-					{
-						if (this._isOpen())
-						{
-							if (this.selected)
-							{
-								this._confirm(this.selected.innerText);
-							}
-							else
-							{
-								this._confirm();
-							}
-						}
-						else
-						{
-							this._confirm();
-						}
-					}
+				self.onKeyDown(this._el_input, "ArrowUp", (evt) => {
+					evt.preventDefault();
+					this._scroll(false);
+				});
+				self.onKeyDown(this._el_input, "ArrowDown", (evt) => {
+					evt.preventDefault();
+					this._scroll(true);
+				});
+				self.onKeyDown(this._el_input, "Enter", (evt) => {
+					let val = this._isOpen() && this.selected ? 
+							  this.selected.innerText : null;
+					this._confirm(val);
 				});
 			}
 
@@ -509,6 +510,8 @@ let Widgets = {};
 						}
 					}
 				});
+
+				this._show();
 			}
 
 			_createListElement(text)
@@ -516,15 +519,15 @@ let Widgets = {};
 				let li = document.createElement("li");
 				addClasses(li, cl_li);
 
-				li.addEventListener("mouseenter", () => {
-					this.selected = li;
-				});
-				li.addEventListener("mouseleave", () => {
-					this.selected = null;
+				li.addEventListener("mousemove", () => {
+					if (this.selected !== li)
+					{
+						this.selected = li;
+					}
 				});
 				li.addEventListener("click", (evt) => {
 					evt.preventDefault();
-					this._confirm(value);
+					this._confirm(text);
 				});
 				li.addEventListener("mousedown", (evt) => {
 					evt.preventDefault();

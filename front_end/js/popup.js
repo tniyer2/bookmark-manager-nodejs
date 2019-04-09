@@ -1,6 +1,5 @@
 
 injectCss(document.head, `css/popup-theme-${"light"}.css`);
-injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 (function(){
 
@@ -8,9 +7,9 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	const VIDEO_DURATION_LIMIT = 120;
 
     const cl_hide = "noshow";
-	const cl_autoComplete = [ "save-menu__auto-complete",
-							  "save-menu__auto-complete--theme" ];
+	const cl_autoComplete = "save-menu__auto-complete";
 
+	const el_sizer = document.getElementById("sizer");
 	const el_saveMenu = document.getElementById("save-menu");
 	const el_title 		  = el_saveMenu.querySelector("#title");
 	const el_tagContainer = el_saveMenu.querySelector("#tag-container");
@@ -121,6 +120,16 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 			el_tagContainer.dispatchEvent(new Event("blur"));
 		});
 
+		taggle.setOptions({tagFormatter: (li) => {
+			li.addEventListener("click", (evt) => {
+				evt.stopPropagation();
+				let text = li.querySelector("span").innerText;
+				taggle.remove(text);
+			});
+		}, onTagAdd: () => {
+			el_tagContainer.scrollTop = el_tagContainer.scrollHeight;
+		}});
+
 		return taggle;
 	}
 
@@ -128,7 +137,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	{
 		let list = document.createElement("ul");
 		addClasses(list, cl_autoComplete);
-		el_tagContainer.appendChild(list);
+		el_tagContainer.parentElement.appendChild(list);
 
 		let input = g_taggle.getInput();
 		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
@@ -140,7 +149,6 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
 	{
 		let setMeta = (li, data) => {
-			console.log("data:", data);
 
 			g_meta = { srcUrl: data.srcUrl,
 					   category: data.category };
@@ -191,6 +199,7 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		{
 			enableElement(el_saveBtn);
 			enableElement(el_sourceMenu);
+			attachResizeEvents();
 
 			scanInfo.list.forEach((video) => {
 				let options = { title: video.title,
@@ -247,6 +256,28 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 		el_bookmarkBtn.addEventListener("click", bookmark, {once: true});
 	}
 
+	function attachResizeEvents()
+	{
+		let onResize = () => {
+			let b1 = el_saveMenu.getBoundingClientRect();
+			let b2 = el_sourceMenu.getBoundingClientRect();
+
+			let hdiff = Math.abs(b1.height - b2.height) / 2;
+			let tdiff = Math.abs(b1.top - b2.top);
+
+			if (hdiff === tdiff)
+			{
+				enableElement(el_sizer);
+			}
+			else
+			{
+				disableElement(el_sizer);
+			}
+		};
+		onResize();
+		window.addEventListener("resize", onResize);
+	}
+
 	function attachStyleEvents()
 	{
 		Widgets.styleOnFocus(el_title, el_title.parentElement, "focus");
@@ -254,16 +285,25 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 		el_title.addEventListener("focus", () => {
 			el_title.placeholder = "";
+			el_title.style.fontSize = 16 + "px";
 		});
 		el_title.addEventListener("blur", () => {
 			el_title.placeholder = "enter title...";
+			if (!el_title.value)
+			{
+				el_title.style.fontSize = null;
+			}
+		});
+		let taggleInput = g_taggle.getInput();
+		Widgets.onKeyDown(el_title, "Enter", (evt) => {
+			taggleInput.focus();
 		});
 
 		fgs = el_saveMenu.querySelector("#focus-guard-start");
 		fge = el_saveMenu.querySelector("#focus-guard-end");
 
 		fgs.addEventListener("focus", () => {
-			g_taggle.getInput().focus();
+			taggleInput.focus();
 		});
 		fge.addEventListener("focus", () => {
 			el_title.focus();
@@ -274,6 +314,17 @@ injectCss(document.head, `css/popup-tint-${"yellow"}.css`);
 
 	function enableElement(elm)
 	{
-		elm.classList.remove(cl_hide);
+		if (elm.classList.contains(cl_hide))
+		{
+			elm.classList.remove(cl_hide);
+		}
+	}
+
+	function disableElement(elm)
+	{
+		if (!elm.classList.contains(cl_hide))
+		{
+			elm.classList.add(cl_hide);
+		}
 	}
 }).call(this);
