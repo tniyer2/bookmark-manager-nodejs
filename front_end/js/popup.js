@@ -1,13 +1,14 @@
 
-injectCss(document.head, `css/popup-theme-${"light"}.css`);
-
 (function(){
+
+	const THEME = "light"
+	injectCss(document.head, `css/popup-theme-${THEME}.css`);
+	injectCss(document.head, `css/alerts-theme-${THEME}.css`);
 
 	// caching stops after this limit
 	const VIDEO_DURATION_LIMIT = 120;
 
     const cl_hide = "noshow";
-	const cl_autoComplete = "save-menu__auto-complete";
 
 	const el_sizer = document.getElementById("sizer");
 	const el_saveMenu = document.getElementById("save-menu");
@@ -29,10 +30,12 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 		g_popupId,
 		g_tabId;
 	let g_cache = false;
+	let g_noSourceAlert;
 
 	attachMaskEvents();
 	attachButtonEvents();
 	attachStyleEvents();
+	let alerter = createAlerter();
 
 	(async () => {
 		let response = await wrap(getPopupInfo).catch(noop);
@@ -109,41 +112,46 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 	function createTaggle(container, options)
 	{
 		let taggle = new Taggle(container, options);
-		let input = taggle.getInput();
+		let taggleInput = taggle.getInput();
 
-		input.maxLength = TAG_CHARCTER_LIMIT;
+		taggleInput.maxLength = TAG_CHARCTER_LIMIT;
 
-		input.addEventListener("focus", () => {
+		taggleInput.addEventListener("focus", () => {
 			el_tagContainer.dispatchEvent(new Event("focus"));
 		});
-		input.addEventListener("blur", () => {
+		taggleInput.addEventListener("blur", () => {
 			el_tagContainer.dispatchEvent(new Event("blur"));
 		});
 
 		taggle.setOptions({tagFormatter: (li) => {
 			li.addEventListener("click", (evt) => {
 				evt.stopPropagation();
+
 				let text = li.querySelector("span").innerText;
 				taggle.remove(text);
+
+				if (!taggle.getTags().values.length)
+				{
+					taggleInput.focus();
+				}
 			});
-		}, onTagAdd: () => {
+		}, onTagAdd: (evt, text) => {
 			el_tagContainer.scrollTop = el_tagContainer.scrollHeight;
 		}});
 
 		return taggle;
 	}
 
-	function createAutoComplete(tags)
+	function createAutoComplete(values)
 	{
-		let list = document.createElement("ul");
-		addClasses(list, cl_autoComplete);
-		el_tagContainer.parentElement.appendChild(list);
-
-		let input = g_taggle.getInput();
+		let taggleInput = g_taggle.getInput();
 		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
-		let confirmInput = () => { input.dispatchEvent(confirmEvent); };
+		let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
 
-		new Widgets.AutoComplete(input, list, tags, confirmInput);
+		new Widgets.AutoComplete(taggleInput, el_tagContainer.parentElement, 
+								 { BEMBlock: "save-menu",
+								   values: values, 
+								   onConfirm: confirmInput });
 	}
 
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
@@ -153,6 +161,11 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 			g_meta = { srcUrl: data.srcUrl,
 					   category: data.category };
 			el_title.value = data.title;
+			if (g_noSourceAlert)
+			{
+				g_noSourceAlert.remove();
+			}
+
 			if (data.category === "image")
 			{
 				g_cache = true;
@@ -171,7 +184,8 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 			}
 		};
 		let manager = new Widgets.ListManager(el_sourceList, 
-											  { selectFirst: false,
+											  { BEMBlock: "source-menu",
+											    selectFirst: false,
 												onSelect: setMeta });
 		if (isImage)
 		{
@@ -224,6 +238,17 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 		}
 	}
 
+	function createAlerter() 
+	{
+		let a =  new Widgets.AwesomeAlerter(document.body, 
+				{ BEMBlock: "alerts", 
+	  	  		  insertAtTop: false });
+		a.list.addEventListener("click", (evt) => {
+			evt.stopPropagation();
+		});
+		return a;
+	}
+
 	function attachMaskEvents()
 	{
 		let stopBubble = (evt) => { evt.stopPropagation(); };
@@ -239,12 +264,18 @@ injectCss(document.head, `css/popup-theme-${"light"}.css`);
 		};
 
 		let save = () => {
+			if (g_noSourceAlert)
+			{
+				g_noSourceAlert.removeImmediately();
+			}
+
 			if (g_meta)
 			{
 				saveMeta(g_meta.srcUrl, g_meta.category, g_cache);
 			}
 			else
 			{
+				g_noSourceAlert = alerter.alert("pick a source first", 3);
 				attachSave();
 			}
 		};

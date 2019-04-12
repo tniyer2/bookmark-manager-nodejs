@@ -7,6 +7,10 @@
 		return typeof arg === "undefined";
 	};
 
+	this.clamp = function(val, low, high) {
+		return Math.min(Math.max(val, low), high);
+	}
+
 	this.makeTag = function() {
 		let tag = "";
 		for (let i = 0, l = arguments.length; i < l; i+=1)
@@ -87,19 +91,17 @@
 		element.appendChild(link);
 	};
 
-	// Applies css classes to an element.
-	// @param classes can be an array of strings or a string.
-	this.addClasses = function(element, classes) {
-		if (typeof classes === "string")
+	this.addClass = function(element, classname) {
+		if (!element.classList.contains(classname))
 		{
-			element.classList.add(classes);
+			element.classList.add(classname);
 		}
-		else
+	};
+
+	this.removeClass = function(element, classname) {
+		if (element.classList.contains(classname))
 		{
-			for (let i = 0, l = classes.length; i < l; i+=1)
-			{
-				element.classList.add(classes[i]);
-			}
+			element.classList.remove(classname);
 		}
 	};
 

@@ -10,7 +10,17 @@ let Widgets = {};
 				callback(evt);
 			}
 		});
-	}
+	};
+
+	this.prependBEMBlock = function(classObject, block) {
+		if (block)
+		{
+			for (let key in classObject)
+			{
+				classObject[key] = block + "__" + classObject[key];
+			}
+		}
+	};
 
 	this.AwesomeFocus = class {
 		constructor(target, onfocus, onblur)
@@ -61,19 +71,187 @@ let Widgets = {};
 		});
 	};
 
+	this.AwesomeAlerter = (function(){
+
+		const cl_hide = "noshow";
+		const cl_fadeIn = "fade-in";
+		const cl_fadeOut = "fade-out";
+		const listStyle = `position: absolute;
+						   display: flex;
+						   justify-content: space-between;`;
+		const CLASSES = { list: "list",
+						  li: "alert",
+						  text: "text",
+						  closeButton: "close" };
+
+		const DEFAULTS = { BEMBlock: "",
+						   spacing: 10,
+						   stack: true,
+						   limit: 10, 
+						   insertAtTop: false };
+
+		const AlertController = class {
+			constructor()
+			{
+				this._functions = arguments;
+			}
+
+			get remove()
+			{
+				return this._functions[0];
+			}
+
+			get removeImmediately()
+			{
+				return this._functions[1];
+			}
+		};
+
+		return class {
+			constructor(parentElement, options)
+			{
+				this._options = extend(DEFAULTS, options);
+				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
+
+				this._height = 0;
+
+				this._list = this._createList();
+				parentElement.appendChild(this._list);
+			}
+
+			get list() 
+			{
+				return this._list;
+			}
+
+			alert(text, duration)
+			{
+				let li = this._createLi(text);
+
+				let overLimit = this._list.childNodes.length === this._options.limit;
+				if (!this._options.stack || overLimit)
+				{
+					this._removeOnTransition(this._list.firstChild);
+				}
+
+				this._add(li);
+
+				if (!isUdf(duration))
+				{
+					if (duration <= 0)
+					{
+						this._remove(li);
+					}
+					else
+					{					
+						setTimeout(() => {
+							this._removeOnTransition(li);
+						}, duration * 1000);
+					};
+				}
+				return new AlertController(this._removeOnTransition.bind(this, li), this._remove.bind(this, li));
+			}
+
+			_createList()
+			{
+				let list = document.createElement("ul");
+				list.classList.add(CLASSES.list);
+				list.classList.add(cl_hide);
+				list.style = listStyle;
+
+				let dir = this._options.insertAtTop ? "column-reverse": "column";
+				let translateY = this._options.insertAtTop ? "0": "-100%";
+
+				list.style.flexDirection = dir;
+				list.style.transform = "translate(-50%, " + translateY + ")";
+
+				return list;
+			}
+
+			_createLi(text)
+			{
+				let li = document.createElement("li");
+				li.classList.add(CLASSES.li);
+
+				let p = document.createElement("p");
+				p.classList.add(CLASSES.text);
+				let textNode = document.createTextNode(text);
+				p.appendChild(textNode);
+
+				let closeButton = document.createElement("button");
+				closeButton.classList.add(CLASSES.closeButton);
+				closeButton.innerHTML = "&times;";
+				closeButton.addEventListener("click", () => {
+					this._removeOnTransition(li);
+				});
+
+				li.appendChild(p);
+				li.appendChild(closeButton);
+
+				return li;
+			}
+
+			_add(li)
+			{
+				removeClass(this._list, cl_hide);
+				this._list.append(li);
+				this._updateHeight(li.clientHeight);
+				li.classList.add(cl_fadeIn);
+			}
+
+			_removeOnTransition(li)
+			{
+				if (li && this._list.contains(li))
+				{
+					li.addEventListener("transitionend", (evt) => {
+						this._remove(li);
+					});
+					li.classList.add(cl_fadeOut);
+				}
+			}
+			
+			_remove(li)
+			{
+				if (li && this._list.contains(li))
+				{
+					let height = li.clientHeight;
+					this._list.removeChild(li);
+					this._updateHeight(-1 * height);
+
+					if (this._list.childNodes.length === 0)
+					{
+						addClass(this._list, cl_hide);
+					}
+				}
+			}
+
+			_updateHeight(itemHeight)
+			{
+				this._height += itemHeight;
+				let numOfItems = this._list.childNodes.length;
+				let spacing = Math.max(numOfItems - 1, 0) * this._options.spacing;
+				// An extra 1 pixel stops annoying  behavior with flexbox.
+				let final = Math.max(this._height + spacing, 1);
+
+				this._list.style.height = final + "px";
+			}
+		};
+	}).call(this);
+
 	this.ListManager = (function(){
 		const SVGNS   = "http://www.w3.org/2000/svg";
 		const XLINKNS = "http://www.w3.org/1999/xlink";
 
-		const cl_source = "source-menu__source";
 		const cl_activeSource = "active";
-		const cl_tagList = "source-menu__tag-list";
-		const cl_tag  = "source-menu__tag";
-		const cl_copyBtn = "source-menu__copy";
-		const cl_downloadBtn = "source-menu__download";
-		const cl_svg  = "source-menu__svg";
+		const CLASSES = { source: "source",
+						  tagList: "tag-list",
+						  tag: "tag",
+						  copyBtn: "copy",
+						  downloadBtn: "download",
+						  svg: "svg" };
 
-		const CLASS_DEFAULTS = { selectFirst: true,
+		const CLASS_DEFAULTS = { BEMBlock: "",
+								 selectFirst: true,
 								 // @param li selected element
 								 // @param data data associated with the element
 								 onSelect: noop,
@@ -90,11 +268,13 @@ let Widgets = {};
 		return class {
 			constructor(list, options)
 			{
+				this._options = extend(CLASS_DEFAULTS, options);
+				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
+
 				this._el_list = list;
 				this._data = [];
 				this._numOfSources = 0;
 
-				this._options = extend(CLASS_DEFAULTS, options);
 				this._el_test = document.createElement("canvas");
 			}
 
@@ -124,13 +304,13 @@ let Widgets = {};
 				sourceOptions = extend(SOURCE_DEFAULTS, sourceOptions);
 
 				const el_source = document.createElement("li");
-				addClasses(el_source, cl_source);
+				el_source.classList.add(CLASSES.source);
 
 				const titleTextNode = document.createTextNode(sourceOptions.title);
 				el_source.appendChild(titleTextNode);
 
 				const el_tagList = document.createElement("ul");
-				addClasses(el_tagList, cl_tagList);
+				el_tagList.classList.add(CLASSES.tagList);
 				el_source.appendChild(el_tagList);
 
 				if (sourceOptions.showExtension === true)
@@ -264,7 +444,7 @@ let Widgets = {};
 			_createTag(text)
 			{
 				let tag = document.createElement("li");
-				addClasses(tag, cl_tag);
+				tag.classList.add(CLASSES.tag);
 
 				let textNode = document.createTextNode(text);
 				tag.appendChild(textNode);
@@ -275,7 +455,7 @@ let Widgets = {};
 			_createCopySVG(url)
 			{
 				let svg = this._createSVG("#icon-copy");
-				addClasses(svg, cl_copyBtn);
+				svg.classList.add(CLASSES.copyBtn);
 
 				svg.addEventListener("click", (event) => {
 					event.stopPropagation();
@@ -288,7 +468,7 @@ let Widgets = {};
 			_createDownloadSVG(url)
 			{
 				let svg = this._createSVG("#icon-download");
-				addClasses(svg, cl_downloadBtn);
+				svg.classList.add(CLASSES.downloadBtn);
 
 				svg.addEventListener("click", () => {
 					event.stopPropagation();
@@ -301,7 +481,7 @@ let Widgets = {};
 			_createSVG(href)
 			{
 				let svg = document.createElementNS(SVGNS, "svg");
-				addClasses(svg, cl_svg);
+				svg.classList.add(CLASSES.svg);
 
 				let use = document.createElementNS(SVGNS, "use");
 				use.setAttributeNS(XLINKNS,"href", href);
@@ -335,19 +515,27 @@ let Widgets = {};
 
 	this.AutoComplete = (function(){
 
-		const cl_hide = "noshow";
-		const cl_li = "save-menu__auto-complete-li";
-		const cl_activeLi = "active";
-
 		const g_evaluate = (b, s) => { return shortestMatch(b, s, true); };
 
+		const cl_hide = "noshow";
+		const cl_activeLi = "active";
+		const CLASSES = { autoComplete: "auto-complete", 
+						  li: "auto-complete-li" };
+		const DEFAULTS = { BEMBlock: "", 
+						   values: [], 
+						   onConfirm: noop, 
+						   caseSensitive: false };
+
 		return class {
-			constructor(input, list, values, onConfirm)
+			constructor(input, parentElement, options)
 			{
+				this._options = extend(DEFAULTS, options);
+				self.prependBEMBlock(CLASSES, this._options.BEMBlock)
+
 				this._el_input = input;
-				this._el_list = list;
-				this._values = values;
-				this._onConfirm = onConfirm;
+				this._el_list = document.createElement("ul");
+				this._el_list.classList.add(CLASSES.autoComplete);
+				parentElement.appendChild(this._el_list);
 
 				this._attachEvents();
 				this._close();
@@ -406,23 +594,13 @@ let Widgets = {};
 			{
 				if (this.selected)
 				{
-					if (inward)
+					if (inward && this.selected.nextSibling)
 					{
-						if (this.selected.nextSibling)
-						{
-							this.selected = this.selected.nextSibling;
-						}
+						this.selected = this.selected.nextSibling;
 					}
-					else
+					else if (!inward && this.selected.previousSibling)
 					{
-						if (this.selected.previousSibling)
-						{
-							this.selected = this.selected.previousSibling;
-						}
-						else
-						{
-							this.selected = null;
-						}
+						this.selected = this.selected.previousSibling;
 					}
 				}
 				else
@@ -446,7 +624,7 @@ let Widgets = {};
 					this._el_input.value = value;
 				}
 
-				this._onConfirm();
+				this._options.onConfirm();
 				this._close();
 			}
 
@@ -476,14 +654,19 @@ let Widgets = {};
 
 			_getSimilarValues(text, comp)
 			{
-				let cache = {};
-				for (let i = 0, l = this._values.length; i < l; i+=1)
+				if (!this._options.caseSensitive)
 				{
-					let sim = comp(this._values[i], text);
-					cache[this._values[i]] = sim;
+					text = text.toLowerCase();
 				}
 
-				let similarValues = this._values.slice();
+				let cache = {};
+				for (let i = 0, l = this._options.values.length; i < l; i+=1)
+				{
+					let sim = comp(this._options.values[i], text);
+					cache[this._options.values[i]] = sim;
+				}
+
+				let similarValues = this._options.values.slice();
 				similarValues = similarValues.filter((s) => {
 					return cache[s] !== null;
 				});
@@ -517,7 +700,7 @@ let Widgets = {};
 			_createListElement(text)
 			{
 				let li = document.createElement("li");
-				addClasses(li, cl_li);
+				li.classList.add(CLASSES.li);
 
 				li.addEventListener("mousemove", () => {
 					if (this.selected !== li)

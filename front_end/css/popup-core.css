@@ -2,7 +2,12 @@
 /*utilities*/
 .noshow {
   display: none !important; }
-
+.focus-guard {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0; }
 
 /*top-level elements*/
 html {
@@ -11,26 +16,21 @@ html {
 body {
   margin: 0; }
 .root {
+  position: absolute;
+  width: 100%;
+  height: 100%; 
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  position: absolute;
-  width: 100%;
-  height: 100%; }
+  justify-content: center; }
 .sizer {
   display: inline-block;
   flex: 0.7 0 auto; }
-.focus-guard {
-  display: block;
-  width: 0;
-  height: 0;
-  margin: 0;
-  padding: 0; }
 
 
 /*the menu for saving content*/
 .save-menu {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   width: 250px;
@@ -80,7 +80,6 @@ body {
   margin: 0;
   padding: 0; }
 .taggle_input {
-  display: inline-block;
   float: left;
   width: 100%;
   max-width: 100%;
@@ -145,8 +144,7 @@ body {
   height: 20px;
   padding-left: 2px;
   overflow: hidden;
-  font-size: 14px;
-}
+  font-size: 14px; }
 .save-menu__auto-complete-li.active {}
 
 
