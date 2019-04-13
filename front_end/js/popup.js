@@ -4,11 +4,13 @@
 	const THEME = "light"
 	injectCss(document.head, `css/popup-theme-${THEME}.css`);
 	injectCss(document.head, `css/alerts-theme-${THEME}.css`);
+	injectCss(document.head, `css/scrollbar-theme-${THEME}.css`);
 
 	// caching stops after this limit
 	const VIDEO_DURATION_LIMIT = 120;
 
     const cl_hide = "noshow";
+    const cl_scrollbar = "customScrollbar1";
 
 	const el_sizer = document.getElementById("sizer");
 	const el_saveMenu = document.getElementById("save-menu");
@@ -17,7 +19,6 @@
 	const el_saveBtn 	  = el_saveMenu.querySelector("#save-btn");
 	const el_bookmarkBtn  = el_saveMenu.querySelector("#bookmark-btn");
 	const el_sourceMenu = document.getElementById("source-menu");
-	const el_sourceList = el_sourceMenu.querySelector("ul");
 
 	const TAG_CHARCTER_LIMIT = 30;
 	const COMMA_CODE = 188;
@@ -137,6 +138,7 @@
 			});
 		}, onTagAdd: (evt, text) => {
 			el_tagContainer.scrollTop = el_tagContainer.scrollHeight;
+			// alerter.alert("tag added: " + text, 3);
 		}});
 
 		return taggle;
@@ -148,10 +150,11 @@
 		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
 		let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
 
-		new Widgets.AutoComplete(taggleInput, el_tagContainer.parentElement, 
-								 { BEMBlock: "save-menu",
-								   values: values, 
-								   onConfirm: confirmInput });
+		let ac = new Widgets.AutoComplete(taggleInput, el_tagContainer.parentElement, 
+					 { BEMBlock: "save-menu",
+					   values: values, 
+					   onConfirm: confirmInput });
+		ac.el_list.classList.add(cl_scrollbar);
 	}
 
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
@@ -183,10 +186,12 @@
 				}
 			}
 		};
-		let manager = new Widgets.ListManager(el_sourceList, 
+		let manager = new Widgets.ListManager(el_sourceMenu, 
 											  { BEMBlock: "source-menu",
 											    selectFirst: false,
 												onSelect: setMeta });
+		manager.el_list.classList.add(cl_scrollbar);
+
 		if (isImage)
 		{
 			enableElement(el_saveBtn);
@@ -224,6 +229,7 @@
 									category: "video",
 									title: video.title
 								}};
+				manager.addSource(video.url, options);
 				manager.addSource(video.url, options);
 			});
 		}
@@ -316,14 +322,9 @@
 
 		el_title.addEventListener("focus", () => {
 			el_title.placeholder = "";
-			el_title.style.fontSize = 16 + "px";
 		});
 		el_title.addEventListener("blur", () => {
 			el_title.placeholder = "enter title...";
-			if (!el_title.value)
-			{
-				el_title.style.fontSize = null;
-			}
 		});
 		let taggleInput = g_taggle.getInput();
 		Widgets.onKeyDown(el_title, "Enter", (evt) => {

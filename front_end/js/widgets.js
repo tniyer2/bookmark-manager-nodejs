@@ -1,7 +1,9 @@
 
 let Widgets = {};
 (function(){
-	let self = this;
+	const self = this;
+	const SVGNS   = "http://www.w3.org/2000/svg";
+	const XLINKNS = "http://www.w3.org/1999/xlink";
 
 	this.onKeyDown = function(elm, key, callback) {
 		elm.addEventListener("keydown", (evt) => {
@@ -71,6 +73,15 @@ let Widgets = {};
 		});
 	};
 
+	this.createSVG = function(href) {
+		let svg = document.createElementNS(SVGNS, "svg");
+		let use = document.createElementNS(SVGNS, "use");
+		use.setAttributeNS(XLINKNS,"href", href);
+		svg.appendChild(use);
+
+		return svg;
+	};
+
 	this.AwesomeAlerter = (function(){
 
 		const cl_hide = "noshow";
@@ -82,6 +93,7 @@ let Widgets = {};
 		const CLASSES = { list: "list",
 						  li: "alert",
 						  text: "text",
+						  spinner: "spinner",
 						  closeButton: "close" };
 
 		const DEFAULTS = { BEMBlock: "",
@@ -124,9 +136,22 @@ let Widgets = {};
 				return this._list;
 			}
 
-			alert(text, duration)
+			alert(text, duration, async)
 			{
-				let li = this._createLi(text);
+				if (isUdf(async))
+				{
+					if (typeof duration === "boolean")
+					{
+						async = duration;
+						duration = 0;
+					}
+					else
+					{
+						async = false;
+					}
+				}
+
+				let {li} = this._createLi(text, async);
 
 				let overLimit = this._list.childNodes.length === this._options.limit;
 				if (!this._options.stack || overLimit)
@@ -136,7 +161,7 @@ let Widgets = {};
 
 				this._add(li);
 
-				if (!isUdf(duration))
+				if (!async)
 				{
 					if (duration <= 0)
 					{
@@ -149,7 +174,9 @@ let Widgets = {};
 						}, duration * 1000);
 					};
 				}
-				return new AlertController(this._removeOnTransition.bind(this, li), this._remove.bind(this, li));
+				return new AlertController(
+					this._removeOnTransition.bind(this, li), 
+					this._remove.bind(this, li));
 			}
 
 			_createList()
@@ -168,7 +195,7 @@ let Widgets = {};
 				return list;
 			}
 
-			_createLi(text)
+			_createLi(text, async)
 			{
 				let li = document.createElement("li");
 				li.classList.add(CLASSES.li);
@@ -177,6 +204,12 @@ let Widgets = {};
 				p.classList.add(CLASSES.text);
 				let textNode = document.createTextNode(text);
 				p.appendChild(textNode);
+				li.appendChild(p);
+
+				if (async)
+				{
+					// let spinner = self.createSVG();
+				}
 
 				let closeButton = document.createElement("button");
 				closeButton.classList.add(CLASSES.closeButton);
@@ -184,11 +217,9 @@ let Widgets = {};
 				closeButton.addEventListener("click", () => {
 					this._removeOnTransition(li);
 				});
-
-				li.appendChild(p);
 				li.appendChild(closeButton);
 
-				return li;
+				return {li: li};
 			}
 
 			_add(li)
@@ -230,8 +261,12 @@ let Widgets = {};
 				this._height += itemHeight;
 				let numOfItems = this._list.childNodes.length;
 				let spacing = Math.max(numOfItems - 1, 0) * this._options.spacing;
-				// An extra 1 pixel stops annoying  behavior with flexbox.
-				let final = Math.max(this._height + spacing, 1);
+				let final = Math.max(this._height + spacing, 0);
+				if (numOfItems === 1)
+				{
+					// An extra pixel stops annoying flexbox behavior
+					final += 1;
+				}
 
 				this._list.style.height = final + "px";
 			}
@@ -239,14 +274,14 @@ let Widgets = {};
 	}).call(this);
 
 	this.ListManager = (function(){
-		const SVGNS   = "http://www.w3.org/2000/svg";
-		const XLINKNS = "http://www.w3.org/1999/xlink";
 
 		const cl_activeSource = "active";
-		const CLASSES = { source: "source",
+		const CLASSES = { sourceList: "list",
+						  source: "source",
 						  tagList: "tag-list",
 						  tag: "tag",
-						  copyBtn: "copy",
+						  text: "text",
+						  linkBtn: "link",
 						  downloadBtn: "download",
 						  svg: "svg" };
 
@@ -257,7 +292,7 @@ let Widgets = {};
 								 onSelect: noop,
 								 // same signature
 								 onDeselect: noop };
-		const SOURCE_DEFAULTS = { allowCopy: true,
+		const SOURCE_DEFAULTS = { createLink: true,
 								  allowDownload: true,
 								  type: "",
 								  showDimensions: false,
@@ -266,16 +301,24 @@ let Widgets = {};
 								  data: null };
 
 		return class {
-			constructor(list, options)
+			constructor(parentElement, options)
 			{
 				this._options = extend(CLASS_DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
 
-				this._el_list = list;
 				this._data = [];
 				this._numOfSources = 0;
 
+				this._el_list = document.createElement("ul");
+				this._el_list.classList.add(CLASSES.sourceList);
+				parentElement.appendChild(this._el_list);
+
 				this._el_test = document.createElement("canvas");
+			}
+
+			get el_list()
+			{
+				return this._el_list;
 			}
 
 			get selected()
@@ -306,8 +349,11 @@ let Widgets = {};
 				const el_source = document.createElement("li");
 				el_source.classList.add(CLASSES.source);
 
+				const p = document.createElement("p");
+				p.classList.add(CLASSES.text);
 				const titleTextNode = document.createTextNode(sourceOptions.title);
-				el_source.appendChild(titleTextNode);
+				p.appendChild(titleTextNode)
+				el_source.appendChild(p);
 
 				const el_tagList = document.createElement("ul");
 				el_tagList.classList.add(CLASSES.tagList);
@@ -353,10 +399,10 @@ let Widgets = {};
 					}
 				}
 
-				if (sourceOptions.allowCopy === true)
+				if (sourceOptions.createLink === true)
 				{
-					let copyBtn = this._createCopySVG(srcUrl);
-					el_source.appendChild(copyBtn);
+					let linkBtn = this._createLinkSVG(srcUrl);
+					el_source.appendChild(linkBtn);
 				}
 
 				if (sourceOptions.allowDownload === true)
@@ -452,40 +498,34 @@ let Widgets = {};
 				return tag;
 			}
 
-			_createCopySVG(url)
+			_createLinkSVG(url)
 			{
-				let svg = this._createSVG("#icon-copy");
-				svg.classList.add(CLASSES.copyBtn);
+				let svg = self.createSVG("#icon-link");
+				svg.classList.add(CLASSES.svg);
+				svg.classList.add(CLASSES.linkBtn);
 
 				svg.addEventListener("click", (event) => {
 					event.stopPropagation();
-					this._copyToClipboard(url);
 				});
 
-				return svg;
+				let a = document.createElement("a");
+				a.href = url;
+				a.target = "_blank";
+				a.appendChild(svg);
+
+				return a;
 			}
 
 			_createDownloadSVG(url)
 			{
-				let svg = this._createSVG("#icon-download");
+				let svg = self.createSVG("#icon-download");
+				svg.classList.add(CLASSES.svg);
 				svg.classList.add(CLASSES.downloadBtn);
 
 				svg.addEventListener("click", () => {
 					event.stopPropagation();
 					this._download(url);
 				});
-
-				return svg;
-			}
-
-			_createSVG(href)
-			{
-				let svg = document.createElementNS(SVGNS, "svg");
-				svg.classList.add(CLASSES.svg);
-
-				let use = document.createElementNS(SVGNS, "use");
-				use.setAttributeNS(XLINKNS,"href", href);
-				svg.appendChild(use);
 
 				return svg;
 			}
@@ -539,6 +579,11 @@ let Widgets = {};
 
 				this._attachEvents();
 				this._close();
+			}
+
+			get el_list()
+			{
+				return this._el_list;
 			}
 
 			get prevSelected()

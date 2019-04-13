@@ -1,0 +1,5 @@
+
+.customScrollbar1::-webkit-scrollbar-track { 
+  background-color: #ccc; }
+.customScrollbar1::-webkit-scrollbar-thumb { 
+  background-color: #878787; }

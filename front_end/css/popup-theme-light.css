@@ -41,10 +41,6 @@ html {
   background: #cac8c4 !important; }
 .save-menu__auto-complete {
   border: 0.5px solid #939393; }
-.save-menu__auto-complete::-webkit-scrollbar-track { 
-  background-color: #b5b5b5; }
-.save-menu__auto-complete::-webkit-scrollbar-thumb { 
-  background-color: #878787; }
 .save-menu__auto-complete-li {
   background: white;
   color: #939393;
@@ -66,11 +62,23 @@ html {
 
 
 /*the menu where the sources are listed*/
-.source-menu {
-  background: #FDFDFD; }
+.source-menu {}
+.source-menu__list {
+  border: 2.5px solid #545454;
+  background: white; }
+.source-menu__source {
+  background: inherit; }
 .source-menu__source.active {
-  background: red; }
+  background: #b5b5b5; }
 .source-menu__tag {
-  background: blue; }
-.source-menu__svg {
-  fill: black; }
+  background: #ff1800;
+  color: white;
+  font-family: "Helvetica"; }
+.source-menu__link {
+  fill: #4286f4; }
+.source-menu__link:hover {
+  fill: #3269c1; }
+.source-menu__download {
+  fill: #1e1e1e; }
+.source-menu__download:hover {
+  fill: #4286f4; }

@@ -33,8 +33,9 @@ body {
   position: relative;
   display: inline-flex;
   flex-direction: column;
-  width: 250px;
-  height: 250px;
+  box-sizing: border-box;
+  width: 300px;
+  height: 290px;
   padding: 20px 10px;
   border-radius: 17px;
   user-select: none; }
@@ -50,7 +51,7 @@ body {
   height: 20px;
   background: inherit;
   border: none;
-  font-size: 17px; }
+  font-size: 16px; }
 .save-menu__title:focus {
   outline: none; }
 
@@ -72,7 +73,7 @@ body {
   top: 45%;
   left: 5px;
   transform: translateY(-50%);
-  font-size: 18px;
+  font-size: 16px;
   user-select: none; }
 .taggle_list  {
   float: left;
@@ -132,14 +133,6 @@ body {
   padding: 0;
   overflow-y: auto;
   list-style-type: none; }
-.save-menu__auto-complete::-webkit-scrollbar {
-  width: 7px; }
-.save-menu__auto-complete::-webkit-scrollbar-track { 
-  border-radius: 3px; }
-.save-menu__auto-complete::-webkit-scrollbar-thumb { 
-  border-radius: 3px; }
-.save-menu__auto-complete::-webkit-scrollbar-button {
-  display: none; }
 .save-menu__auto-complete-li {
   height: 20px;
   padding-left: 2px;
@@ -174,29 +167,47 @@ body {
 
 /*the menu where the sources are listed*/
 .source-menu {
-  width: 250px;
-  height: 250px;
+  box-sizing: border-box;
+  width: 300px;
+  height: 290px;
   margin: 0 auto;
-  padding: 20px 10px;
-  border-radius: 3px; }
+  padding: 0; }
 .source-menu__list {
   display: block;
+  height: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  border-radius: 5px;
   list-style-type: none; }
 .source-menu__source {
-  display: inline-block; }
+  padding: 5px;
+  font-size: 12px;
+  user-select: none; }
+.source-menu__text {
+  display: block;
+  margin: 0;
+  font-weight: 400;
+  word-wrap: break-word; }
 .source-menu__tag-list {
   display: inline-block;
+  vertical-align: middle;
   margin: 0;
   padding: 0; }
 .source-menu__tag {
-  display: inline-block; }
+  display: inline;
+  height: 20px;
+  margin-right: 3px;
+  padding: 2px;
+  border-radius: 3px; }
 .source-menu__svg {
   display: inline-block;
-  vertical-align: bottom;
-  width: 20px;
-  height: 16px;
+  vertical-align: middle;
   cursor: pointer; }
-.source-menu__copy {}
-.source-menu__download{}
+.source-menu__link {
+  width: 30px;
+  height: 20px;
+  margin-right: 3px; }
+.source-menu__download{
+  width: 20px;
+  height: 20px; }
