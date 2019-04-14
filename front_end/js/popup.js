@@ -8,6 +8,7 @@
 
 	// caching stops after this limit
 	const VIDEO_DURATION_LIMIT = 120;
+	const NO_SOURCE_ALERT_DELAY = 5;
 
     const cl_hide = "noshow";
     const cl_scrollbar = "customScrollbar1";
@@ -230,7 +231,7 @@
 									title: video.title
 								}};
 				manager.addSource(video.url, options);
-				manager.addSource(video.url, options);
+				// manager.addSource(video.url, options);
 			});
 		}
 		else if (scanInfo.single)
@@ -239,7 +240,7 @@
 
 			let video = scanInfo.single;
 			setMeta(null, { srcUrl: video.url,
-							category: "video",
+							category: "youtube",
 							title: video.title });
 		}
 	}
@@ -281,7 +282,7 @@
 			}
 			else
 			{
-				g_noSourceAlert = alerter.alert("pick a source first", 3);
+				g_noSourceAlert = alerter.alert("pick a source first", NO_SOURCE_ALERT_DELAY);
 				attachSave();
 			}
 		};

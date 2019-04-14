@@ -1,34 +1,49 @@
-
 /*utilities*/
+/* line 3, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .noshow {
-  display: none !important; }
+  display: none !important;
+}
+
+/* line 5, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .focus-guard {
   display: block;
   width: 0;
   height: 0;
   margin: 0;
-  padding: 0; }
+  padding: 0;
+}
 
 /*top-level elements*/
+/* line 13, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 html {
   width: 100%;
-  height: 100%; }
+  height: 100%;
+}
+
+/* line 16, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 body {
-  margin: 0; }
+  margin: 0;
+}
+
+/* line 18, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .root {
   position: absolute;
   width: 100%;
-  height: 100%; 
+  height: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center; }
+  justify-content: center;
+}
+
+/* line 26, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .sizer {
   display: inline-block;
-  flex: 0.7 0 auto; }
-
+  flex: 0.7 0 auto;
+}
 
 /*the menu for saving content*/
+/* line 32, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu {
   position: relative;
   display: inline-flex;
@@ -38,25 +53,33 @@ body {
   height: 290px;
   padding: 20px 10px;
   border-radius: 17px;
-  user-select: none; }
-
+  user-select: none;
+}
 
 /*css relating to the title*/
+/* line 45, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__title-box {
   margin-top: 10px;
   padding: 5px;
-  border-radius: 3px; }
+  border-radius: 3px;
+}
+
+/* line 49, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__title {
   width: 100%;
   height: 20px;
   background: inherit;
   border: none;
-  font-size: 16px; }
-.save-menu__title:focus {
-  outline: none; }
+  font-size: 16px;
+}
 
+/* line 55, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.save-menu__title:focus {
+  outline: none;
+}
 
 /*css relating to the tags*/
+/* line 60, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__tag-container {
   position: relative;
   min-height: auto;
@@ -66,20 +89,33 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   border-radius: 3px;
-  cursor: text; }
-.save-menu__tag-container::-webkit-scrollbar { width: 0; }
+  cursor: text;
+}
+
+/* line 70, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.save-menu__tag-container::-webkit-scrollbar {
+  width: 0;
+}
+
+/* line 71, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle_placeholder {
   position: absolute;
   top: 45%;
   left: 5px;
   transform: translateY(-50%);
   font-size: 16px;
-  user-select: none; }
-.taggle_list  {
+  user-select: none;
+}
+
+/* line 78, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.taggle_list {
   float: left;
   width: 100%;
   margin: 0;
-  padding: 0; }
+  padding: 0;
+}
+
+/* line 83, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle_input {
   float: left;
   width: 100%;
@@ -88,23 +124,37 @@ body {
   border: none;
   outline: none;
   font-size: 16px;
-  font-weight: 300; }
-.taggle_list li { /*all li including inputLi*/
+  font-weight: 300;
+}
+
+/* line 92, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.taggle_list li {
+  /*all li including inputLi*/
   display: inline-block;
   float: left;
   margin-bottom: 5px;
   white-space: nowrap;
-  font-weight: 500; }
-.taggle { /*all li except inputLi*/
+  font-weight: 500;
+}
+
+/* line 98, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.taggle {
+  /*all li except inputLi*/
   position: relative;
   margin-right: 8px;
   padding: 5px 10px;
   border-radius: 3px;
-  cursor: pointer; 
-  transition: padding 0.1s; }
+  cursor: pointer;
+  transition: padding 0.1s;
+}
+
+/* line 105, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle:hover {
   padding: 5px;
-  padding-right: 15px; }
+  padding-right: 15px;
+}
+
+/* line 108, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle .close {
   display: none;
   position: absolute;
@@ -114,13 +164,21 @@ body {
   background: none;
   outline: none;
   border: none;
-  color: #d10000;
   font-size: 1.5em;
-  cursor: inherit; }
+  cursor: inherit;
+}
+
+/* line 119, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle:hover > .close {
-  display: block; }
+  display: block;
+}
+
+/* line 121, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .taggle_sizer {
-  display: none; }
+  display: none;
+}
+
+/* line 123, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__auto-complete {
   display: block;
   position: absolute;
@@ -132,46 +190,65 @@ body {
   margin: 0;
   padding: 0;
   overflow-y: auto;
-  list-style-type: none; }
+  list-style-type: none;
+}
+
+/* line 135, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__auto-complete-li {
   height: 20px;
   padding-left: 2px;
   overflow: hidden;
-  font-size: 14px; }
-.save-menu__auto-complete-li.active {}
-
+  font-size: 14px;
+}
 
 /*css relating to the svg buttons*/
+/* line 144, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__button-area {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-around; }
+  justify-content: space-around;
+}
+
+/* line 149, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__save-btn {
   display: inline-block;
   width: 80px;
   height: 80px;
-  cursor: pointer; }
+  cursor: pointer;
+}
+
+/* line 154, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__bookmark-btn {
   display: inline-block;
   width: 80px;
   height: 80px;
-  cursor: pointer; }
+  cursor: pointer;
+}
+
+/* line 159, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__save-svg {
   width: 100%;
-  height: 100%; }
+  height: 100%;
+}
+
+/* line 162, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .save-menu__bookmark-svg {
   width: 100%;
-  height: 100%; }
-
+  height: 100%;
+}
 
 /*the menu where the sources are listed*/
+/* line 168, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu {
   box-sizing: border-box;
   width: 300px;
   height: 290px;
   margin: 0 auto;
-  padding: 0; }
+  padding: 0;
+}
+
+/* line 174, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__list {
   display: block;
   height: 100%;
@@ -179,35 +256,61 @@ body {
   padding: 0;
   overflow-y: auto;
   border-radius: 5px;
-  list-style-type: none; }
+  list-style-type: none;
+}
+
+/* line 182, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__source {
   padding: 5px;
+  padding-top: 3px;
+  padding-bottom: 2px;
   font-size: 12px;
-  user-select: none; }
+  user-select: none;
+}
+
+/* line 188, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__text {
   display: block;
   margin: 0;
   font-weight: 400;
-  word-wrap: break-word; }
+  word-wrap: break-word;
+}
+
+/* line 193, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__tag-list {
   display: inline-block;
   vertical-align: middle;
   margin: 0;
-  padding: 0; }
+  padding: 0;
+}
+
+/* line 198, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__tag {
   display: inline;
   height: 20px;
   margin-right: 3px;
   padding: 2px;
-  border-radius: 3px; }
+  border-radius: 3px;
+}
+
+/* line 204, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__svg {
   display: inline-block;
   vertical-align: middle;
-  cursor: pointer; }
+  cursor: pointer;
+}
+
+/* line 208, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
 .source-menu__link {
   width: 30px;
   height: 20px;
-  margin-right: 3px; }
-.source-menu__download{
+  margin-right: 3px;
+}
+
+/* line 212, ../../Projects/tagger-plus/front_end/scss/popup-core.scss */
+.source-menu__download {
   width: 20px;
-  height: 20px; }
+  height: 20px;
+}
+
+/*# sourceMappingURL=popup-core.css.map */

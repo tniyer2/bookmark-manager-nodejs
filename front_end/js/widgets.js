@@ -93,7 +93,6 @@ let Widgets = {};
 		const CLASSES = { list: "list",
 						  li: "alert",
 						  text: "text",
-						  spinner: "spinner",
 						  closeButton: "close" };
 
 		const DEFAULTS = { BEMBlock: "",
@@ -136,22 +135,9 @@ let Widgets = {};
 				return this._list;
 			}
 
-			alert(text, duration, async)
+			alert(text, duration)
 			{
-				if (isUdf(async))
-				{
-					if (typeof duration === "boolean")
-					{
-						async = duration;
-						duration = 0;
-					}
-					else
-					{
-						async = false;
-					}
-				}
-
-				let {li} = this._createLi(text, async);
+				let li = this._createLi(text);
 
 				let overLimit = this._list.childNodes.length === this._options.limit;
 				if (!this._options.stack || overLimit)
@@ -161,7 +147,7 @@ let Widgets = {};
 
 				this._add(li);
 
-				if (!async)
+				if (duration)
 				{
 					if (duration <= 0)
 					{
@@ -195,7 +181,7 @@ let Widgets = {};
 				return list;
 			}
 
-			_createLi(text, async)
+			_createLi(text)
 			{
 				let li = document.createElement("li");
 				li.classList.add(CLASSES.li);
@@ -206,11 +192,6 @@ let Widgets = {};
 				p.appendChild(textNode);
 				li.appendChild(p);
 
-				if (async)
-				{
-					// let spinner = self.createSVG();
-				}
-
 				let closeButton = document.createElement("button");
 				closeButton.classList.add(CLASSES.closeButton);
 				closeButton.innerHTML = "&times;";
@@ -219,7 +200,7 @@ let Widgets = {};
 				});
 				li.appendChild(closeButton);
 
-				return {li: li};
+				return li;
 			}
 
 			_add(li)

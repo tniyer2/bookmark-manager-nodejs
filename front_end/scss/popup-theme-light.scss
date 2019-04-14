@@ -1,0 +1,90 @@
+
+@import "master";
+
+/*top-level elements*/
+html {
+  background-color: hsla(0, 0%, 0%, 0.65); }
+
+
+/*modifiers*/
+.awesomeShadow {
+  border: 0.5px solid $lt-gray;
+  box-shadow: 0px 1px 3px 0px $lt-gray;
+}
+.awesomeShadow.focus {
+  box-shadow: 0px 1px 3px 1.25px $lt-gray;
+}
+
+
+/*the menu for saving content*/
+.save-menu {
+  border: 2.5px solid $lt-strong-gray;
+  background-color: white; }
+
+
+/*css relating to the title*/
+.save-menu__title-box {
+  background: white; }
+.save-menu__title::placeholder {
+  color: $lt-dark-gray; }
+
+
+/*css relating to the tags*/
+.save-menu__tag-container {
+  background: white; }
+.taggle_placeholder {
+    color: $lt-dark-gray; }
+.taggle {
+  background: $lt-light-gray; }
+.taggle:hover {
+  background: $lt-gray; }
+.taggle_hot {
+  background: $lt-gray !important; }
+.taggle .close {
+  color: $dark-red; }
+.save-menu__auto-complete {
+  border: 1px solid $lt-gray; }
+.save-menu__auto-complete-li {
+  background: white;
+  color: $lt-dark-gray;
+  font-weight: 400; }
+.save-menu__auto-complete-li.active {
+  background: $lt-gray; 
+  color: $lt-strong-gray; }
+
+
+/*css relating to the svg buttons*/
+.save-menu__save-svg {
+  fill: $lt-gray; }
+.save-menu__save-svg:hover {
+  fill: $red; }
+.save-menu__bookmark-svg {
+  fill: $lt-gray; }
+.save-menu__bookmark-svg:hover {
+  fill: $blue; }
+
+
+/*the menu where the sources are listed*/
+.source-menu {}
+.source-menu__list {
+  border: 2.5px solid $lt-strong-gray;
+  background: white; }
+.source-menu__source {
+  background: inherit; }
+.source-menu__source:hover {
+  background: $lt-medium-gray;
+}
+.source-menu__source.active {
+  background: $lt-gray; }
+.source-menu__tag {
+  background: $red;
+  color: white;
+  font-family: "Helvetica"; }
+.source-menu__link {
+  fill: $blue; }
+.source-menu__link:hover {
+  fill: $yellow; }
+.source-menu__download {
+  fill: black; }
+.source-menu__download:hover {
+  fill: $blue; }

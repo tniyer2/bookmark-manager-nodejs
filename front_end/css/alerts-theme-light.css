@@ -1,9 +1,13 @@
-
 /*alerts*/
+/* line 5, ../../Projects/tagger-plus/front_end/scss/alerts-theme-light.scss */
 .alerts__alert {
- background: #636363; 
- color: white; }
+  background: #636363;
+  color: white;
+}
 
-
+/* line 10, ../../Projects/tagger-plus/front_end/scss/alerts-theme-light.scss */
 .alerts__close {
-	color: #424242; }
+  color: #424242;
+}
+
+/*# sourceMappingURL=alerts-theme-light.css.map */

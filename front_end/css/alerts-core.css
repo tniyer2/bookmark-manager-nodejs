@@ -1,33 +1,44 @@
-
+/* line 2, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__list {
   top: 20%;
   left: 50%;
   width: 150px;
   padding: 0;
   margin: 0;
-  list-style-type: none; }
+  list-style-type: none;
+}
 
-
+/* line 11, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert {
   opacity: 0.5;
   position: relative;
   padding: 3px 10px;
   border-radius: 3px;
-  word-wrap: break-word; }
+  word-wrap: break-word;
+}
+
+/* line 17, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert.fade-in {
-  opacity: 1; 
-  transition: opacity 0.5s; }
+  opacity: 1;
+  transition: opacity 0.5s;
+}
+
+/* line 20, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert.fade-out {
-  opacity: 0; 
-  transition: opacity 0.5s; }
+  opacity: 0;
+  transition: opacity 0.5s;
+}
 
-
+/* line 25, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__text {
   max-width: calc(100% - 10px);
   margin: 0;
   font-size: 16px;
   text-align: center;
-  user-select: none; }
+  user-select: none;
+}
+
+/* line 31, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__close {
   opacity: 0.3;
   position: absolute;
@@ -46,9 +57,15 @@
   font-weight: 500;
   text-align: center;
   user-select: none;
-  transition: all 0.3s step-start; }
+  transition: all 0.3s step-start;
+}
+
+/* line 50, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__close:hover {
-	opacity: 0.6;
-	width: 13px;
-	height: 13px;
-  font-size: 13px; }
+  opacity: 0.6;
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+}
+
+/*# sourceMappingURL=alerts-core.css.map */

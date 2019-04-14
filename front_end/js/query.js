@@ -1,7 +1,7 @@
 
 (function(){
 
-	let Ratio = (function(){
+	const Ratio = (function(){
 		const CASE_WEIGHT = 0.1;
 		const FOUND_AT_END_WEIGHT = 0.3;
 		const FOUND_IN_MIDDLE_WEIGHT = 0.85;

@@ -1,0 +1,214 @@
+
+/*utilities*/
+.noshow {
+  display: none !important; }
+.focus-guard {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0; }
+
+/*top-level elements*/
+html {
+  width: 100%;
+  height: 100%; }
+body {
+  margin: 0; }
+.root {
+  position: absolute;
+  width: 100%;
+  height: 100%; 
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center; }
+.sizer {
+  display: inline-block;
+  flex: 0.7 0 auto; }
+
+
+/*the menu for saving content*/
+.save-menu {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 300px;
+  height: 290px;
+  padding: 20px 10px;
+  border-radius: 17px;
+  user-select: none; }
+
+
+/*css relating to the title*/
+.save-menu__title-box {
+  margin-top: 10px;
+  padding: 5px;
+  border-radius: 3px; }
+.save-menu__title {
+  width: 100%;
+  height: 20px;
+  background: inherit;
+  border: none;
+  font-size: 16px; }
+.save-menu__title:focus {
+  outline: none; }
+
+
+/*css relating to the tags*/
+.save-menu__tag-container {
+  position: relative;
+  min-height: auto;
+  max-height: 90px;
+  padding: 5px;
+  padding-bottom: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 3px;
+  cursor: text; }
+.save-menu__tag-container::-webkit-scrollbar { width: 0; }
+.taggle_placeholder {
+  position: absolute;
+  top: 45%;
+  left: 5px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  user-select: none; }
+.taggle_list  {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0; }
+.taggle_input {
+  float: left;
+  width: 100%;
+  max-width: 100%;
+  background: inherit;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-weight: 300; }
+.taggle_list li { /*all li including inputLi*/
+  display: inline-block;
+  float: left;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  font-weight: 500; }
+.taggle { /*all li except inputLi*/
+  position: relative;
+  margin-right: 8px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer; 
+  transition: padding 0.1s; }
+.taggle:hover {
+  padding: 5px;
+  padding-right: 15px; }
+.taggle .close {
+  display: none;
+  position: absolute;
+  top: 55%;
+  right: -3px;
+  transform: translateY(-50%);
+  background: none;
+  outline: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: inherit; }
+.taggle:hover > .close {
+  display: block; }
+.taggle_sizer {
+  display: none; }
+.save-menu__auto-complete {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0px;
+  z-index: 1;
+  width: 99.5%;
+  max-height: 100px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style-type: none; }
+.save-menu__auto-complete-li {
+  height: 20px;
+  padding-left: 2px;
+  overflow: hidden;
+  font-size: 14px; }
+.save-menu__auto-complete-li.active {}
+
+
+/*css relating to the svg buttons*/
+.save-menu__button-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around; }
+.save-menu__save-btn {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  cursor: pointer; }
+.save-menu__bookmark-btn {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  cursor: pointer; }
+.save-menu__save-svg {
+  width: 100%;
+  height: 100%; }
+.save-menu__bookmark-svg {
+  width: 100%;
+  height: 100%; }
+
+
+/*the menu where the sources are listed*/
+.source-menu {
+  box-sizing: border-box;
+  width: 300px;
+  height: 290px;
+  margin: 0 auto;
+  padding: 0; }
+.source-menu__list {
+  display: block;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border-radius: 5px;
+  list-style-type: none; }
+.source-menu__source {
+  padding: 5px;
+  padding-top: 3px;
+  padding-bottom: 2px;
+  font-size: 12px;
+  user-select: none; }
+.source-menu__text {
+  display: block;
+  margin: 0;
+  font-weight: 400;
+  word-wrap: break-word; }
+.source-menu__tag-list {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0; }
+.source-menu__tag {
+  display: inline;
+  height: 20px;
+  margin-right: 3px;
+  padding: 2px;
+  border-radius: 3px; }
+.source-menu__svg {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer; }
+.source-menu__link {
+  width: 30px;
+  height: 20px;
+  margin-right: 3px; }
+.source-menu__download{
+  width: 20px;
+  height: 20px; }

@@ -1,9 +1,21 @@
-
+/* line 2, ../../Projects/tagger-plus/front_end/scss/scrollbar-core.scss */
 .customScrollbar1::-webkit-scrollbar {
-  width: 7px; }
-.customScrollbar1::-webkit-scrollbar-track { 
-  border-radius: 3px; }
-.customScrollbar1::-webkit-scrollbar-thumb { 
-  border-radius: 3px; }
+  width: 7px;
+}
+
+/* line 4, ../../Projects/tagger-plus/front_end/scss/scrollbar-core.scss */
+.customScrollbar1::-webkit-scrollbar-track {
+  border-radius: 3px;
+}
+
+/* line 6, ../../Projects/tagger-plus/front_end/scss/scrollbar-core.scss */
+.customScrollbar1::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+}
+
+/* line 8, ../../Projects/tagger-plus/front_end/scss/scrollbar-core.scss */
 .customScrollbar1::-webkit-scrollbar-button {
-  display: none; }
+  display: none;
+}
+
+/*# sourceMappingURL=scrollbar-core.css.map */
