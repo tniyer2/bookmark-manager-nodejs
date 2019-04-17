@@ -1,0 +1,29 @@
+
+@import "master";
+
+body {
+	background: white; }
+.header {
+	background: $lt-light-gray; }
+
+
+.search__search-box-wrapper { // background in wrapper
+	background: white; }
+.search__search-box { // border in box
+	border: 1px solid $lt-strong-gray; }
+
+
+.search__title-input {
+	color: $lt-font-color; }
+.search__title-input::placeholder {
+	color: $lt-dark-gray; }
+
+
+.search__searchby {
+	background: $lt-gray; }
+.search__searchby-btn:hover + .search__searchby {
+	background: $blue; }
+.search__submit svg {
+	fill: black; }
+.search__submit svg:hover {
+	fill: $blue; }
