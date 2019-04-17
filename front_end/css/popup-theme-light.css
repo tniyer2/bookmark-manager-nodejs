@@ -24,6 +24,10 @@ html {
   background: white;
 }
 
+.save-menu__title {
+  color: rgba(0, 0, 0, 0.87);
+}
+
 .save-menu__title::placeholder {
   color: #9b9b9b;
 }
@@ -31,41 +35,6 @@ html {
 /*css relating to the tags*/
 .save-menu__tag-container {
   background: white;
-}
-
-.taggle_placeholder {
-  color: #9b9b9b;
-}
-
-.taggle {
-  background: #e2e2e2;
-}
-
-.taggle:hover {
-  background: #b2b2b2;
-}
-
-.taggle_hot {
-  background: #b2b2b2 !important;
-}
-
-.taggle .close {
-  color: #d10000;
-}
-
-.save-menu__auto-complete {
-  border: 1px solid #b2b2b2;
-}
-
-.save-menu__auto-complete-li {
-  background: white;
-  color: #9b9b9b;
-  font-weight: 400;
-}
-
-.save-menu__auto-complete-li.active {
-  background: #b2b2b2;
-  color: #595959;
 }
 
 /*css relating to the svg buttons*/

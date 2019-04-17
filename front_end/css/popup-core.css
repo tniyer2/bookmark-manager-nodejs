@@ -61,7 +61,7 @@ body {
   height: 20px;
   background: inherit;
   border: none;
-  font-size: 16px;
+  font: 300 16px arial, sans-serif;
 }
 
 .save-menu__title:focus {
@@ -85,97 +85,8 @@ body {
   width: 0;
 }
 
-.taggle_placeholder {
-  position: absolute;
-  top: 45%;
-  left: 5px;
-  transform: translateY(-50%);
-  font-size: 16px;
-  user-select: none;
-}
-
-.taggle_list {
-  float: left;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.taggle_input {
-  float: left;
-  width: 100%;
-  max-width: 100%;
-  background: inherit;
-  border: none;
-  outline: none;
-  font-size: 16px;
-  font-weight: 300;
-}
-
 .taggle_list li {
-  /*all li including inputLi*/
-  display: inline-block;
-  float: left;
   margin-bottom: 5px;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.taggle {
-  /*all li except inputLi*/
-  position: relative;
-  margin-right: 8px;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: padding 0.1s;
-}
-
-.taggle:hover {
-  padding: 5px;
-  padding-right: 15px;
-}
-
-.taggle .close {
-  display: none;
-  position: absolute;
-  top: 55%;
-  right: -3px;
-  transform: translateY(-50%);
-  background: none;
-  outline: none;
-  border: none;
-  font-size: 1.5em;
-  cursor: inherit;
-}
-
-.taggle:hover > .close {
-  display: block;
-}
-
-.taggle_sizer {
-  display: none;
-}
-
-.save-menu__auto-complete {
-  display: block;
-  position: absolute;
-  top: 100%;
-  left: 0px;
-  z-index: 1;
-  width: 99.5%;
-  max-height: 100px;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style-type: none;
-}
-
-.save-menu__auto-complete-li {
-  height: 20px;
-  padding-left: 2px;
-  overflow: hidden;
-  font-size: 14px;
 }
 
 /*css relating to the svg buttons*/

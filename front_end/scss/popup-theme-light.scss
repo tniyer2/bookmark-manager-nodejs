@@ -25,6 +25,8 @@ html {
 /*css relating to the title*/
 .save-menu__title-box {
   background: white; }
+.save-menu__title {
+  color: $lt-font-color; }
 .save-menu__title::placeholder {
   color: $lt-dark-gray; }
 
@@ -32,25 +34,6 @@ html {
 /*css relating to the tags*/
 .save-menu__tag-container {
   background: white; }
-.taggle_placeholder {
-    color: $lt-dark-gray; }
-.taggle {
-  background: $lt-light-gray; }
-.taggle:hover {
-  background: $lt-gray; }
-.taggle_hot {
-  background: $lt-gray !important; }
-.taggle .close {
-  color: $dark-red; }
-.save-menu__auto-complete {
-  border: 1px solid $lt-gray; }
-.save-menu__auto-complete-li {
-  background: white;
-  color: $lt-dark-gray;
-  font-weight: 400; }
-.save-menu__auto-complete-li.active {
-  background: $lt-gray; 
-  color: $lt-strong-gray; }
 
 
 /*css relating to the svg buttons*/

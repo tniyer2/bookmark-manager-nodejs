@@ -3,16 +3,88 @@
 <html>
 <head>
 	<title>Gallery</title>
+    <link rel="stylesheet" type="text/css" href="../css/alerts-core.css">
+    <link rel="stylesheet" type="text/css" href="../css/scrollbar-core.css">
+    <link rel="stylesheet" type="text/css" href="../css/taggle-core.css">
 	<link rel="stylesheet" type="text/css" href="../css/contentCreator.css">
 	<link rel="stylesheet" type="text/css" href="../css/gallery-core.css">
 </head>
 <body>
-	<div id="search-box" class="search__search-box">
-		<Input type="text">
+	<svg style="position:absolute;width:0px;height:0px;">
+     	<defs>
+     		<symbol id="icon-search" viewBox="0 0 32 32">
+     			<title>search</title>
+     			<path d="M31.008 27.231l-7.58-6.447c-0.784-0.705-1.622-1.029-2.299-0.998 1.789-2.096 2.87-4.815 2.87-7.787 0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12c2.972 0 5.691-1.081 7.787-2.87-0.031 0.677 0.293 1.515 0.998 2.299l6.447 7.58c1.104 1.226 2.907 1.33 4.007 0.23s0.997-2.903-0.23-4.007zM12 20c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"></path>
+     		</symbol>
+     		<symbol id="icon-title" viewBox="0 0 1542.997 860.247">
+     			<title>search by title</title>
+     			<path d="M1416.354,226.223c-16.165-16.158-36.242-26.97-55.568-38.894c-26.728-16.491-58.359-26.237-88.699-32.894  c-9.493-2.083-19.175-3.24-28.879-3.669c-20.027-0.885-39.885-2.453-59.827-0.291c-107.085,11.607-197.587,75.16-282.979,135.794  c-30.798,21.87-61.743,43.835-94.576,62.586c-13.653,6.502-27.69,12.19-42.151,16.565c-5.169,0.709-10.362,1.205-15.572,1.471  c-7.3-0.858-14.565-2.06-21.748-3.61c-1.429-0.59-2.849-1.2-4.259-1.833c-0.2-0.289-0.391-0.585-0.589-0.875  c-6.493-15.951-11.043-32.67-14.997-49.463c-5.66-26.407-11.159-52.89-18.588-78.849c-9.401-32.849-24.413-63.276-41.841-92.673  c-6.133-10.346-13.333-20.031-21.352-28.988c-15.01-16.765-30.128-34.015-48.303-47.511c-17.304-12.848-36.026-24.392-55.474-33.749  c-19.136-9.207-40.463-14.792-60.664-20.435c-10.704-2.99-21.683-4.936-32.721-6.167c-21.503-2.398-43.333-3.063-64.96-2.604  c-34.08,0.722-67.394,8.618-100.404,16.437c-57.229,13.554-110.627,40.173-161.333,69.325c-16.438,9.45-32.363,19.8-47.66,31.001  c-27.14,19.875-45.816,48.698-51.454,82.015c-5.571,32.931,2.254,67.137,21.61,94.376c39.512,55.604,120.747,70.593,176.391,29.844  c16.534-12.107,33.814-23.153,51.643-33.242c27.936-13.599,57.036-24.884,87.055-32.888c15.398-2.708,30.958-4.404,46.581-4.789  c7.399,0.803,14.749,1.967,22.025,3.519c3.963,1.605,7.869,3.341,11.707,5.225c2.993,2.281,5.911,4.657,8.748,7.129  c3.337,4.356,6.479,8.855,9.434,13.482c8.836,20.551,14.895,42.16,20.049,63.957c5.529,25.964,10.878,52.021,18.352,77.482  c2.932,9.99,6.384,19.829,10.547,29.374c8.346,19.133,17.978,38.121,29.757,55.398c11.778,17.277,26.866,32.714,42.346,46.619  c3.776,3.392,7.824,6.468,12.003,9.344c13.38,9.209,27.285,17.959,41.749,25.419c20.187,10.412,43.188,16.312,64.923,21.862  c13.986,3.572,28.443,5.585,42.833,6.558c19.277,1.303,39.452,2.637,58.913,0.838c19.693-1.82,39.503-7.095,58.513-11.561  c19.021-4.468,37.344-11.615,54.975-19.96c49.01-23.198,94.345-51.623,138.57-82.739c40.557-28.534,80.511-58.438,123.674-82.991  c14.714-7.023,29.855-13.14,45.464-17.8c5.761-0.821,11.551-1.395,17.361-1.701c3.693,0.506,7.369,1.126,11.022,1.868  c4.783,1.942,9.492,4.06,14.107,6.374c2.163,1.665,4.271,3.396,6.343,5.171c2.48,3.312,4.831,6.717,7.075,10.195  c5.017,11.786,9.068,23.959,12.415,36.335c8.296,45.826,9.926,92.703,11.407,139.154c1.529,48.024,1.609,96.918,11.136,144.202  c2.37,10.672,4.739,21.345,7.108,32.018c8.076,21.765,21.062,40.042,38.958,54.826c25.407,20.738,58.533,30.829,91.181,27.953  c33.728-2.973,65.431-19.834,86.844-46.066c5.748-9.301,11.497-18.6,17.246-27.898c8.981-20.178,12.549-41.273,10.707-63.282  c-10.187-50.558-9.75-102.932-11.465-154.269c-0.936-28.036-2.187-56.08-4.919-84.007c-3.628-37.083-10.853-73.86-20.535-109.822  c-9.205-34.187-25.317-67.163-44.466-96.752C1448.857,258.688,1432.111,241.975,1416.354,226.223z"></path>
+     		</symbol>
+     		<symbol id="icon-tag" viewBox="0 0 32 32">
+     			<title>search by tag</title>
+     			<path d="M30.5 0h-12c-0.825 0-1.977 0.477-2.561 1.061l-14.879 14.879c-0.583 0.583-0.583 1.538 0 2.121l12.879 12.879c0.583 0.583 1.538 0.583 2.121 0l14.879-14.879c0.583-0.583 1.061-1.736 1.061-2.561v-12c0-0.825-0.675-1.5-1.5-1.5zM23 12c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"></path>
+     		</symbol>
+     	</defs>
+     </svg>
+	<div class="header">
+		<form id="search" class="search">
+			<input type="text" style="display:none;">
+			<div class="search__search-box-wrapper">
+				<div id="search-box" class="search__search-box">
+					<input id="title-input" type="text" placeholder="enter title..." class="search__title-input">
+					<div id="tag-container" class="noshow search__tag-container">
+					</div>
+					<btn id="searchby-btn" class="search__searchby-btn"></btn>
+					<div id="searchby" class="search__searchby">
+						<svg>
+							<use href="#icon-title"/>
+							<use href="#icon-tag" class="noshow"/>
+						</svg>
+					</div>
+				</div>
+			</div>
+			<div>
+				<div class="search__dropdown search__date">
+					<p>from</p>
+					<select id="date">
+						<option value="">All time</option>
+						<option value="1">Last 24 hours</option>
+						<option value="7">Last 7 days</option>
+						<option value="28">Last 4 weeks</option>
+					</select>
+				</div>
+				<div class="search__dropdown search__category">
+					<p>include</p>
+					<select id="category">
+						<option value=''>All</option>
+						<option value='image+video+youtube'>Images and videos</option>
+						<option value='web'>Bookmarks</option>
+						<option value='image'>Images</option>
+						<option value='video+youtube}'>Videos</option>
+					</select>
+				</div>
+				<div class="search__dropdown search__sortby">
+					<p>sort by</p>
+					<select id="sortby">
+						<option value=''>Relevance</option>
+						<option value='dsc'>New</option>
+						<option value='asc'>Old</option>
+					</select>
+				</div>
+			</div>
+			<btn id="submit" class="search__submit">
+				<svg>
+					<use href="#icon-search"/>
+				</svg>
+			</btn>
+		</form>
 	</div>
 	<div id="feed">
 	</div>
+	<script src="../taggle.js"></script>
 	<script src="../js/utility.js"></script>
+	<script src="../js/widgets.js"></script>
+	<script src="../js/myTaggle.js"></script>
 	<script src="../js/query.js"></script>
 	<script src="../js/contentCreator.js"></script>
 	<script src="../js/gallery.js"></script>
