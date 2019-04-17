@@ -36,7 +36,11 @@
 .taggle_inputLi {
   padding: ($taggle-vertical-padding / 2) 0; }
 .taggle_input {
+<<<<<<< HEAD
   height: calc(100% + (2 * #{$taggle-vertical-padding})); }
+=======
+  height: calc(100% + (2 * #{$taggle-vertical-padding}));}
+>>>>>>> temp
 .taggle:hover {
   padding: 5px;
   padding-right: 15px; }
