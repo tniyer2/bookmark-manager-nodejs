@@ -1,12 +1,14 @@
+/* line 2, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__list {
   top: 20%;
   left: 50%;
-  width: 175px;
+  width: 150px;
   padding: 0;
   margin: 0;
   list-style-type: none;
 }
 
+/* line 11, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert {
   opacity: 0.5;
   position: relative;
@@ -15,16 +17,19 @@
   word-wrap: break-word;
 }
 
+/* line 17, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert.fade-in {
   opacity: 1;
   transition: opacity 0.5s;
 }
 
+/* line 20, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__alert.fade-out {
   opacity: 0;
   transition: opacity 0.5s;
 }
 
+/* line 25, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__text {
   max-width: calc(100% - 10px);
   margin: 0;
@@ -33,6 +38,7 @@
   user-select: none;
 }
 
+/* line 31, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__close {
   opacity: 0.3;
   position: absolute;
@@ -54,9 +60,12 @@
   transition: all 0.3s step-start;
 }
 
+/* line 50, ../../Projects/tagger-plus/front_end/scss/alerts-core.scss */
 .alerts__close:hover {
   opacity: 0.6;
   width: 13px;
   height: 13px;
   font-size: 13px;
 }
+
+/*# sourceMappingURL=alerts-core.css.map */

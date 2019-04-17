@@ -1,3 +1,4 @@
+/* line 2, ../../Projects/tagger-plus/front_end/scss/contentCreator.scss */
 .content-block {
   width: 300px;
   height: 335px;
@@ -6,6 +7,7 @@
   background-color: #3399ff;
 }
 
+/* line 10, ../../Projects/tagger-plus/front_end/scss/contentCreator.scss */
 .content-block__source-block {
   display: block;
   width: 300px;
@@ -15,6 +17,7 @@
   border: 1px solid #000;
 }
 
+/* line 19, ../../Projects/tagger-plus/front_end/scss/contentCreator.scss */
 .content-block__image {
   display: block;
   max-width: 100%;
@@ -22,13 +25,17 @@
   vertical-align: middle;
 }
 
+/* line 26, ../../Projects/tagger-plus/front_end/scss/contentCreator.scss */
 .content-block__video {
   width: 100%;
   height: 100%;
 }
 
+/* line 31, ../../Projects/tagger-plus/front_end/scss/contentCreator.scss */
 .content-block__title {
   display: inline;
   text-align: center;
   font-size: 15px;
 }
+
+/*# sourceMappingURL=contentCreator.css.map */

@@ -1,8 +1,12 @@
+/* line 2, ../../Projects/tagger-plus/front_end/scss/singleView.scss */
 .main {
   display: flex;
   flex-direction: column;
 }
 
+/* line 8, ../../Projects/tagger-plus/front_end/scss/singleView.scss */
 .delete-btn {
   width: 50px;
 }
+
+/*# sourceMappingURL=singleView.css.map */

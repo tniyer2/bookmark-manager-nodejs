@@ -1,5 +1,5 @@
 
-const Widgets = {};
+let Widgets = {};
 (function(){
 	const self = this;
 	const SVGNS   = "http://www.w3.org/2000/svg";

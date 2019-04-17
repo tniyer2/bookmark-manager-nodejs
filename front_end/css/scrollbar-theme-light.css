@@ -1,7 +1,11 @@
+/* line 4, ../../Projects/tagger-plus/front_end/scss/scrollbar-theme-light.scss */
 .customScrollbar1::-webkit-scrollbar-track {
   background-color: #e2e2e2;
 }
 
+/* line 6, ../../Projects/tagger-plus/front_end/scss/scrollbar-theme-light.scss */
 .customScrollbar1::-webkit-scrollbar-thumb {
   background-color: #9b9b9b;
 }
+
+/*# sourceMappingURL=scrollbar-theme-light.css.map */
