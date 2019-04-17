@@ -1,0 +1,74 @@
+
+@import "master";
+
+.taggle_placeholder {
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  font: $regular-font;
+  user-select: none; }
+.taggle_list {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0; }
+.taggle_input {
+  float: left;
+  width: 100%;
+  max-width: 100%;
+  background: inherit;
+  border: none;
+  outline: none;
+  font: $regular-font; }
+.taggle_list li { /*all li including inputLi*/
+  display: inline-block;
+  float: left;
+  white-space: nowrap;
+  font-weight: 500; }
+.taggle { /*all li except inputLi*/
+  position: relative;
+  margin-right: 8px;
+  padding: $taggle-vertical-padding 10px;
+  border-radius: 3px;
+  cursor: pointer; 
+  transition: padding 0.1s; }
+.taggle_inputLi {
+  padding: ($taggle-vertical-padding / 2) 0; }
+.taggle_input {
+  height: calc(100% + (2 * #{$taggle-vertical-padding})); }
+.taggle:hover {
+  padding: 5px;
+  padding-right: 15px; }
+.taggle .close {
+  display: none;
+  position: absolute;
+  top: 55%;
+  right: -3px;
+  transform: translateY(-50%);
+  background: none;
+  outline: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: inherit; }
+.taggle:hover > .close {
+  display: block; }
+.taggle_sizer {
+  display: none; }
+.auto-complete {
+  position: absolute;
+  top: 100%;
+  left: 0px;
+  z-index: 1;
+  width: 99.5%;
+  max-height: 100px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style-type: none; }
+.auto-complete-li {
+  height: 20px;
+  padding-left: 2px;
+  overflow: hidden;
+  font-size: 14px; }
+.auto-complete-li.active {}
