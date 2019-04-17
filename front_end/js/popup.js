@@ -1,13 +1,11 @@
 
 (function(){
 
-	const THEME = "light"
-	injectCss(document.head, `css/popup-theme-${THEME}.css`);
-	injectCss(document.head, `css/alerts-theme-${THEME}.css`);
-	injectCss(document.head, `css/scrollbar-theme-${THEME}.css`);
+	injectThemeCss("light", ["popup", "taggle", "scrollbar", "alerts"]);
 
 	// caching stops after this limit
 	const VIDEO_DURATION_LIMIT = 120;
+	const NO_SOURCE_MESSAGE = "Pick a source first.";
 	const NO_SOURCE_ALERT_DELAY = 5;
 
     const cl_hide = "noshow";
@@ -21,11 +19,8 @@
 	const el_bookmarkBtn  = el_saveMenu.querySelector("#bookmark-btn");
 	const el_sourceMenu = document.getElementById("source-menu");
 
-	const TAG_CHARCTER_LIMIT = 30;
-	const COMMA_CODE = 188;
 	const g_taggleOptions = { placeholder: "enter tags...",
-							  tabIndex: 0,
-							  submitKeys: [COMMA_CODE] };
+							  tabIndex: 0 };
 	const g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
 
 	let g_meta,
@@ -48,7 +43,7 @@
 
 		enableElement(el_bookmarkBtn);
 		enableElement(el_saveMenu);
-		createAutoComplete(response.tags);
+		createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
 		createSourceList(response.srcUrl, response.docUrl,
 						 response.scanInfo, response.mediaType === "image");
 	})();
@@ -109,53 +104,6 @@
 	{
 		let message = {to: "content.js", close: true};
 		chrome.tabs.sendMessage(g_tabId, message);
-	}
-
-	function createTaggle(container, options)
-	{
-		let taggle = new Taggle(container, options);
-		let taggleInput = taggle.getInput();
-
-		taggleInput.maxLength = TAG_CHARCTER_LIMIT;
-
-		taggleInput.addEventListener("focus", () => {
-			el_tagContainer.dispatchEvent(new Event("focus"));
-		});
-		taggleInput.addEventListener("blur", () => {
-			el_tagContainer.dispatchEvent(new Event("blur"));
-		});
-
-		taggle.setOptions({tagFormatter: (li) => {
-			li.addEventListener("click", (evt) => {
-				evt.stopPropagation();
-
-				let text = li.querySelector("span").innerText;
-				taggle.remove(text);
-
-				if (!taggle.getTags().values.length)
-				{
-					taggleInput.focus();
-				}
-			});
-		}, onTagAdd: (evt, text) => {
-			el_tagContainer.scrollTop = el_tagContainer.scrollHeight;
-			// alerter.alert("tag added: " + text, 3);
-		}});
-
-		return taggle;
-	}
-
-	function createAutoComplete(values)
-	{
-		let taggleInput = g_taggle.getInput();
-		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA_CODE});
-		let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
-
-		let ac = new Widgets.AutoComplete(taggleInput, el_tagContainer.parentElement, 
-					 { BEMBlock: "save-menu",
-					   values: values, 
-					   onConfirm: confirmInput });
-		ac.el_list.classList.add(cl_scrollbar);
 	}
 
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
@@ -282,7 +230,7 @@
 			}
 			else
 			{
-				g_noSourceAlert = alerter.alert("pick a source first", NO_SOURCE_ALERT_DELAY);
+				g_noSourceAlert = alerter.alert(NO_SOURCE_MESSAGE, NO_SOURCE_ALERT_DELAY);
 				attachSave();
 			}
 		};

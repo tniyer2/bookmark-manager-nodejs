@@ -1,8 +1,120 @@
 
-.search__search-box {
+@import "master";
 
-}
+$searchby-width: 30px;
+$searchby-height: 30px;
+$searchby-padding: 2px;
+$searchby-svg-width: $searchby-width - 2 * $searchby-padding;
+$searchby-svg-height: $searchby-width - 2 * $searchby-padding;
 
-.search__search-box input {
-	
-}
+$input-width: 300px;
+$input-height: 38px;
+$input-padding-left: 5px;
+$input-padding-right: 3px;
+
+$container-padding: 5px;
+
+.noshow {
+	display: none !important; }
+body {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	margin: 0; }
+
+
+.header {
+	padding: 10px; }
+
+
+.search {
+	display: inline-block;
+	max-width: 50%;
+	user-select: none; }
+
+
+.search__search-box-wrapper { // background in wrapper
+	position: relative;
+	z-index: 0;
+	display: inline-block;
+	box-sizing: border-box;
+	margin-bottom: 5px;
+	border-radius: 5px; }
+.search__search-box { // border in box
+	position: relative;
+	overflow: hidden;
+	border-radius: inherit; }
+.search__title-input {
+	width: $input-width;
+	height: $input-height;
+	box-sizing: border-box;
+	padding: 0;
+	padding-left: $input-padding-left;
+	padding-right: $input-padding-right;
+	margin: 0;
+	margin-right: $searchby-width;
+	border: none;
+	outline: none;
+	background: none;
+	font: $regular-font; }
+.search__tag-container {
+	width: $input-width;
+	min-height: $input-height;
+	box-sizing: border-box;
+	padding-left: $input-padding-left;
+	padding-right: $input-padding-right;
+	padding-top: $container-padding;
+	padding-bottom: 0;
+	margin-right: $searchby-width;
+	cursor: text; }
+.taggle_list li {
+	margin-bottom: $container-padding; }
+
+
+%searchby {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: $searchby-width;
+	height: 100%;
+	box-sizing: border-box;
+	padding: $searchby-padding; }
+.search__searchby {
+	@extend %searchby;
+	z-index: -1;
+	border-radius: 0 3px 3px 0; }
+.search__searchby svg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: $searchby-svg-width;
+	height: $searchby-svg-height; }
+.search__searchby-btn { @extend %searchby; }
+
+
+.search__dropdown {
+	display: inline-block; }
+.search__dropdown p {
+	display: inline-block;
+	margin: 0; }
+.search__dropdown select {
+	display: inline-block; }
+.search__dropdown option {}
+.search__date {}
+.search__category {}
+.search__sortby {}
+.search__submit {
+	display: inline-block;
+	vertical-align: top;
+	width: 20px;
+	height: 20px; 
+	margin: 0;
+	padding: 0;
+	border: none;
+	outline: none;
+	background: none; }
+.search__submit svg {
+	width: 100%;
+	height: 100%; }

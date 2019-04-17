@@ -1,156 +1,95 @@
 /*top-level elements*/
-/* line 5, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 html {
   background-color: rgba(0, 0, 0, 0.65);
 }
 
 /*modifiers*/
-/* line 10, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .awesomeShadow {
   border: 0.5px solid #b2b2b2;
   box-shadow: 0px 1px 3px 0px #b2b2b2;
 }
 
-/* line 14, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .awesomeShadow.focus {
   box-shadow: 0px 1px 3px 1.25px #b2b2b2;
 }
 
 /*the menu for saving content*/
-/* line 20, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu {
   border: 2.5px solid #595959;
   background-color: white;
 }
 
 /*css relating to the title*/
-/* line 26, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__title-box {
   background: white;
 }
 
-/* line 28, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
+.save-menu__title {
+  color: rgba(0, 0, 0, 0.87);
+}
+
 .save-menu__title::placeholder {
   color: #9b9b9b;
 }
 
 /*css relating to the tags*/
-/* line 33, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__tag-container {
   background: white;
 }
 
-/* line 35, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.taggle_placeholder {
-  color: #9b9b9b;
-}
-
-/* line 37, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.taggle {
-  background: #e2e2e2;
-}
-
-/* line 39, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.taggle:hover {
-  background: #b2b2b2;
-}
-
-/* line 41, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.taggle_hot {
-  background: #b2b2b2 !important;
-}
-
-/* line 43, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.taggle .close {
-  color: #d10000;
-}
-
-/* line 45, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.save-menu__auto-complete {
-  border: 1px solid #b2b2b2;
-}
-
-/* line 47, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.save-menu__auto-complete-li {
-  background: white;
-  color: #9b9b9b;
-  font-weight: 400;
-}
-
-/* line 51, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
-.save-menu__auto-complete-li.active {
-  background: #b2b2b2;
-  color: #595959;
-}
-
 /*css relating to the svg buttons*/
-/* line 57, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__save-svg {
   fill: #b2b2b2;
 }
 
-/* line 59, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__save-svg:hover {
   fill: #E71717;
 }
 
-/* line 61, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__bookmark-svg {
   fill: #b2b2b2;
 }
 
-/* line 63, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .save-menu__bookmark-svg:hover {
   fill: #4286F4;
 }
 
 /*the menu where the sources are listed*/
-/* line 69, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__list {
   border: 2.5px solid #595959;
   background: white;
 }
 
-/* line 72, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__source {
   background: inherit;
 }
 
-/* line 74, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__source:hover {
   background: #ccc;
 }
 
-/* line 77, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__source.active {
   background: #b2b2b2;
 }
 
-/* line 79, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__tag {
   background: #E71717;
   color: white;
   font-family: "Helvetica";
 }
 
-/* line 83, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__link {
   fill: #4286F4;
 }
 
-/* line 85, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__link:hover {
   fill: #ffbe3a;
 }
 
-/* line 87, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__download {
   fill: black;
 }
 
-/* line 89, ../../Projects/tagger-plus/front_end/scss/popup-theme-light.scss */
 .source-menu__download:hover {
   fill: #4286F4;
 }
-
-/*# sourceMappingURL=popup-theme-light.css.map */

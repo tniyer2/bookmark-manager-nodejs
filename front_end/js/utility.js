@@ -82,13 +82,22 @@
 
     // @param element the element to append the <link> to.
     // @param chromeUrl the url of the css in the chrome extension.
-	this.injectCss = function (element, chromeUrl) {
+	this.injectCss = function(element, chromeUrl) {
 
 		let link  = document.createElement("link");
 		link.rel  = "stylesheet";
 		link.type = "text/css";
 		link.href = chrome.runtime.getURL(chromeUrl);
 		element.appendChild(link);
+	};
+
+	this.injectThemeCss = function(theme, cssNames) {
+		for (let i = 0, l = cssNames.length; i < l; i+=1)
+		{
+			let css = cssNames[i];
+			let url = "css/" + css + "-theme-" + theme + ".css";
+			injectCss(document.head, url);
+		}
 	};
 
 	this.addClass = function(element, classname) {

@@ -223,12 +223,14 @@
 		};
 		this.prototype.parse = function(q) {
 			let map = {};
-			for (let keyPair of q.split("&"))
+			let options = q.split("&").filter(o => o);
+			for (let i = 0, l = options.length; i < l; i+=1)
 			{
-				arr = keyPair.split("=");
+				let option = options[i];
+				arr = option.split("=");
 				if (arr.length !== 2)
 				{
-					throw "'" + keyPair + "' could not be parsed into key and values.";
+					throw "'" + option + "' could not be parsed into key and values.";
 				}
 				let key = arr[0];
 				let values = arr[1].split("+");
@@ -374,15 +376,20 @@
 
 		function getNumberFilter(key, value)
 		{
-			value = Number(value);
+			let s1 = value.substring(0, 1);
+			let n1 = Number(value.substring(1));
 
-			let f =
-			value.substring(0, 1) === "!"  ? obj => obj[key] != Number(value.substring(1)) :
-			value.substring(0, 1) === ">"  ? obj => obj[key] > Number(value.substring(1)) :
-			value.substring(0, 1) === "<"  ? obj => obj[key] < Number(value.substring(1)) :
-			value.substring(0, 2) === "x>" ? obj => obj[key] >= Number(value.substring(2)) :
-			value.substring(0, 2) === "x<" ? obj => obj[key] <= Number(value.substring(2)) :
-			obj => value === obj[key];
+			let s2 = value.substring(0, 2);
+			let n2 = Number(value.substring(2));
+
+			let n3 = Number(value);
+
+			let f = s1 === "!"  ? o => o[key] !== n1 :
+					s1 === ">"  ? o => o[key] > n1 :
+					s1 === "<"  ? o => o[key] < n1 :
+					s2 === "x>" ? o => o[key] >= n2 :
+					s2 === "x<" ? o => o[key] <= n2 :
+								  o => o[key] === n3;
 
 			return f;
 		}

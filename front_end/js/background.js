@@ -46,6 +46,10 @@
 		{
 			getPopupInfo(sender, sendResponse, onErr);
 		}
+		else if (msg.request === "get-tags")
+		{
+			g_requester.getTags(sender, sendResponse, onErr);
+		}
 		else if (msg.request === "get-meta")
 		{
 			g_requester.getContent(sender, sendResponse, onErr);
