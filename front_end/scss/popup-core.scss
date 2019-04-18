@@ -125,7 +125,8 @@ body {
   display: block;
   margin: 0;
   font-weight: 400;
-  word-wrap: break-word; }
+  word-wrap: break-word; 
+  user-select: text; }
 .source-menu__tag-list {
   display: inline-block;
   vertical-align: middle;

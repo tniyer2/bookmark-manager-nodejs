@@ -15,6 +15,7 @@ chrome.runtime.sendMessage({request: "find-meta", id: ID}, (response) => {
 
 	if (response.content)
 	{
+		console.log("meta:", response.content);
 		let content = createContent(response.content);
 		el_main.insertBefore(content, el_deleteBtn);
 		el_deleteBtn.disabled = false;

@@ -34,22 +34,61 @@
 	let g_submitted = false;
 
 	attachSubmit();
-	attachEvents();
+	el_searchByBtn.addEventListener("click", switchSearch);
 	load();
 
-	async function load()
+	function load()
 	{
 		let hrefQuery = decodeURI(location.search).substring(1);
-		let q;
-		if (hrefQuery)
+		let i = hrefQuery.lastIndexOf("&");
+		let len = hrefQuery.length;
+		let query = hrefQuery.substring(0, i);
+		let cookie  = hrefQuery.substring(i + 1, len);
+
+		let map;
+		if (query)
 		{
-			q = Searcher.parse(hrefQuery);
+			map = Searcher.parse(query);
 		}
 		else
 		{
-			q = DEFAULT_QUERY;
+			map = DEFAULT_QUERY;
 		}
 
+		useCookie(map, cookie);
+		loadContent(map);
+	}
+
+	function useCookie(map, cookie)
+	{
+		if (map.title)
+		{
+			el_titleInput.value = map.title;
+			if (g_searchByTag) switchSearch();
+		}
+		else if (map.tags)
+		{
+			for (let tag of map.tags)
+			{
+				g_taggle.add(tag);	
+			}
+			if (!g_searchByTag) switchSearch();
+		}
+
+		let indices = cookie.split("-");
+		el_date.selectedIndex = indices[0];
+		el_category.selectedIndex = indices[1];
+		el_sortBy.selectedIndex = indices[2];
+	}
+
+	function makeCookie()
+	{
+		let cookie = `${el_date.selectedIndex}-${el_category.selectedIndex}-${el_sortBy.selectedIndex}`;
+		return cookie;
+	}
+
+	async function loadContent(q)
+	{
 		let meta = await wrap(requestMeta).catch(noop);
 		if (isUdf(meta)) return;
 
@@ -58,66 +97,6 @@
 
 		let tags = await wrap(makeRequest, "get-tags").catch(noop);
 		createAutoComplete(g_taggle, el_searchBox, tags);
-	}
-
-	function onSubmit()
-	{
-		function getSelected(elm)
-		{
-			return elm.options[elm.selectedIndex].value;
-		}
-
-		if (g_submitted)
-		{
-			return;
-		}
-		else
-		{
-			g_submitted = true;
-		}
-
-		let q = "";
-
-		let sortby = getSelected(el_sortBy);
-		if (sortby)
-		{
-			q += "&" + sortby + "=date";
-		}
-
-		if (el_titleInput.value)
-		{
-			q += "&title=" + el_titleInput.value;
-		}
-
-		let tags = g_taggle.getTags().values;
-		let l = tags.length;
-		if (l > 0)
-		{
-			q += "&tags=" + tags[0];
-			for (let i = 1; i < l; i+=1)
-			{
-				q += "+" + tags[i];
-			}
-		}
-
-		let category = getSelected(el_category);
-		if (category)
-		{
-			q += "&category=" + category;
-		}
-
-		let offset = getSelected(el_date);
-		if (offset)
-		{
-			let ms = Number(offset) * 24 * 60 * 60 * 1000;
-			let date = Date.now() - ms;
-			q += "&date=x>" + date;
-		}
-
-		let loc = location.href;
-		let i = loc.indexOf("?");
-		let newLoc = loc.substring(0, i) + "?" + q;
-		location.href = encodeURI(newLoc);
 	}
 
 	async function requestMeta(successCallback, errorCallback)
@@ -188,6 +167,67 @@
 		}
 	}
 
+	function submitSearch()
+	{
+		if (g_submitted) {
+			return;
+		} else {
+			g_submitted = true;
+		}
+
+		let queryString = makeQueryString();
+		let cookie = makeCookie();
+
+		let i = location.href.indexOf("?");
+		let loc = location.href.substring(0, i);
+		let redirect = loc + "?" + queryString + "&" + cookie;
+		location.href = encodeURI(redirect);
+	}
+
+	function makeQueryString()
+	{
+		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
+		let q = "";
+
+		let sortby = getSelected(el_sortBy);
+		if (sortby)
+		{
+			q += "&" + sortby + "=date";
+		}
+
+		let title = el_titleInput.value;
+		if (title)
+		{
+			q += "&title=" + title;
+		}
+
+		let tags = g_taggle.getTags().values;
+		if (tags.length > 0)
+		{
+			q += "&tags=" + tags[0];
+			for (let i = 1, l = tags.length; i < l; i+=1)
+			{
+				q += "+" + tags[i];
+			}
+		}
+
+		let category = getSelected(el_category);
+		if (category)
+		{
+			q += "&category=" + category;
+		}
+
+		let offset = getSelected(el_date);
+		if (offset)
+		{
+			let ms = Number(offset) * 24 * 60 * 60 * 1000;
+			let date = Date.now() - ms;
+			q += "&date=x>" + date;
+		}
+
+		return q;
+	}
+
 	function attachSubmit()
 	{
 		let onEnter = (elm, callback, condition) => {
@@ -202,44 +242,42 @@
 		el_form.addEventListener("submit", (evt) => { 
 			evt.preventDefault();
 		});
-		el_submit.addEventListener("click", onSubmit, {once: true});
+		el_submit.addEventListener("click", submitSearch, {once: true});
 
-		onEnter(el_titleInput, onSubmit, () => el_titleInput.value);
+		onEnter(el_titleInput, submitSearch, () => el_titleInput.value);
 
 		let taggleInput = g_taggle.getInput();
-		onEnter(taggleInput, onSubmit, () => !taggleInput.value);
+		onEnter(taggleInput, submitSearch, () => !taggleInput.value);
 	}
 
-	function attachEvents()
+	function switchSearch()
 	{
-		el_searchByBtn.addEventListener("click", () => {
-			let useTags = el_searchBy.querySelectorAll("use");
-			let a1, a2, r1, r2;
-			if (g_searchByTag)
-			{
-				a1 = el_tagContainer;
-				a2 = useTags[1];
-				r1 = el_titleInput;
-				r2 = useTags[0];
+		let useTags = el_searchBy.querySelectorAll("use");
+		let a1, a2, r1, r2;
+		if (g_searchByTag)
+		{
+			a1 = el_tagContainer;
+			a2 = useTags[1];
+			r1 = el_titleInput;
+			r2 = useTags[0];
 
-				g_taggle.removeAll();
-			}
-			else
-			{
-				a1 = el_titleInput;
-				a2 = useTags[0];
-				r1 = el_tagContainer;
-				r2 = useTags[1];
+			g_taggle.removeAll();
+		}
+		else
+		{
+			a1 = el_titleInput;
+			a2 = useTags[0];
+			r1 = el_tagContainer;
+			r2 = useTags[1];
 
-				el_titleInput.value = "";
-			}
+			el_titleInput.value = "";
+		}
 
-			addClass(a1, cl_hide);
-			addClass(a2, cl_hide);
-			removeClass(r1, cl_hide);
-			removeClass(r2, cl_hide);
+		addClass(a1, cl_hide);
+		addClass(a2, cl_hide);
+		removeClass(r1, cl_hide);
+		removeClass(r2, cl_hide);
 
-			g_searchByTag = !g_searchByTag;
-		});
+		g_searchByTag = !g_searchByTag;
 	}
 }).call(this);

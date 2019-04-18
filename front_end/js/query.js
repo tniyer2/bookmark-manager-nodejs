@@ -190,50 +190,96 @@
 
 	this.Searcher = (function(){
 
-		const STRING_KEYS = ["id", "title", "category", "srcUrl", "docUrl"];
-		const NUMBER_KEYS = ["date", "bytes"];
+		const TITLE_KEY = "title";
+		const TAG_KEY = "tags";
+
+		const NO_FILTER_KEYS 	= [ TITLE_KEY ];
+		const SINGLE_VALUE_KEYS = [ TITLE_KEY, "asc", "dsc" ];
+		const STRING_KEYS 		= [ TITLE_KEY, "id", "category", "srcUrl", "docUrl" ];
+		const NUMBER_KEYS 		= [ "date", "bytes" ];
+
+		const NOT_MODIFIER = "!";
+		const OR_MODIFIER = "*";
+
 		const SEARCH_TOLERANCE = 70;
 
 		this.prototype.query = function(meta, map) {
 
-			let filter = genFilter(map);
-			let sortInfo = genComparator(map);
+			let filter = getFilter(map);
+			let sortInfo = getComparator(map);
+
+			console.log("meta:", meta);
+			console.log("filter:", filter);
 
 			if (filter)
 			{
 				meta = meta.filter(filter);
 			}
+			console.log("meta after filter:", meta);
 
-			if (map.title)
+			let title = map[TITLE_KEY];
+			if (title)
 			{
-				meta = search(meta, map.title[0]);
+				meta = search(meta, title);
 			}
+			console.log("title:", title);
+			console.log("meta after search:", meta);
+
+			let tags = map[TAG_KEY];
+			if (tags)
+			{
+				meta = searchTags(meta, tags);
+			}
+			console.log("tags:", tags);
+			console.log("meta after searchTags:", meta);
 
 			if (sortInfo)
 			{
-				meta.sort(sortInfo.compare);
+				console.log("sortInfo:", sortInfo);
+				meta.sort(sortInfo.comparator);
 
 				if (sortInfo.reverse)
 				{
 					meta.reverse();
 				}
+				console.log("meta after being sorted:", meta);
 			}
 
+			console.log("meta after query:", meta);
 			return meta;
 		};
 		this.prototype.parse = function(q) {
+
+			function split(arr, reg)
+			{
+				return arr.split(reg).filter(o => o);
+			}
+
 			let map = {};
-			let options = q.split("&").filter(o => o);
+			if (!q) return map;
+
+			let options = split(q, "&");
+
 			for (let i = 0, l = options.length; i < l; i+=1)
 			{
-				let option = options[i];
-				arr = option.split("=");
+				let opt = options[i];
+				let arr = opt.split("=");
 				if (arr.length !== 2)
 				{
-					throw "'" + option + "' could not be parsed into key and values.";
+					let e = "'" + opt + "' could not be parsed into a key and values.";
+					throw new Error(e);
 				}
+
 				let key = arr[0];
-				let values = arr[1].split("+");
+				let values;
+				if (SINGLE_VALUE_KEYS.includes(key))
+				{
+					values = arr[1];
+				}
+				else
+				{
+					values = split(arr[1], "+");
+				}
 
 				map[key] = values;
 			}
@@ -242,80 +288,60 @@
 		};
 		return new this();
 
-		function genFilter(map)
+		function getFilter(map)
 		{
-			let filter;
+			let filters = [];
 
 			for (let key in map)
 			{
-				if (key === "title" || key === "asc" || key === "dsc") continue;
+				if (!map.hasOwnProperty(key)) continue;
 
-				let getFilter = key === "tags"  ? getTagFilter :
-								STRING_KEYS.find(element => key === String(element)) ? getStringFilter :
-								NUMBER_KEYS.find(element => key === String(element)) ? getNumberFilter :
-								null;
-
-				if (getFilter === null)
+				let factory;
+				if (NO_FILTER_KEYS.includes(key))
 				{
-					throw "key '" + key + "' is unsupported.";
+					continue;
+				}
+				else if (STRING_KEYS.includes(key))
+				{
+					console.log(key + " is a string key.");
+					factory = getStringFilter;
+				}
+				else if (NUMBER_KEYS.includes(key))
+				{
+					console.log(key + " is a number key.");
+					factory = getNumberFilter;
+				}
+				else
+				{
+					continue;
 				}
 
-				let subFilters = [];
-				for (let value of map[key])
-				{
-					let f = getFilter(key, value);
-					subFilters.push(f);
-				}
-
-				filter = (obj) => {
-					for (let f of subFilters)
-					{
-						if (!f(obj))
-						{
-							return false;
-						}
-					}
-					return true;
-				};
+				let f = factory(key, map[key]);
+				filters.push(f);
 			}
 
-			return filter;
+			console.log("filters before being combined:", filters.splice());
+			return combineFilters(filters);
 		}
 
-		function genComparator(map)
+		function getComparator(map)
 		{
-			let sortInfo = {};
-			let sortKey;
+			let sortKey = map.asc ? map.asc:
+						  map.dsc ? map.dsc:
+						  null;
+			if (sortKey === null) return;
 
-			if (map.asc)
-			{
-				sortKey = String(map.asc);
-			}
-			else if (map.dsc)
-			{
-				sortKey = String(map.dsc);
-			}
-			else
-			{
-				return null;
-			}
+			let info = {reverse: Boolean(map.dsc)};
 
-			if (sortKey === "title" && "title" in map)
+			if (STRING_KEYS.includes(sortKey))
 			{
-				return null;
-			}
-
-			sortInfo.reverse = Boolean(map.dsc);
-
-			if (STRING_KEYS.find(element => sortKey === element))
-			{
-				sortInfo.compare = (first, second) => {
+				info.comparator = (first, second) => {
 					return first[sortKey].localeCompare(second[sortKey]);
 				};
 			}
-			else if (NUMBER_KEYS.find(element => sortKey === element))
+			else if (NUMBER_KEYS.includes(sortKey))
 			{
-				sortInfo.compare = (first, second) => {
+				info.comparator = (first, second) => {
 					return first[sortKey] - second[sortKey];
 				};
 			}
@@ -324,7 +350,7 @@
 				throw "sortKey '" + sortKey + "' is not supported.";
 			}
 
-			return sortInfo;
+			return info;
 		}
 
 		function search(meta, match)
@@ -346,52 +372,183 @@
 			return meta;
 		}
 
-		function getTagFilter(key, value)
+		function searchTags(meta, match)
 		{
-			let not = false;
-			let first = value.substring(0, 1);
+			let {whitelist, optional, blacklist} = parseModifiers(match);
+			console.log("whitelist:", whitelist);
+			console.log("optional:", optional);
+			console.log("blacklist:", blacklist);
 
-			if (first === "!")
+			function evaluate(content)
 			{
-				not = true;
-				value = value.substring(1);
+				let tags = content[TAG_KEY];
+
+				for (let tag of tags)
+				{
+					if (blacklist.find(o => o === tag))
+					{
+						return 0;
+					}
+				}
+
+				if (whitelist.length > 0)
+				{
+					for (let wl of whitelist)
+					{
+						if (!tags.find(o => o === wl))
+						{
+							return 0;
+						}
+					}
+					return 1;
+				}
+				else if (optional.length > 0)
+				{
+					let count = 0;
+					for (let tag of tags)
+					{
+						if (optional.find(o => o === tag))
+						{
+							count += 1;
+						}
+					}
+					return count;
+				}
+				else
+				{
+					return 1;
+				}
 			}
 
-			let f = (obj) => {
-				let b = Boolean(obj[key].find(tag => String(tag) === value));
-				return not ? !b : b;
+			let cache = {};
+			for (let content of meta)
+			{
+				cache[content.id] = evaluate(content);
+			}
+
+			meta = meta.filter(c => cache[c.id] !== 0);
+			meta.sort((first, second) => {
+				return cache[first.id] - cache[second.id];
+			});
+
+			return meta;
+		}
+
+		function getStringFilter(key, values)
+		{
+			let {whitelist, optional, blacklist} = parseModifiers(values);
+
+			return (obj) => {
+				let objectValue = obj[key];
+				let equalTo = o => o === objectValue;
+
+				if (blacklist.find(equalTo))
+				{
+					return false;
+				}
+
+				if (whitelist.length > 0)
+				{
+					return whitelist.every(equalTo)
+				}
+				else
+				{
+					return optional.find(equalTo)
+				}
 			};
-
-			return f;
 		}
 
-		function getStringFilter(key, value)
+		function parseModifiers(values)
 		{
-			let f = value.substring(0, 1) === "!" ?
-					obj => obj[key] !== value.substring(1) :
-					obj => obj[key] === value;
+			let whitelist = [];
+			let optional  = [];
+			let blacklist = [];
 
-			return f;
+			function inner(val)
+			{
+				let p = val.substring(0, 1);
+
+				if (p === OR_MODIFIER)
+				{
+					optional.push(val.substring(1));
+				}
+				else if (p === NOT_MODIFIER)
+				{
+					blacklist.push(val.substring(1));
+				}
+				else
+				{
+					whitelist.push(val);
+				}
+			}
+
+			if (typeof values === "string")
+			{
+				inner(values);
+			}
+			else
+			{
+				for (let val of values)
+				{
+					inner(val);
+				}
+			}
+
+			return { whitelist: whitelist, 
+					 optional: optional, 
+					 blacklist: blacklist };
 		}
 
-		function getNumberFilter(key, value)
+		function getNumberFilter(key, values)
 		{
-			let s1 = value.substring(0, 1);
-			let n1 = Number(value.substring(1));
+			function inner(val)
+			{
+				let s1 = val.substring(0, 1);
+				let n1 = Number(val.substring(1));
 
-			let s2 = value.substring(0, 2);
-			let n2 = Number(value.substring(2));
+				let s2 = val.substring(0, 2);
+				let n2 = Number(val.substring(2));
 
-			let n3 = Number(value);
+				let n3 = Number(val);
 
-			let f = s1 === "!"  ? o => o[key] !== n1 :
-					s1 === ">"  ? o => o[key] > n1 :
-					s1 === "<"  ? o => o[key] < n1 :
-					s2 === "x>" ? o => o[key] >= n2 :
-					s2 === "x<" ? o => o[key] <= n2 :
-								  o => o[key] === n3;
+				let f = s1 === "!"  ? o => o[key] !== n1 :
+						s1 === ">"  ? o => o[key] > n1 :
+						s1 === "<"  ? o => o[key] < n1 :
+						s2 === "x>" ? o => o[key] >= n2 :
+						s2 === "x<" ? o => o[key] <= n2 :
+									  o => o[key] === n3;
 
-			return f;
+				return f;
+			}
+
+			let filters = [];
+			if (typeof values === "string")
+			{
+				filters.push(inner(values));
+			}
+			else
+			{
+				for (let val of values)
+				{
+					filters.push(inner(val));
+				}
+			}
+
+			return combineFilters(filters);
+		}
+
+		function combineFilters(filters)
+		{
+			return (obj) => {
+				for (let f of filters)
+				{
+					if (!f(obj))
+					{
+						return false;
+					}
+				}
+				return true;
+			}; 
 		}
 	}).call(function(){});
 }).call(this);

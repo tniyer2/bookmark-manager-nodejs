@@ -48,12 +48,19 @@
 						 response.scanInfo, response.mediaType === "image");
 	})();
 
+	function getRandomDate(days)
+	{
+		let rand = Math.random() * days;
+		let offset = rand * 24 * 60 * 60 * 1000;
+		return Date.now() - offset;
+	}
+
 	function saveMeta(srcUrl, category, cache)
 	{
 		let meta = { title: el_title.value,
 					 tags: g_taggle.getTags().values,
 					 category: category,
-					 date: Date.now(),
+					 date: getRandomDate(35) /*Date.now()*/,
 					 srcUrl: srcUrl };
 
 		let msg = { request: "add-meta",
@@ -112,7 +119,12 @@
 
 			g_meta = { srcUrl: data.srcUrl,
 					   category: data.category };
-			el_title.value = data.title;
+
+			if (!el_title.value)
+			{
+				el_title.value = data.title;
+			}
+
 			if (g_noSourceAlert)
 			{
 				g_noSourceAlert.remove();
@@ -206,10 +218,11 @@
 
 	function attachMaskEvents()
 	{
+		let eventName = "mousedown";
 		let stopBubble = (evt) => { evt.stopPropagation(); };
-		el_saveMenu.addEventListener("click", stopBubble);
-		el_sourceMenu.addEventListener("click", stopBubble);
-		document.documentElement.addEventListener("click", closePopup);
+		el_saveMenu.addEventListener(eventName, stopBubble);
+		el_sourceMenu.addEventListener(eventName, stopBubble);
+		document.documentElement.addEventListener(eventName, closePopup);
 	}
 
 	function attachButtonEvents()
