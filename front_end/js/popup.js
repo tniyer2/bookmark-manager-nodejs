@@ -8,6 +8,11 @@
 	const NO_SOURCE_MESSAGE = "Pick a source first.";
 	const NO_SOURCE_ALERT_DELAY = 5;
 
+	const RESERVED_KEYS = ['*', '!'];
+	const RESERVED_KEYS_REGEX = RegExp(`[${RESERVED_KEYS.join('')}]`, 'g');
+	const RESERVED_KEY_MESSAGE = (character) => `'${character}' is a reserved character`;
+	const RESERVED_KEY_ALERT_DELAY = 5;
+
     const cl_hide = "noshow";
     const cl_scrollbar = "customScrollbar1";
 
@@ -21,11 +26,9 @@
 
 	const g_taggleOptions = { placeholder: "enter tags...",
 							  tabIndex: 0 };
-	const g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
+	let g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
 
-	let g_meta,
-		g_popupId,
-		g_tabId;
+	let g_meta, g_popupId, g_tabId;
 	let g_cache = false;
 	let g_noSourceAlert;
 
@@ -43,7 +46,7 @@
 
 		enableElement(el_bookmarkBtn);
 		enableElement(el_saveMenu);
-		createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
+		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
 		createSourceList(response.srcUrl, response.docUrl,
 						 response.scanInfo, response.mediaType === "image");
 	})();
@@ -60,7 +63,7 @@
 		let meta = { title: el_title.value,
 					 tags: g_taggle.getTags().values,
 					 category: category,
-					 date: getRandomDate(35) /*Date.now()*/,
+					 date: Date.now()/*getRandomDate(35)*/,
 					 srcUrl: srcUrl };
 
 		let msg = { request: "add-meta",
@@ -111,6 +114,30 @@
 	{
 		let message = {to: "content.js", close: true};
 		chrome.tabs.sendMessage(g_tabId, message);
+	}
+
+	function createTaggle(container, options)
+	{
+		options.inputFormatter = (input) => {
+			let prevAlert;
+
+			input.addEventListener("input", () => {
+				input.value = input.value.replace(RESERVED_KEYS_REGEX, '');
+			});
+			input.addEventListener("keydown", (evt) => {
+				if (RESERVED_KEYS.includes(evt.key))
+				{
+					if (prevAlert)
+					{
+						prevAlert.removeImmediately();
+					}
+
+					prevAlert = alerter.alert(RESERVED_KEY_MESSAGE(evt.key), RESERVED_KEY_ALERT_DELAY);
+				}
+			});
+		};
+		taggle = MyTaggle.createTaggle(container, options);
+		return taggle;
 	}
 
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
@@ -248,7 +275,7 @@
 			}
 		};
 		let bookmark = () => {
-			saveMeta("docUrl", "web", false);
+			saveMeta("docUrl", "bookmark", false);
 		};
 
 		attachSave();

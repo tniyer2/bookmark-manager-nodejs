@@ -1,4 +1,5 @@
 
+const MyTaggle = {};
 (function(){
 	const TAG_CHARCTER_LIMIT = 30;
 	const COMMA_CODE = 188;
@@ -50,4 +51,4 @@
 					   onConfirm: confirmInput });
 		ac.el_list.classList.add(cl_scrollbar);
 	};
-}).call(this);
+}).call(MyTaggle);

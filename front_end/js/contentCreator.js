@@ -1,6 +1,33 @@
 
 (function(){
 
+	const FAVICON_CRAWLER_URL = "https://www.google.com/s2/favicons";
+
+	function createImage(source)
+	{
+		let image = document.createElement("img");
+		image.classList.add("content-block__image");
+		image.src = source;
+		return image;
+	}
+
+	function createVideo(source)
+	{
+		let video = document.createElement("video");
+		video.classList.add("content-block__video");
+		video.controls = true;
+		video.loop = true;
+		video.src = source;
+		return video;
+	}
+
+	function createIcon(source)
+	{
+		let url = new URL(source);
+		let faviconUrl = FAVICON_CRAWLER_URL + "?domain=" + url.hostname;
+		return createImage(faviconUrl);
+	}
+
 	this.createContent = function(meta) {
 
 		let contentBlock = document.createElement("div");
@@ -14,35 +41,21 @@
 		let titleTextNode = document.createTextNode(meta.title);
 		title.appendChild(titleTextNode);
 
+		let source = meta.path ? meta.path : meta.srcUrl;
 		if (meta.category === "image")
 		{
-			let image = document.createElement("img");
-			image.classList.add("content-block__image");
-			image.src = meta.path ? meta.path : meta.srcUrl;
-
+			let image = createImage(source);
 			sourceBlock.appendChild(image);
 		}
 		else if (meta.category === "video")
 		{
-			let video = document.createElement("video");
-			video.classList.add("content-block__video");
-			video.controls = true;
-			video.loop = true;
-
-			if (meta.path)
-			{
-				video.src = meta.path;
-			}
-			else
-			{
-				video.src = meta.srcUrl;
-			}
-
+			let video = createVideo(source);
 			sourceBlock.appendChild(video);
 		}
-		else if (meta.category === "web")
+		else if (meta.category === "bookmark")
 		{
-			// not supported for now
+			let favicon = createIcon(source);
+			sourceBlock.appendChild(favicon);
 		}
 		else
 		{

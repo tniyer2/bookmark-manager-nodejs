@@ -9,8 +9,6 @@
 		// @return the ratio that match matches main;
 		//		   0(inclusive) to 100(inclusive)
 		return function(main, match) {
-			// console.log("title: " + main);
-			// console.log("query: " + match);
 
 			if (!isString(main) || !isString(match))
 			{
@@ -47,9 +45,6 @@
 					sortedIndex[i].splice(insertedAt, 0, j);
 				}
 			}
-
-			// console.log(sorted);
-			// console.log(sortedIndex);
 
 			let totalCharacters = 0;
 			let totalDistance = 0;
@@ -208,44 +203,33 @@
 			let filter = getFilter(map);
 			let sortInfo = getComparator(map);
 
-			console.log("meta:", meta);
-			console.log("filter:", filter);
-
 			if (filter)
 			{
 				meta = meta.filter(filter);
 			}
-			console.log("meta after filter:", meta);
 
 			let title = map[TITLE_KEY];
 			if (title)
 			{
 				meta = search(meta, title);
 			}
-			console.log("title:", title);
-			console.log("meta after search:", meta);
 
 			let tags = map[TAG_KEY];
 			if (tags)
 			{
 				meta = searchTags(meta, tags);
 			}
-			console.log("tags:", tags);
-			console.log("meta after searchTags:", meta);
 
 			if (sortInfo)
 			{
-				console.log("sortInfo:", sortInfo);
 				meta.sort(sortInfo.comparator);
 
 				if (sortInfo.reverse)
 				{
 					meta.reverse();
 				}
-				console.log("meta after being sorted:", meta);
 			}
 
-			console.log("meta after query:", meta);
 			return meta;
 		};
 		this.prototype.parse = function(q) {
@@ -274,11 +258,11 @@
 				let values;
 				if (SINGLE_VALUE_KEYS.includes(key))
 				{
-					values = arr[1];
+					values = decodeURIComponent(arr[1]);
 				}
 				else
 				{
-					values = split(arr[1], "+");
+					values = split(arr[1], "+").map(s => decodeURIComponent(s));
 				}
 
 				map[key] = values;
@@ -303,12 +287,10 @@
 				}
 				else if (STRING_KEYS.includes(key))
 				{
-					console.log(key + " is a string key.");
 					factory = getStringFilter;
 				}
 				else if (NUMBER_KEYS.includes(key))
 				{
-					console.log(key + " is a number key.");
 					factory = getNumberFilter;
 				}
 				else
@@ -320,7 +302,6 @@
 				filters.push(f);
 			}
 
-			console.log("filters before being combined:", filters.splice());
 			return combineFilters(filters);
 		}
 
@@ -375,9 +356,6 @@
 		function searchTags(meta, match)
 		{
 			let {whitelist, optional, blacklist} = parseModifiers(match);
-			console.log("whitelist:", whitelist);
-			console.log("optional:", optional);
-			console.log("blacklist:", blacklist);
 
 			function evaluate(content)
 			{

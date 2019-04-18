@@ -24,11 +24,6 @@
 	const el_feed = document.getElementById("feed");
 
 	const g_taggle = createTaggle(el_tagContainer, {placeholder: "enter tags..."});
-	if (TAGGLE_RESIZEABLE)
-	{
-		el_tagContainer.style.width = "auto";
-		el_tagContainer.style.minWidth = INPUT_WIDTH + "px";
-	}
 	
 	let g_searchByTag = false;
 	let g_submitted = false;
@@ -39,7 +34,7 @@
 
 	function load()
 	{
-		let hrefQuery = decodeURI(location.search).substring(1);
+		let hrefQuery = location.search.substring(1);
 		let i = hrefQuery.lastIndexOf("&");
 		let len = hrefQuery.length;
 		let query = hrefQuery.substring(0, i);
@@ -57,6 +52,67 @@
 
 		useCookie(map, cookie);
 		loadContent(map);
+	}
+
+	function submitSearch()
+	{
+		if (g_submitted) {
+			return;
+		} else {
+			g_submitted = true;
+		}
+
+		let queryString = makeQueryString();
+		let cookie = makeCookie();
+
+		let i = location.href.indexOf("?");
+		let loc = location.href.substring(0, i);
+		let redirect = loc + "?" + queryString + "&" + cookie;
+		location.href = redirect;
+	}
+
+	function makeQueryString()
+	{
+		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
+		let q = "";
+
+		let sortby = getSelected(el_sortBy);
+		if (sortby)
+		{
+			q += "&" + sortby + "=date";
+		}
+
+		let title = el_titleInput.value;
+		if (title)
+		{
+			q += "&title=" + encodeURIComponent(title);
+		}
+
+		let tags = g_taggle.getTags().values;
+		if (tags.length > 0)
+		{
+			q += "&tags=";
+			for (let i = 0, l = tags.length; i < l; i+=1)
+			{
+				q += "+" + encodeURIComponent(tags[i]);
+			}
+		}
+
+		let category = getSelected(el_category);
+		if (category)
+		{
+			q += "&category=" + category;
+		}
+
+		let offset = getSelected(el_date);
+		if (offset)
+		{
+			let ms = Number(offset) * 24 * 60 * 60 * 1000;
+			let date = Date.now() - ms;
+			q += "&date=x>" + date;
+		}
+
+		return q;
 	}
 
 	function useCookie(map, cookie)
@@ -96,7 +152,7 @@
 		populate(meta);
 
 		let tags = await wrap(makeRequest, "get-tags").catch(noop);
-		createAutoComplete(g_taggle, el_searchBox, tags);
+		MyTaggle.createAutoComplete(g_taggle, el_searchBox, tags);
 	}
 
 	async function requestMeta(successCallback, errorCallback)
@@ -167,67 +223,6 @@
 		}
 	}
 
-	function submitSearch()
-	{
-		if (g_submitted) {
-			return;
-		} else {
-			g_submitted = true;
-		}
-
-		let queryString = makeQueryString();
-		let cookie = makeCookie();
-
-		let i = location.href.indexOf("?");
-		let loc = location.href.substring(0, i);
-		let redirect = loc + "?" + queryString + "&" + cookie;
-		location.href = encodeURI(redirect);
-	}
-
-	function makeQueryString()
-	{
-		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
-		let q = "";
-
-		let sortby = getSelected(el_sortBy);
-		if (sortby)
-		{
-			q += "&" + sortby + "=date";
-		}
-
-		let title = el_titleInput.value;
-		if (title)
-		{
-			q += "&title=" + title;
-		}
-
-		let tags = g_taggle.getTags().values;
-		if (tags.length > 0)
-		{
-			q += "&tags=" + tags[0];
-			for (let i = 1, l = tags.length; i < l; i+=1)
-			{
-				q += "+" + tags[i];
-			}
-		}
-
-		let category = getSelected(el_category);
-		if (category)
-		{
-			q += "&category=" + category;
-		}
-
-		let offset = getSelected(el_date);
-		if (offset)
-		{
-			let ms = Number(offset) * 24 * 60 * 60 * 1000;
-			let date = Date.now() - ms;
-			q += "&date=x>" + date;
-		}
-
-		return q;
-	}
-
 	function attachSubmit()
 	{
 		let onEnter = (elm, callback, condition) => {
@@ -247,7 +242,9 @@
 		onEnter(el_titleInput, submitSearch, () => el_titleInput.value);
 
 		let taggleInput = g_taggle.getInput();
-		onEnter(taggleInput, submitSearch, () => !taggleInput.value);
+		onEnter(taggleInput, submitSearch, () => {
+			return !taggleInput.value && g_taggle.getTags().values.length > 0;
+		});
 	}
 
 	function switchSearch()
@@ -279,5 +276,15 @@
 		removeClass(r2, cl_hide);
 
 		g_searchByTag = !g_searchByTag;
+	}
+
+	function createTaggle(container, options)
+	{
+		if (TAGGLE_RESIZEABLE)
+		{
+			container.style.width = "auto";
+			container.style.minWidth = INPUT_WIDTH + "px";
+		}
+		return MyTaggle.createTaggle(container, options);
 	}
 }).call(this);

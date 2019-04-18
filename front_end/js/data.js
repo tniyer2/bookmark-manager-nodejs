@@ -116,7 +116,7 @@
 	}).call(this);
 
 	const DataManager = (function(){
-		const TAGS_KEY = "tags";
+		const TAG_KEY = "tags";
 		const ID_LENGTH = 40;
 
 		let INNER_INSTANCE;
@@ -127,7 +127,7 @@
 				this._tagTracker = new TagCounter();
 
 				meta.forEach((content) => {
-					content[TAGS_KEY].forEach((tag) => {
+					content[TAG_KEY].forEach((tag) => {
 						this._tagTracker.increment(tag);
 					});
 				});
@@ -158,7 +158,7 @@
 					return;
 				}
 
-				let tags = content[TAGS_KEY];
+				let tags = content[TAG_KEY];
 				tags.forEach((tag) => {
 					this._tagTracker.increment(tag);
 				});
@@ -189,7 +189,7 @@
 				let success = await wrap(save, this._meta).catch(errorCallback);
 				if (isUdf(success)) return;
 
-				let tags = content[TAGS_KEY];
+				let tags = content[TAG_KEY];
 				tags.forEach((tag) => {
 					this._tagTracker.decrement(tag);
 				});
@@ -326,6 +326,8 @@
 
 	this.RequestManager = (function(){
 		const APP_ID_PREFIX = "app_";
+		const TITLE_KEY = "title";
+		const DEFAULT_TITLE = "untitled";
 
 		return class {
 			constructor(connector)
@@ -389,6 +391,11 @@
 
 			async addContent(content, cache, sender, successCallback, errorCallback)
 			{
+				if (!content[TITLE_KEY])
+				{
+					content[TITLE_KEY] = DEFAULT_TITLE;
+				}
+
 				let port = await wrap(this._connector.connect
 						 		 .bind(this._connector))
 						 		 .catch(e => console.warn(e));

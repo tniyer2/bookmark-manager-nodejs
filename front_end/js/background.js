@@ -1,6 +1,7 @@
 
 (function(){
 	
+	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
 	const CONTEXT_OPTIONS = { title: "Save",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
@@ -22,7 +23,16 @@
 		return true;
 	});
 	chrome.browserAction.onClicked.addListener((tab) => {
-		chrome.tabs.create({url: "html/gallery.html"});
+		tabUrl = new URL(tab.url);
+		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
+		if (tabUrlWOQuery === GALLERY_URL)
+		{
+			chrome.tabs.update(tab.id, {url: GALLERY_URL});
+		}
+		else
+		{
+			chrome.tabs.create({url: GALLERY_URL});
+		}
 	});
 	chrome.contextMenus.removeAll(() => {
 		chrome.contextMenus.create(CONTEXT_OPTIONS);
