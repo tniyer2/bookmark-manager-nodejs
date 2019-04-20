@@ -3,9 +3,6 @@
 
 	injectThemeCss("light", ["gallery", "taggle", "scrollbar", "alerts"]);
 
-	const INPUT_WIDTH = 300;
-	const TAGGLE_RESIZEABLE = false;
-
 	const CONTENT_LINK  = "singleView.html";
 	const DEFAULT_QUERY = {dsc: "date"};
 	const cl_hide = "noshow";
@@ -23,13 +20,15 @@
 
 	const el_feed = document.getElementById("feed");
 
-	const g_taggle = createTaggle(el_tagContainer, {placeholder: "enter tags..."});
+	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."});
 	
+	let g_titleWidget, g_tagWidget;
 	let g_searchByTag = false;
 	let g_submitted = false;
 
 	attachSubmit();
 	el_searchByBtn.addEventListener("click", switchSearch);
+	attachStyleEvents();
 	load();
 
 	function load()
@@ -247,16 +246,30 @@
 		});
 	}
 
+	function attachStyleEvents()
+	{
+		g_titleWidget = Widgets.styleOnFocus(el_searchBox, "focus", 
+							{ focusTarget: el_titleInput, 
+							  mouseTarget: el_searchBox,
+							  disable: g_searchByTag });
+		g_tagWidget = Widgets.styleOnFocus(el_searchBox, "focus",
+							{ focusTarget: el_tagContainer, 
+			  				  mouseTarget: el_searchBox,
+							  disable: !g_searchByTag });
+	}
+
 	function switchSearch()
 	{
 		let useTags = el_searchBy.querySelectorAll("use");
-		let a1, a2, r1, r2;
+		let a1, a2, r1, r2, w1, w2;
 		if (g_searchByTag)
 		{
 			a1 = el_tagContainer;
 			a2 = useTags[1];
 			r1 = el_titleInput;
 			r2 = useTags[0];
+			w1 = g_tagWidget;
+			w2 = g_titleWidget;
 
 			g_taggle.removeAll();
 		}
@@ -266,6 +279,8 @@
 			a2 = useTags[0];
 			r1 = el_tagContainer;
 			r2 = useTags[1];
+			w1 = g_titleWidget;
+			w2 = g_tagWidget;
 
 			el_titleInput.value = "";
 		}
@@ -274,17 +289,9 @@
 		addClass(a2, cl_hide);
 		removeClass(r1, cl_hide);
 		removeClass(r2, cl_hide);
+		w1.disable();
+		w2.enable();
 
 		g_searchByTag = !g_searchByTag;
-	}
-
-	function createTaggle(container, options)
-	{
-		if (TAGGLE_RESIZEABLE)
-		{
-			container.style.width = "auto";
-			container.style.minWidth = INPUT_WIDTH + "px";
-		}
-		return MyTaggle.createTaggle(container, options);
 	}
 }).call(this);

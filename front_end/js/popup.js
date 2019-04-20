@@ -306,8 +306,8 @@
 
 	function attachStyleEvents()
 	{
-		Widgets.styleOnFocus(el_title, el_title.parentElement, "focus");
-		Widgets.styleOnFocus(el_tagContainer, el_tagContainer, "focus");
+		Widgets.styleOnFocus(el_title.parentElement, "focus", {target: el_title});
+		Widgets.styleOnFocus(el_tagContainer, "focus", {target: el_tagContainer});
 
 		el_title.addEventListener("focus", () => {
 			el_title.placeholder = "";

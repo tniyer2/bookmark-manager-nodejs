@@ -12,9 +12,9 @@
 <body>
 	<svg style="position:absolute;width:0px;height:0px;">
      	<defs>
-     		<symbol id="icon-search" viewBox="0 0 32 32">
+     		<symbol id="icon-search" viewBox="0 0 100 100">
      			<title>search</title>
-     			<path d="M31.008 27.231l-7.58-6.447c-0.784-0.705-1.622-1.029-2.299-0.998 1.789-2.096 2.87-4.815 2.87-7.787 0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12c2.972 0 5.691-1.081 7.787-2.87-0.031 0.677 0.293 1.515 0.998 2.299l6.447 7.58c1.104 1.226 2.907 1.33 4.007 0.23s0.997-2.903-0.23-4.007zM12 20c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"></path>
+     			<path d="M91.9,91.9c-3.5,3.5-9.2,3.5-12.7,0L62.7,75.4C56.9,79,50.1,81,42.7,81C21.6,81,4.5,63.9,4.5,42.7  S21.6,4.5,42.7,4.5S81,21.6,81,42.7c0,7.3-2.1,14.1-5.6,20l16.5,16.5C95.4,82.7,95.4,88.4,91.9,91.9z M42.7,18  C29.1,18,18,29.1,18,42.7s11.1,24.8,24.8,24.8s24.8-11.1,24.8-24.8S56.4,18,42.7,18z"></path>
      		</symbol>
      		<symbol id="icon-title" viewBox="0 0 1542.997 860.247">
      			<title>search by title</title>
@@ -24,26 +24,37 @@
      			<title>search by tag</title>
      			<path d="M30.5 0h-12c-0.825 0-1.977 0.477-2.561 1.061l-14.879 14.879c-0.583 0.583-0.583 1.538 0 2.121l12.879 12.879c0.583 0.583 1.538 0.583 2.121 0l14.879-14.879c0.583-0.583 1.061-1.736 1.061-2.561v-12c0-0.825-0.675-1.5-1.5-1.5zM23 12c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"></path>
      		</symbol>
+     		<symbol id="icon-settings" viewBox="0 0 32 32">
+     			<title>settings</title>
+     			<path d="M29.181 19.070c-1.679-2.908-0.669-6.634 2.255-8.328l-3.145-5.447c-0.898 0.527-1.943 0.829-3.058 0.829-3.361 0-6.085-2.742-6.085-6.125h-6.289c0.008 1.044-0.252 2.103-0.811 3.070-1.679 2.908-5.411 3.897-8.339 2.211l-3.144 5.447c0.905 0.515 1.689 1.268 2.246 2.234 1.676 2.903 0.672 6.623-2.241 8.319l3.145 5.447c0.895-0.522 1.935-0.82 3.044-0.82 3.35 0 6.067 2.725 6.084 6.092h6.289c-0.003-1.034 0.259-2.080 0.811-3.038 1.676-2.903 5.399-3.894 8.325-2.219l3.145-5.447c-0.899-0.515-1.678-1.266-2.232-2.226zM16 22.479c-3.578 0-6.479-2.901-6.479-6.479s2.901-6.479 6.479-6.479c3.578 0 6.479 2.901 6.479 6.479s-2.901 6.479-6.479 6.479z"></path>
+     		</symbol>
      	</defs>
      </svg>
-	<div class="header">
+	<div class="menubar">
 		<form id="search" class="search">
 			<input type="text" style="display:none;">
-			<div class="search__search-box-wrapper">
-				<div id="search-box" class="search__search-box">
-					<input id="title-input" maxlength="100" type="text" placeholder="enter title..." class="search__title-input">
-					<div id="tag-container" class="noshow search__tag-container">
-					</div>
-					<btn id="searchby-btn" class="search__searchby-btn"></btn>
-					<div id="searchby" class="search__searchby">
-						<svg>
-							<use href="#icon-title"/>
-							<use href="#icon-tag" class="noshow"/>
-						</svg>
+			<div class="search__row1">
+				<div class="search__search-box-wrapper">
+					<div id="search-box" class="search__search-box">
+						<input id="title-input" maxlength="100" type="text" placeholder="enter title..." class="search__title-input">
+						<div id="tag-container" class="noshow search__tag-container">
+						</div>
+						<btn id="searchby-btn" class="search__searchby-btn"></btn>
+						<div id="searchby" class="search__searchby">
+							<svg>
+								<use href="#icon-title"/>
+								<use href="#icon-tag" class="noshow"/>
+							</svg>
+						</div>
 					</div>
 				</div>
+				<btn id="submit" class="search__submit">
+					<svg class="search__svg">
+						<use href="#icon-search"/>
+					</svg>
+				</btn>
 			</div>
-			<div>
+			<div class="search__row2">
 				<div class="search__dropdown search__date">
 					<p>from</p>
 					<select id="date">
@@ -72,12 +83,14 @@
 					</select>
 				</div>
 			</div>
-			<btn id="submit" class="search__submit">
-				<svg>
-					<use href="#icon-search"/>
-				</svg>
-			</btn>
 		</form>
+		<div class="menubar-right">
+			<a href="settings.html" target="_blank" class="settings-link">
+				<svg class="search__svg">
+					<use href="#icon-settings"/>
+				</svg>
+			</a>
+		</div>
 	</div>
 	<div id="feed">
 	</div>

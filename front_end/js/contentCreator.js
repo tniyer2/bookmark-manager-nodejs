@@ -21,6 +21,13 @@
 		return video;
 	}
 
+	function createYoutube(source)
+	{
+		let iframe = document.createElement("iframe");
+		iframe.src = source;
+		return iframe;
+	}
+
 	function createIcon(source)
 	{
 		let url = new URL(source);
@@ -42,20 +49,22 @@
 		title.appendChild(titleTextNode);
 
 		let source = meta.path ? meta.path : meta.srcUrl;
+		let content;
 		if (meta.category === "image")
 		{
-			let image = createImage(source);
-			sourceBlock.appendChild(image);
+			content = createImage(source);
 		}
 		else if (meta.category === "video")
 		{
-			let video = createVideo(source);
-			sourceBlock.appendChild(video);
+			content = createVideo(source);
+		}
+		else if (meta.category === "youtube")
+		{
+			content = createYoutube(meta.srcUrl);
 		}
 		else if (meta.category === "bookmark")
 		{
-			let favicon = createIcon(source);
-			sourceBlock.appendChild(favicon);
+			content = createIcon(source);
 		}
 		else
 		{
@@ -63,6 +72,7 @@
 			return;
 		}
 
+		sourceBlock.appendChild(content);
 		contentBlock.appendChild(sourceBlock);
 		contentBlock.appendChild(title);
 

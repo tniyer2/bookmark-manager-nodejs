@@ -25,52 +25,79 @@ const Widgets = {};
 	};
 
 	this.AwesomeFocus = class {
-		constructor(target, onfocus, onblur)
+		constructor(focusCallback, blurCallback, options)
 		{
-			this._target = target;
-			this._onfocus = onfocus;
-			this._onblur = onblur;
+			if (options.target)
+			{
+				this._mouseTarget = options.target;
+				this._focusTarget = options.target;
+			}
+			else
+			{
+				this._mouseTarget = options.mouseTarget;
+				this._focusTarget = options.focusTarget;
+			}
 
-			this._listenMouse();
-			this._attachEvents();
+			this._focusCallback = focusCallback;
+			this._blurCallback = blurCallback;
+
+			this._onfocus = (function(){
+				this._removeMouse();
+			}).bind(this);
+			this._onblur = (function(){
+				this._listenMouse();
+				this._blurCallback();
+			}).bind(this);
+
+			if (options.disable !== true)
+			{
+				this.enable();
+			}
 		}
 
-		_attachEvents()
+		enable()
 		{
-			this._target.addEventListener("focus", () => {
-				this._removeMouse();
-			});
-			this._target.addEventListener("blur", () => {
-				this._listenMouse();
-				this._onblur();
-			});
+			this._listenMouse();
+			this._listenFocus();
+		}
+
+		disable()
+		{
+			this._removeMouse();
+			this._removeFocus();
+		}
+
+		_listenFocus()
+		{
+			this._focusTarget.addEventListener("focus", this._onfocus);
+			this._focusTarget.addEventListener("blur", this._onblur);
+		}
+
+		_removeFocus()
+		{
+			this._focusTarget.removeEventListener("focus", this._onfocus);
+			this._focusTarget.removeEventListener("blur", this._onblur);
 		}
 
 		_listenMouse()
 		{
-			this._target.addEventListener("mouseenter", this._onfocus);
-			this._target.addEventListener("mouseleave", this._onblur);
+			this._mouseTarget.addEventListener("mouseenter", this._focusCallback);
+			this._mouseTarget.addEventListener("mouseleave", this._blurCallback);
 		}
 
 		_removeMouse()
 		{
-			this._target.removeEventListener("mouseenter", this._onfocus);
-			this._target.removeEventListener("mouseleave", this._onblur);
+			this._mouseTarget.removeEventListener("mouseenter", this._focusCallback);
+			this._mouseTarget.removeEventListener("mouseleave", this._blurCallback);
 		}
 	};
 
-	this.styleOnFocus = function(target, elm, cl) {
-		new self.AwesomeFocus(target, () => {
-			if (!elm.classList.contains(cl))
-			{
-				elm.classList.add(cl);
-			}
+	this.styleOnFocus = function(elm, cl, options) {
+		return new self.AwesomeFocus(() => {
+			addClass(elm, cl);
 		}, () => {
-			if (elm.classList.contains(cl))
-			{
-				elm.classList.remove(cl);
-			}
-		});
+			removeClass(elm, cl);
+		}, options);
 	};
 
 	this.createSVG = function(href) {
@@ -352,17 +379,23 @@ const Widgets = {};
 				let sourceMeta;
 				if (sourceOptions.type === "image")
 				{
-					sourceMeta = await bindWrap(this._testImageDimensions, 
-								   		  		this, srcUrl)
-												.catch(noop);
-					sourceMeta.text = sourceMeta.width + "x" + sourceMeta.height;
+					try
+					{
+						sourceMeta = await bindWrap(this._testImageDimensions, 
+									   		  		this, srcUrl);
+						sourceMeta.text = sourceMeta.width + "x" + sourceMeta.height;
+					}
+					catch (e) {/*ignore*/}
 				}
 				else if (sourceOptions.type === "video")
 				{
-					sourceMeta = await bindWrap(this._testVideoDimensions, 
-										  		this, srcUrl)
-												.catch(noop);
-					sourceMeta.text = sourceMeta.height + "p";
+					try
+					{
+						sourceMeta = await bindWrap(this._testVideoDimensions, 
+											  		this, srcUrl);
+						sourceMeta.text = sourceMeta.height + "p";
+					}
+					catch (e) {/*ignore*/}
 				}
 				else 
 				{
@@ -440,10 +473,9 @@ const Widgets = {};
 					successCallback(info);
 					this._el_test.removeChild(elm);
 				});
-				elm.addEventListener("error", (e) => {
-					console.warn(e);
+				elm.addEventListener("error", () => {
 					errorCallback(null);
-				});
+				}, true);
 
 				this._el_test.appendChild(elm);
 			}
@@ -460,10 +492,9 @@ const Widgets = {};
 					successCallback(info);
 					this._el_test.removeChild(elm);
 				});
-				elm.addEventListener("error", (e) => {
-					console.warn(e);
+				elm.addEventListener("error", () => {
 					errorCallback(null);
-				});
+				}, true);
 
 				this._el_test.appendChild(elm);
 			}
