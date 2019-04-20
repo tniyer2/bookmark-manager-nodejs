@@ -1,7 +1,7 @@
 
 const fs = require("fs");
 const console = require("console");
-const {TagCounter} = require("../front_end/js/utility.js");
+const {TagCounter, searchId, extend} = require("../front_end/js/utility.js");
 
 const TAGS_KEY = "tags";
 
@@ -26,18 +26,46 @@ class MetaLoader
 	add(content)
 	{
 		this._meta.push(content);
-		content[TAGS_KEY].forEach((tag) => {
-			this._tracker.increment(tag);
-		});
+		this._tracker.increment(content[TAGS_KEY]);
+		this._saveSync();
 	}
 
-	remove(index)
+	find(contentId)
 	{
-		let content = this._meta[index];
-		content[TAGS_KEY].forEach((tag) => {
-			this._tracker.decrement(tag);
-		});
+		let {content} = searchId(this._meta, contentId);
+		return content;
+	}
+
+	remove(contentId)
+	{
+		let {content, index} = searchId(this._meta, contentId);
+		if (!content) return null;
+
+		this._tracker.decrement(content[TAGS_KEY]);
 		this._meta.splice(index, 1);
+
+		this._saveSync();
+
+		return content;
+	}
+
+	update(contentId, info)
+	{
+		let {content, index} = searchId(this._meta, contentId);
+		if (!content) return null;
+
+		if (info[TAGS_KEY])
+		{
+			this._tracker.decrement(content[TAGS_KEY]);
+			this._tracker.increment(info[TAGS_KEY]);
+		}
+
+		delete info.id;
+		this._meta[index] = extend(content, info);
+		
+		this._saveSync();
+
+		return content;
 	}
 
 	loadSync()
@@ -65,13 +93,11 @@ class MetaLoader
 		}
 
 		this._meta.forEach((content) => {
-			content[TAGS_KEY].forEach((tag) => {
-				this._tracker.increment(tag);
-			});
+			this._tracker.increment(content[TAGS_KEY]);
 		});
 	}
 
-	saveSync()
+	_saveSync()
 	{
 		console.log("MetaLoader: saving meta");
 

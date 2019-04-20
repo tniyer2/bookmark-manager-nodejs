@@ -127,9 +127,7 @@
 				this._tagTracker = new TagCounter();
 
 				meta.forEach((content) => {
-					content[TAG_KEY].forEach((tag) => {
-						this._tagTracker.increment(tag);
-					});
+					this._tagTracker.increment(content[TAG_KEY]);
 				});
 				this._meta = meta;
 			}
@@ -144,8 +142,6 @@
 				return this._meta;
 			}
 
-			// success: {success}
-			// error: errors from save
 			async addContent(content, successCallback, errorCallback)
 			{
 				content.id = getRandomString(ID_LENGTH);
@@ -158,65 +154,59 @@
 					return;
 				}
 
-				let tags = content[TAG_KEY];
-				tags.forEach((tag) => {
-					this._tagTracker.increment(tag);
-				});
+				this._tagTracker.increment(content[TAG_KEY]);
 
 				successCallback({success: true});
 			}
 
-			// success: {success}
-			// error: {error}, errors from searchId, errors from save
 			async deleteContent(contentId, successCallback, errorCallback)
 			{
-				let i;
-				try {
-					i = searchId(this._meta, contentId);
-				} catch(e) {
-					errorCallback(e);
-					return;
+				let {content, index} = searchId(this._meta, contentId);
+				if (content)
+				{
+					this._meta.splice(index, 1);
+					this._tagTracker.decrement(content[TAG_KEY]);
+
+					save(this._meta, () => {
+						successCallback({success: true});
+					}, errorCallback);
 				}
-				let content = this._meta[i];
-				if (!content)
+				else
 				{
 					errorCallback(null);
-					return;
 				}
-
-				this._meta.splice(i, 1);
-
-				let success = await wrap(save, this._meta).catch(errorCallback);
-				if (isUdf(success)) return;
-
-				let tags = content[TAG_KEY];
-				tags.forEach((tag) => {
-					this._tagTracker.decrement(tag);
-				});
-
-				successCallback({success: true});
 			}
 
-			// success: {content}
-			// error: {error}, errors from searchId
 			async findContent(contentId, successCallback, errorCallback)
 			{
-				let i;
-				try {
-					i = searchId(this._meta, contentId);
-				} catch(e) {
-					console.warn(e);
-					errorCallback(e);
-					return;
-				}
-
-				let content = this._meta[i];
-				console.log("i:", i);
-				console.log("meta:", this._meta);
-				console.log("content:", content);
+				let {content} = searchId(this._meta, contentId);
 				if (content)
 				{
 					successCallback({content: content});
+				}
+				else
+				{
+					errorCallback(null);
+				}
+			}
+
+			async updateContent(contentId, info, successCallback, errorCallback)
+			{
+				let {content, index} = searchId(this._meta, contentId);
+				if (content)
+				{
+					if (info[TAG_KEY])
+					{
+						this._tagTracker.decrement(content[TAG_KEY]);
+						this._tagTracker.increment(info[TAG_KEY]);
+					}
+
+					delete info.id;
+					this._meta[index] = extend(content, info);
+
+					save(this._meta, () => {
+						successCallback({success: true});
+					}, errorCallback);
 				}
 				else
 				{
@@ -245,8 +235,6 @@
 		}});
 		return this;
 
-		// success: meta
-		// error: {error}
 		async function load(successCallback, errorCallback)
 		{
 			let data = await getKeyWrapper("meta").catch(errorCallback);
@@ -280,8 +268,7 @@
 			successCallback(meta);
 		}
 
-		// success: true
-		// error: {error}, {memoryError}
+		// throws {memmoryError}
 		async function save(meta, successCallback, errorCallback)
 		{
 			let serialized = "";
@@ -304,8 +291,6 @@
 			});
 		}
 
-		// success: object with keys
-		// error: {error}
 		function getKeyWrapper(keys)
 		{
 			return new Promise((resolve, reject) => {
@@ -329,93 +314,59 @@
 		const TITLE_KEY = "title";
 		const DEFAULT_TITLE = "untitled";
 
+		const GET_TYPE = "get";
+		const ADD_TYPE = "add";
+		const FIND_TYPE = "find";
+		const DELETE_TYPE = "delete";
+		const UPDATE_TYPE = "update";
+
 		return class {
 			constructor(connector)
 			{
 				this._connector = connector;
+				this._appCount = 0;
 			}
 
-			async getContent(sender, successCallback, errorCallback)
+			get appCount()
 			{
-				let port;
-				let final = {};
-				let blockAddResult = false;
+				this._appCount += 1;
+				return this._appCount;
+			} 
 
-				function addResult(v, a)
-				{
-					if (!v)
-					{
-						blockAddResult = true;
-						console.log("result should not be " + v);
-						errorCallback(null);
-						return;
-					}
-					if (blockAddResult)
-					{
-						return;
-					}
-
-					let s = a ? "app" : "local";
-					final[s] = v;
-					if ((!port && final.local) ||
-						(port && final.local && final.app))
-					{
-						successCallback(final);
-					}
-				}
-
-				port = await wrap(this._connector.connect
-							 .bind(this._connector))
-							 .catch(e => console.warn(e));
-
-				if (port)
-				{
-					let myTag = makeTag(sender.tab.id, "get");
-					let request = { type: "get",
-									tag: myTag };
-
-					port.postMessage(request);
-					port.onMessage.addListener((response) => {
-						if (response.tag === myTag)
-						{
-							addResult(response, true);
-						}
-					});
-				}
-
+			async getContent(successCallback, errorCallback)
+			{
 				let dm = await DataManager.instance.catch(errorCallback);
 				if (isUdf(dm)) return;
 
-				addResult({meta: dm.meta});
+				let final = {local: {meta: dm.meta}};
+
+				let tag = makeTag(GET_TYPE, this.appCount);
+				let request = {type: GET_TYPE, tag: tag};
+				let response = await bindWrap(this._requestApp, this, request).catch(noop);
+				if (response)
+				{
+					final.app = response;
+				}
+
+				successCallback(final);
 			}
 
-			async addContent(content, cache, sender, successCallback, errorCallback)
+			async addContent(content, cache, successCallback, errorCallback)
 			{
 				if (!content[TITLE_KEY])
 				{
 					content[TITLE_KEY] = DEFAULT_TITLE;
 				}
 
-				let port = await wrap(this._connector.connect
-						 		 .bind(this._connector))
-						 		 .catch(e => console.warn(e));
-
-				if (port)
+				let tag = makeTag(ADD_TYPE, this.appCount);
+				let request = { type: ADD_TYPE,
+								tag: tag,
+								content: content,
+								download: cache };
+				let response = await bindWrap(this._requestApp, this, request).catch(noop);
+				if (response)
 				{
-					let myTag = makeTag(sender.tab.id, "add");
-					let appMessage = { type: "add",
-									   tag: myTag,
-									   content: content,
-									   download: cache };
-
-					console.log("content:", content);
-					port.postMessage(appMessage);
-					port.onMessage.addListener((response) => {
-						if (response.tag === myTag)
-						{
-							successCallback(response);
-						}
-					});
+					successCallback(response);
 				}
 				else
 				{
@@ -426,97 +377,103 @@
 				}
 			}
 
-			// mode can be 'get' or 'delete'.
-			async findContent(contentId, mode, sender, successCallback, errorCallback)
+			async findContent(contentId, successCallback, errorCallback)
 			{
-				let modeIsFind   = mode === "find";
-				let modeIsDelete = mode === "delete";
+				this._findContent(FIND_TYPE, contentId, null, successCallback, (dm) => {
+					dm.findContent(contentId, successCallback, errorCallback);
+				}, errorCallback);
+			}
 
-				if (!modeIsFind && !modeIsDelete)
-				{
-					console.warn("mode should not be:", mode);
-					errorCallback(null);
-					return;
-				}
+			async deleteContent(contentId, successCallback, errorCallback)
+			{
+				this._findContent(DELETE_TYPE, contentId, null, successCallback, (dm) => {
+					dm.deleteContent(contentId, successCallback, errorCallback);
+				}, errorCallback);
+			}
+
+			async updateContent(contentId, updateInfo, successCallback, errorCallback)
+			{
+				this._findContent(UPDATE_TYPE, contentId, updateInfo, successCallback, (dm) => {
+					dm.updateContent(contentId, updateInfo, successCallback, errorCallback);
+				}, errorCallback);
+			}
+
+			async _findContent(type, contentId, updateInfo, appCallback, localCallback, errorCallback)
+			{
+				let throwNMError = () => {
+					console.warn(`Cannot connect to app. Connection required for '${type}' request.`);
+					errorCallback({NMError: true});
+				};
 
 				if (fromApp(contentId))
 				{
-					let port = await wrap(this._connector.connect
-									 .bind(this._connector))
-									 .catch(e => console.warn(e));
+					let tag = makeTag(type, this.appCount);
 
-					if (port)
-					{
-						let myTag = makeTag(sender.tab.id, mode);
-						let request = { type: mode,
-										tag: myTag,
-										id: contentId };
+					let request = { tag: tag,
+									type: type, 
+									id: contentId };
+					if (updateInfo)
+					{ 
+						request.info = updateInfo;
+					}
 
-						port.postMessage(request);
-						port.onMessage.addListener((response) => {
-							if (response.tag === myTag)
-							{
-								successCallback(response);
-							}
-						});
-					}
-					else
-					{
-						console.warn(`Cannot connect to app. Connection required 
-									  for '${mode}' mode.`);
-						errorCallback({nmError: true});
-					}
+					this._requestApp(request, appCallback, throwNMError);
 				}
 				else
 				{
-					let dm = await DataManager.instance.catch(errorCallback);
-					if (isUdf(dm)) return;
-
-					if (modeIsFind)
-					{
-						dm.findContent(contentId, successCallback, errorCallback);
-					}
-					else if (modeIsDelete)
-					{
-						dm.deleteContent(contentId, successCallback, errorCallback);
-					}
-					else {/*should already be handled*/}
+					DataManager.instance.then(localCallback).catch(errorCallback);
 				}
 			}
 
-			async getTags(sender, successCallback, errorCallback)
+			async getTags(successCallback, errorCallback)
 			{
 				let dm = await DataManager.instance.catch(errorCallback);
 				if (isUdf(dm)) return;
 
 				let localTags = dm.tags;
 
-				let port = await wrap(this._connector.connect
-								 .bind(this._connector))
-								 .catch(e => console.warn(e));
+				let tag = makeTag("tags", this.appCount);
+				let request = {type: "tags", tag: tag};
+				let response = await bindWrap(this._requestApp, this, request).catch(noop);
+				if (response)
+				{
+					let concat = response.tags.concat(localTags);
+					let tags = removeDuplicates(concat);
+
+					successCallback(tags);
+				}
+				else
+				{
+					successCallback(localTags);
+				}
+			}
+
+			async _requestApp(request, successCallback, errorCallback)
+			{
+				if (!request.tag)
+				{
+					console.warn("aborting request to app. request does not have a tag property:", request);
+					errorCallback(null);
+					return;
+				}
+
+				let port = await bindWrap(this._connector.connect, 
+										  this._connector);
+
 				if (port)
 				{
-					let myTag = makeTag(sender.tab.id, "tags");
-					let request = { type: "tags",
-									tag: myTag };
-
 					port.postMessage(request);
-					port.onMessage.addListener((response) => {
-						if (response.tag === myTag)
+					port.onMessage.addListener( function listener(response) {
+						if (response.tag === request.tag)
 						{
-							let obj = {};
-							let f = (tag) => {obj[tag] = true;};
-							localTags.forEach(f);
-							response.tags.forEach(f);
-
-							let tags = Object.keys(obj);
-							successCallback(tags);
+							port.onMessage.removeListener(listener);
+							successCallback(response);
 						}
 					});
 				}
 				else
 				{
-					successCallback(localTags);
+					errorCallback(null);
 				}
 			}
 		};

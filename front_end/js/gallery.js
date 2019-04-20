@@ -22,7 +22,7 @@
 
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."});
 	
-	let g_titleWidget, g_tagWidget;
+	let g_titleWidget, g_tagWidget, g_meta;
 	let g_searchByTag = false;
 	let g_submitted = false;
 
@@ -129,6 +129,10 @@
 			}
 			if (!g_searchByTag) switchSearch();
 		}
+		else
+		{
+			el_titleInput.value = "";
+		}
 
 		let indices = cookie.split("-");
 		el_date.selectedIndex = indices[0];
@@ -147,8 +151,8 @@
 		let meta = await wrap(requestMeta).catch(noop);
 		if (isUdf(meta)) return;
 
-		meta = Searcher.query(meta, q);
-		populate(meta);
+		g_meta = Searcher.query(meta, q);
+		populate(g_meta);
 
 		let tags = await wrap(makeRequest, "get-tags").catch(noop);
 		MyTaggle.createAutoComplete(g_taggle, el_searchBox, tags);

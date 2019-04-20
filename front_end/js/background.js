@@ -2,6 +2,7 @@
 (function(){
 	
 	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
+	const NEW_TAB = "chrome://newtab/";
 	const CONTEXT_OPTIONS = { title: "Save",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
@@ -22,18 +23,7 @@
 		})();
 		return true;
 	});
-	chrome.browserAction.onClicked.addListener((tab) => {
-		tabUrl = new URL(tab.url);
-		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
-		if (tabUrlWOQuery === GALLERY_URL)
-		{
-			chrome.tabs.update(tab.id, {url: GALLERY_URL});
-		}
-		else
-		{
-			chrome.tabs.create({url: GALLERY_URL});
-		}
-	});
+	chrome.browserAction.onClicked.addListener(openGallery);
 	chrome.contextMenus.removeAll(() => {
 		chrome.contextMenus.create(CONTEXT_OPTIONS);
 	});
@@ -42,14 +32,8 @@
 	function serveRequest(msg, sender, sendResponse)
 	{
 		let onErr = (e) => {
-			if (!e)
-			{
-				sendResponse({error: true});
-			}
-			else
-			{
-				sendResponse(e);
-			}
+			let response = e ? e : {error: true};
+			sendResponse(response);
 		};
 
 		if (msg.request === "get-popup-info")
@@ -58,32 +42,30 @@
 		}
 		else if (msg.request === "get-tags")
 		{
-			g_requester.getTags(sender, sendResponse, onErr);
+			g_requester.getTags(sendResponse, onErr);
 		}
 		else if (msg.request === "get-meta")
 		{
-			g_requester.getContent(sender, sendResponse, onErr);
+			g_requester.getContent(sendResponse, onErr);
 		}
 		else if (msg.request === "add-meta")
 		{
 			let info = g_allPopupInfo[msg.popupId];
+			fillInSource(msg.meta, info);
 
-			msg.meta.docUrl = info.docUrl;
-
-			let srcUrl = msg.meta.srcUrl;
-			msg.meta.srcUrl = srcUrl === "srcUrl" ? info.srcUrl:
-							  srcUrl === "docUrl" ? info.docUrl:
-							  srcUrl;
-
-			g_requester.addContent(msg.meta, msg.cache, sender, sendResponse, onErr);
+			g_requester.addContent(msg.meta, msg.cache, sendResponse, onErr);
 		}
 		else if (msg.request === "find-meta")
 		{
-			g_requester.findContent(msg.id, "find", sender, sendResponse, onErr);
+			g_requester.findContent(msg.id, sendResponse, onErr);
 		}
 		else if (msg.request === "delete-meta")
 		{
-			g_requester.findContent(msg.id, "delete", sender, sendResponse, onErr);
+			g_requester.deleteContent(msg.id, sendResponse, onErr);
+		}
+		else if (msg.request === "update-meta")
+		{
+			g_requester.updateContent(msg.id, msg.info, sendResponse, onErr);
 		}
 		else
 		{
@@ -103,7 +85,7 @@
 		try
 		{
 			info.scanInfo = await wrap(requestScanInfo, sender.tab.id);
-			info.tags = await bindWrap(g_requester.getTags, g_requester, sender);
+			info.tags = await bindWrap(g_requester.getTags, g_requester);
 		}
 		catch (e)
 		{
@@ -111,10 +93,26 @@
 			return;
 		}
 
-		info.popupId = makeTag(sender.tab.id, "get-popup-info");
-		g_allPopupInfo[info.popupId] = info;
+		let popupId = makeTag(sender.tab.id, "get-popup-info");
+
+		info.popupId = popupId;
+		g_allPopupInfo[popupId] = info;
 
 		successCallback(info);
+	}
+
+	function fillInSource(content, info)
+	{
+		content.docUrl = info.docUrl;
+
+		if (content.srcUrl === "srcUrl")
+		{
+			content.srcUrl = info.srcUrl;
+		}
+		else if (content.srcUrl === "docUrl")
+		{
+			content.srcUrl = info.docUrl;
+		}
 	}
 
 	function requestScanInfo(tabId, successCallback, errorCallback)
@@ -130,6 +128,21 @@
 				successCallback(scanInfo);
 			}
 		});
+	}
+
+	function openGallery(tab)
+	{
+		tabUrl = new URL(tab.url);
+		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
+
+		if (tabUrl.href === NEW_TAB || tabUrlWOQuery === GALLERY_URL)
+		{
+			chrome.tabs.update(tab.id, {url: GALLERY_URL});
+		}
+		else
+		{
+			chrome.tabs.create({url: GALLERY_URL});
+		}
 	}
 
 	function onContextClicked(info, tab)

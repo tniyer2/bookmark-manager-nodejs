@@ -9,7 +9,7 @@ const console = require("console");
 const getDownloader = require("./downloader");
 
 const {Searcher} = require("../front_end/js/query");
-const {wrap, bindWrap, bindAll, getRandomString, searchId} = require("../front_end/js/utility");
+const {wrap, bindWrap, bindAll, getRandomString} = require("../front_end/js/utility");
 
 const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
@@ -72,8 +72,12 @@ class NativeMessagingServer
 		    				 t === "tags" 	? f[5]:
 		    				 f[6];
 
-				let syncResponse = handle(request, writeObject);
-				writeObject(syncResponse);
+		    	let addTagAndSend = (response) => {
+		    		response.tag = request.tag;
+		    		writeObject(response);
+		    	};
+				let syncResponse = handle(request, addTagAndSend);
+				addTagAndSend(syncResponse);
 		    });
 		});
 		tcpServer.listen(0, "localhost", () => {
@@ -101,8 +105,7 @@ class NativeMessagingServer
 	_get(request, callback)
 	{
 		console.log("NM Server: client requested meta");
-
-		return {tag: request.tag, meta: this._loader.meta};
+		return {meta: this._loader.meta};
 	}
 
 	_add(request, callback)
@@ -111,6 +114,8 @@ class NativeMessagingServer
 
 		let content = request.content;
 		content.id = APP_ID_PREFIX + getRandomString(ID_LENGTH);
+
+		this._loader.add(content);
 
 		if (request.download === true)
 		{
@@ -127,79 +132,81 @@ class NativeMessagingServer
 					return;
 				}
 				
-				content.path = d.filePath;
-				this._loader.saveSync();
+				this._loader.update(content.id, {path: d.filePath});
 			})();
 		}
 
-		this._loader.add(content);
 		console.log("\t", "content has been added");
-
-		this._loader.saveSync();
-
-		return {tag: request.tag, success: true};
-	}
-
-	_update(request, callback)
-	{
-		throw new Error("handling update requests is not implemented.");
+		return {success: true};
 	}
 
 	_find(request, callback)
 	{
 		console.log("NM Server: retrieving", request.id);
 
-		let index;
-		try {
-			index = searchId(this._loader.meta, request.id);
-		} catch (e)  {
-			console.warn("\t", e);
-			return {tag: request.tag, error: e};
+		let content = this._loader.find(request.id);
+		if (content)
+		{
+			return {content: content};
 		}
-
-		let content = this._loader.meta[index];
-		return {tag: request.tag, content: content};
+		else
+		{
+			console.log("\t", "could not find", request.id);
+			return {error: true};
+		}
 	}
 
 	_delete(request, callback)
 	{
 		console.log("NM Server: removing", request.id);
 
-		let index;
-		try {
-			index = searchId(this._loader.meta, request.id);
-		} catch (e)  {
-			console.warn("\t", e);
-			return {tag: request.tag, error: e};
-		}
-
-		let filePath = this._loader.meta[index].path;
-		if (filePath)
+		let content = this._loader.remove(request.id);
+		if (content)
 		{
-			fs.unlink(filePath, (err) => {
-				if (err) console.warn("\t", err);
-			});
+			let filePath = content.path;
+			if (filePath)
+			{
+				fs.unlink(filePath, (err) => {
+					if (err) console.warn("\t", err);
+				});
+			}
+
+			return {success: true};
 		}
+		else
+		{
+			console.log("\t", "could not find", request.id);
+			return {error: true};
+		}
+	}
 
-		this._loader.remove(index);
-		console.log("\t", "removed", request.id);
+	_update(request, callback)
+	{
+		console.log("NM Server: updating", request.id);
+		console.log("\t", "keys to update:", request.info);
 
-		this._loader.saveSync();
-		return {tag: request.tag, success: true};
+		let content = this._loader.update(request.id, request.info);
+		if (content)
+		{
+			return {success: true};
+		}
+		else
+		{
+			console.log("\t", "could not find", request.id);
+			return {error: true};
+		}
 	}
 
 	_getTags(request, callback)
 	{
-		return {tag: request.tag, tags: this._loader.tags};
+		return {tags: this._loader.tags};
 	}
 
 	_handleInvalid(request, callback)
 	{
-		let e = "NM Server: client sent invalid request type:" +
-				"'" + request.type + "'";
-
+		let e = `NM Server: client sent invalid request type: '${request.type}'`;
 		console.log(e);
-		return {tag: request.tag, error: e};
+		return {error: true};
 	}
 }
 

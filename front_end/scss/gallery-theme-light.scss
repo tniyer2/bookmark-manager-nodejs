@@ -10,8 +10,9 @@ body {
 .search__search-box-wrapper { // background in wrapper
 	background: white; }
 .search__search-box { // border in box
-	border: 2px solid $lt-gray; }
+	border: 1.5px solid $lt-gray; }
 .search__search-box.focus {
+	border: none;
   box-shadow: 0 0 3px 1.25px $lt-gray; }
 
 

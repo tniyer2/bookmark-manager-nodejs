@@ -146,3 +146,8 @@ $search-br-minus: $search-br - 3px;
 	height: $input-height;
 	box-sizing: border-box;
 	padding: $svg-padding; }
+
+
+.feed {
+	display: flex;
+}

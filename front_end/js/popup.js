@@ -112,8 +112,11 @@
 
 	function closePopup()
 	{
-		let message = {to: "content.js", close: true};
-		chrome.tabs.sendMessage(g_tabId, message);
+		if (g_tabId)
+		{
+			let message = {to: "content.js", close: true};
+			chrome.tabs.sendMessage(g_tabId, message);
+		}
 	}
 
 	function createTaggle(container, options)

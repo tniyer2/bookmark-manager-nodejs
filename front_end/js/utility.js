@@ -12,12 +12,8 @@
 	}
 
 	this.makeTag = function() {
-		let tag = "";
-		for (let i = 0, l = arguments.length; i < l; i+=1)
-		{
-			tag += arguments[i];
-		}
-		tag += Date.now();
+		let tag = Array.from(arguments).join("-");
+		tag += "-" + Date.now();
 		return tag;
 	};
 
@@ -32,6 +28,18 @@
 		}
 
 		return s;
+	};
+
+	this.removeDuplicates = function(arr, sortMethod) {
+		arr.sort(sortMethod);
+		for (let i = arr.length - 1; i >= 0; i-=1)
+		{
+			if (arr[i] === arr[i-1])
+			{
+				arr.splice(i, 1);
+			}
+		}
+		return arr;
 	};
 
 	// Wraps a function in a Promise
@@ -141,22 +149,13 @@
 		}
 	};
 
-	// @return index of content with contentId
-	// @throws {error}, {badQuery}
-	this.searchId = function(meta, contentId) {
-		let index = meta.findIndex((m) => {
-			return m.id === contentId;
-		})
+	this.searchId = function(meta, id) {
 
-		if (index === -1)
-		{
-			let e = `Could not find content with id: '${contentId}'`;
-			throw new Error(e);
-		}
-		else
-		{
-			return index;
-		}
+		let i = meta.findIndex((m) => m.id === id);
+		let content = meta[i];
+
+		let final = content ? {index: i, content: content} : {index: null, content: null};
+		return final;
 	};
 
 	// Keeps track of how many times a tag exists.
@@ -171,7 +170,21 @@
 			return Object.keys(this._master);
 		}
 
-		increment(key)
+		increment(keys)
+		{
+			keys.forEach((k) => {
+				this._increment(k);
+			});
+		}
+
+		decrement(keys)
+		{
+			keys.forEach((k) => {
+				this._decrement(k);
+			});
+		}
+
+		_increment(key)
 		{
 			if (!this._master.hasOwnProperty(key))
 			{
@@ -183,7 +196,7 @@
 			}
 		}
 
-		decrement(key)
+		_decrement(key)
 		{
 			if (this._master.hasOwnProperty(key))
 			{
