@@ -1,33 +1,17 @@
 
-const DELETE_REDIRECT = chrome.runtime.getURL("html/gallery.html");
-const ID = getIdFromHref();
+(function(){
 
-const el_main = document.getElementById("main");
-const el_deleteBtn = el_main.querySelector("#delete-btn");
+	injectThemeCss("light", ["alerts", "single-view"]);
 
-chrome.runtime.sendMessage({request: "find-meta", id: ID}, (response) => {
+	const CONTENT_ID = getIdFromHref();
 
-	if (chrome.runtime.lastError)
-	{
-		console.warn(chrome.runtime.lastError.message);
-		return;
-	}
+	const el_main = document.getElementById("main");
+	const el_log = el_main.querySelector("#log");
+	const el_deleteBtn = el_main.querySelector("#delete-btn");
 
-	if (response.content)
-	{
-		console.log("meta:", response.content);
-		let content = createContent(response.content);
-		el_main.insertBefore(content, el_deleteBtn);
-		el_deleteBtn.disabled = false;
-	}
-	else
-	{
-		console.warn("Could not handle response:", response);
-	}
-});
+	const alerter = new Widgets.AwesomeAlerter(document.body, {BEMBlock: "alerts"});
 
-el_deleteBtn.addEventListener("click", () => {
-	chrome.runtime.sendMessage({request: "delete-meta", id: ID}, (response) => {
+	chrome.runtime.sendMessage({request: "find-meta", id: CONTENT_ID}, (response) => {
 
 		if (chrome.runtime.lastError)
 		{
@@ -35,31 +19,47 @@ el_deleteBtn.addEventListener("click", () => {
 			return;
 		}
 
-		if (response.success)
+		if (response.content)
 		{
-			document.location.href = DELETE_REDIRECT;
+			let textNode = document.createTextNode(JSON.stringify(response.content));
+			el_log.appendChild(textNode);
+			el_deleteBtn.disabled = false;
 		}
 		else
 		{
 			console.warn("Could not handle response:", response);
 		}
 	});
-});
 
-function getIdFromHref()
-{
-	let decoded = decodeURI(location.search);
-	let index 	= decoded.indexOf("?");
+	el_deleteBtn.addEventListener("click", requestDelete, {once: false});
 
-	let id;
-	if (index == decoded.length - 1)
+	function createContent(content){}
+
+	function requestDelete()
 	{
-		id = "";
-	}
-	else
-	{
-		id = decoded.substring(index + 1);
+		let message = {request: "delete-meta", id: CONTENT_ID};
+		makeRequest(message, () => {
+			window.close();
+		}, () => {
+			alerter.alert("could not delete. something went wrong.", 3);
+		});
 	}
 
-	return id;
-}
+	function getIdFromHref()
+	{
+		let decoded = decodeURI(location.search);
+		let index 	= decoded.indexOf("?");
+
+		let id;
+		if (index == decoded.length - 1)
+		{
+			id = "";
+		}
+		else
+		{
+			id = decoded.substring(index + 1);
+		}
+
+		return id;
+	}
+}).call(this);

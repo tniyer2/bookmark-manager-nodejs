@@ -45,8 +45,7 @@ class NativeMessagingServer
 			};
 
 		    stream.on("data", (buff) => {
-		    	console.log("NM Server: on data");
-
+		    	
 		    	let request;
 		    	try
 		    	{
@@ -125,10 +124,12 @@ class NativeMessagingServer
 				let fileName = content.id;
 				let filePath = path.join(RESOURCES_PATH, fileName);
 
-				let d = getDownloader(srcUrl, filePath);
+				let d;
 				try {
+					d = getDownloader(srcUrl, filePath);
 					await bindWrap(d.download, d);
 				} catch (e) {
+					console.log(e.message);
 					return;
 				}
 				

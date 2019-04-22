@@ -16,7 +16,7 @@
 
 	let g_recentPopupInfo;
 	let g_allPopupInfo = {};
-
+	
 	chrome.runtime.onMessage.addListener((m, s, cb) => {
 		(async() => {
 			serveRequest(m, s, cb);

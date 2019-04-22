@@ -53,7 +53,7 @@ body {
 .save-menu__title-box {
   margin-top: 10px;
   padding: 5px;
-  border-radius: 3px;
+  border-radius: 7px;
 }
 
 .save-menu__title {
@@ -77,7 +77,7 @@ body {
   padding-bottom: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: 3px;
+  border-radius: 7px;
   cursor: text;
 }
 
@@ -87,6 +87,10 @@ body {
 
 .taggle_list li {
   margin-bottom: 5px;
+}
+
+.taggle_placeholder {
+  left: 5px;
 }
 
 /*css relating to the svg buttons*/

@@ -3,11 +3,11 @@
 <html>
 <head>
 	<title>Gallery</title>
-    <link rel="stylesheet" type="text/css" href="../css/alerts-core.css">
     <link rel="stylesheet" type="text/css" href="../css/scrollbar-core.css">
+    <link rel="stylesheet" type="text/css" href="../css/alerts-core.css">
     <link rel="stylesheet" type="text/css" href="../css/taggle-core.css">
-	<link rel="stylesheet" type="text/css" href="../css/contentCreator.css">
 	<link rel="stylesheet" type="text/css" href="../css/gallery-core.css">
+	<link rel="stylesheet" type="text/css" href="../css/feed-core.css">
 </head>
 <body>
 	<svg style="position:absolute;width:0px;height:0px;">
@@ -37,13 +37,13 @@
 				<div class="search__search-box-wrapper">
 					<div id="search-box" class="search__search-box">
 						<input id="title-input" maxlength="100" type="text" placeholder="enter title..." class="search__title-input">
-						<div id="tag-container" class="noshow search__tag-container">
+						<div id="tag-container" class="search__tag-container">
 						</div>
 						<btn id="searchby-btn" class="search__searchby-btn"></btn>
 						<div id="searchby" class="search__searchby">
 							<svg>
 								<use href="#icon-title"/>
-								<use href="#icon-tag" class="noshow"/>
+								<use href="#icon-tag"/>
 							</svg>
 						</div>
 					</div>
@@ -69,7 +69,7 @@
 					<select id="category">
 						<option value=''>All</option>
 						<option value='*image+*video+*youtube'>Images and videos</option>
-						<option value='web'>Bookmarks</option>
+						<option value='bookmark'>Bookmarks</option>
 						<option value='image'>Images</option>
 						<option value='*video+*youtube'>Videos</option>
 					</select>
@@ -77,9 +77,8 @@
 				<div class="search__dropdown search__sortby">
 					<p>sort by</p>
 					<select id="sortby">
-						<option value=''>Relevance</option>
-						<option value='dsc'>New</option>
-						<option value='asc'>Old</option>
+						<option value='!date'>New</option>
+						<option value='date'>Old</option>
 					</select>
 				</div>
 			</div>
@@ -92,13 +91,13 @@
 			</a>
 		</div>
 	</div>
-	<div id="feed">
+	<div id="feed" class="feed">
 	</div>
 	<script src="../taggle.js"></script>
+	<script src="../js/query.js"></script>
 	<script src="../js/utility.js"></script>
 	<script src="../js/widgets.js"></script>
 	<script src="../js/myTaggle.js"></script>
-	<script src="../js/query.js"></script>
 	<script src="../js/contentCreator.js"></script>
 	<script src="../js/gallery.js"></script>
 </body>

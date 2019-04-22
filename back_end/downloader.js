@@ -27,8 +27,7 @@ function getDownloader(srcUrl, filePath)
 	}
 	else
 	{
-		let m = `${srcUrl.protocol} is not supported. 
-				Only 'http', 'https', and 'data' are supported.`
+		let m = `${srcUrl.protocol} is not supported.\nOnly 'http', 'https', and 'data' are supported.`
 		throw new Error(m);
 	}
 }

@@ -1,10 +1,148 @@
 
-(function(){
-
-	injectThemeCss("light", ["gallery", "taggle", "scrollbar", "alerts"]);
+const FeedBox = (function(){
 
 	const CONTENT_LINK  = "singleView.html";
-	const DEFAULT_QUERY = {dsc: "date"};
+	const DEFAULTS = { bufferSize: 20, 
+					   bufferOnScrollBottom: true, 
+					   scrollBottomOffset: 500,
+					   scrollBottomBufferDelay: 0 };
+	return class {
+		constructor(meta, el_parent, options)
+		{
+			this._meta = meta;
+			this._queue = new Widgets.DOMQueue(el_parent);
+			this._el_test = document.createElement("canvas");
+
+			this._options = extend(DEFAULTS, options);
+
+			this._onScrollBound = this._onScroll.bind(this);
+			if (this._options.bufferOnScrollBottom === true)
+			{
+				this._attachBufferOnScroll();
+			}
+		}
+
+		buffer()
+		{
+			let l1 = this._meta.length;
+			let initial = this._queue.count;
+			let l2 = initial + this._options.bufferSize;
+			while (this._queue.count < l1 && this._queue.count < l2)
+			{
+				let content = this._meta[this._queue.count];
+				let insert = this._queue.next();
+
+				this._createContent(content, (el_contentBlock) => {
+					insert(el_contentBlock);
+				});
+			}
+
+			return this._numLoaded - initial;
+		}
+		
+		_createContent(content, successCallback, errorCallback)
+		{
+			let el_contentBlock = document.createElement("div");
+			el_contentBlock.classList.add("content");
+
+			let el_sourceBlock = document.createElement("div");
+			el_sourceBlock.classList.add("content__source-block");
+			el_contentBlock.appendChild(el_sourceBlock);
+
+			let el_infoBlock = document.createElement("div");
+			el_infoBlock.classList.add("content__info-block");
+			el_contentBlock.appendChild(el_infoBlock);
+
+			let el_title = document.createElement("p");
+			el_title.classList.add("content__title");
+			let titleTextNode = document.createTextNode(content.title);
+			el_title.appendChild(titleTextNode);
+			el_infoBlock.appendChild(el_title);
+
+			let el_content;
+			function successCallbackWrapper()
+			{
+				el_content.classList.add("content__source");
+				el_contentBlock.addEventListener("click", () => {
+					let url = CONTENT_LINK + "?" + content.id;
+					window.open(url, "_blank");
+				});
+				el_sourceBlock.appendChild(el_content);
+
+				successCallback(el_contentBlock);
+			}
+
+			let source = content.path ? content.path : content.srcUrl;
+			let eventName;
+			if (content.category === "image")
+			{
+				el_content = ContentCreator.createImage(source);
+				el_content.classList.add("content__image");
+				eventName = "load";
+			}
+			else if (content.category === "video")
+			{
+				el_content = ContentCreator.createVideo(source);
+				el_content.classList.add("content__video");
+				eventName = "loadeddata";
+			}
+			else if (content.category === "youtube")
+			{
+				el_content = ContentCreator.createIframe(source);
+				el_content.classList.add("content__youtube");
+				successCallbackWrapper();
+				return;
+			}
+			else if (content.category === "bookmark")
+			{
+				let faviconUrl = ContentCreator.getFaviconUrl(source);
+				let el_favicon = ContentCreator.createImage(faviconUrl);
+				el_content = document.createElement("a");
+				el_content.classList.add("content__favicon");
+				el_content.appendChild(el_favicon);
+				el_content.href = source;
+				el_content.target = "_blank";
+				el_content.addEventListener("click", (evt) => {
+					evt.stopPropagation();
+				});
+				successCallbackWrapper();
+				return;
+			}
+			else
+			{
+				console.warn("invalid category:", content.category);
+				return;
+			}
+
+			el_content.addEventListener(eventName, successCallbackWrapper, {once: true});
+		}
+
+		_attachBufferOnScroll()
+		{
+			window.addEventListener("scroll", this._onScrollBound);
+		}
+
+		_onScroll()
+		{
+			if (( window.innerHeight 
+				+ Math.ceil(window.pageYOffset + 1) 
+				+ this._options.scrollBottomOffset ) >= document.body.offsetHeight)
+			{
+				window.removeEventListener("scroll", this._onScrollBound);
+				setTimeout(() => {
+					this.buffer();
+					this._attachBufferOnScroll();
+				}, this._options.scrollBottomBufferDelay * 1000);
+			}
+		}
+	};
+})();
+
+(function(){
+
+	injectThemeCss("light", ["scrollbar", "alerts", "taggle", "gallery", "feed"]);
+
+	const DEFAULT_QUERY = "sort=!date";
 	const cl_hide = "noshow";
 
 	const el_form = document.getElementById("search");
@@ -22,14 +160,25 @@
 
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."});
 	
-	let g_titleWidget, g_tagWidget, g_meta;
-	let g_searchByTag = false;
+	let g_titleWidget, g_tagWidget, g_feedBox;
+	let g_searchByTag;
 	let g_submitted = false;
 
+	hideInput(true)
 	attachSubmit();
 	el_searchByBtn.addEventListener("click", switchSearch);
 	attachStyleEvents();
 	load();
+
+	function hideInput(hideTitle)
+	{
+		g_searchByTag = hideTitle;
+		let i = hideTitle ? el_titleInput : el_tagContainer;
+		let arr = el_searchBy.querySelectorAll("use");
+		let u = hideTitle ? arr[0] : arr[1];
+		i.classList.add(cl_hide);
+		u.classList.add(cl_hide);
+	}
 
 	function load()
 	{
@@ -46,7 +195,7 @@
 		}
 		else
 		{
-			map = DEFAULT_QUERY;
+			map = Searcher.parse(DEFAULT_QUERY);
 		}
 
 		useCookie(map, cookie);
@@ -75,26 +224,25 @@
 		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
 		let q = "";
 
-		let sortby = getSelected(el_sortBy);
-		if (sortby)
-		{
-			q += "&" + sortby + "=date";
-		}
-
 		let title = el_titleInput.value;
+		let tags = g_taggle.getTags().values;
 		if (title)
 		{
 			q += "&title=" + encodeURIComponent(title);
 		}
-
-		let tags = g_taggle.getTags().values;
-		if (tags.length > 0)
+		else if (tags.length)
 		{
 			q += "&tags=";
 			for (let i = 0, l = tags.length; i < l; i+=1)
 			{
 				q += "+" + encodeURIComponent(tags[i]);
 			}
+		}
+
+		let sortby = getSelected(el_sortBy);
+		if (sortby)
+		{
+			q += "&sort=" + sortby;
 		}
 
 		let category = getSelected(el_category);
@@ -134,10 +282,13 @@
 			el_titleInput.value = "";
 		}
 
-		let indices = cookie.split("-");
-		el_date.selectedIndex = indices[0];
-		el_category.selectedIndex = indices[1];
-		el_sortBy.selectedIndex = indices[2];
+		let indices = cookie.split("-").filter(o => o);
+		if (indices.length === 3)
+		{
+			el_date.selectedIndex = indices[0];
+			el_category.selectedIndex = indices[1];
+			el_sortBy.selectedIndex = indices[2];
+		}
 	}
 
 	function makeCookie()
@@ -151,19 +302,20 @@
 		let meta = await wrap(requestMeta).catch(noop);
 		if (isUdf(meta)) return;
 
-		g_meta = Searcher.query(meta, q);
-		populate(g_meta);
+		meta = Searcher.query(meta, q);
+		g_feedBox = new FeedBox(meta, el_feed);
+		g_feedBox.buffer();
 
-		let tags = await wrap(makeRequest, "get-tags").catch(noop);
+		let tags = await wrap(makeRequest, {request: "get-tags"}).catch(noop);
 		MyTaggle.createAutoComplete(g_taggle, el_searchBox, tags);
 	}
 
 	async function requestMeta(successCallback, errorCallback)
 	{
-		let response = await wrap(makeRequest, "get-meta").catch(errorCallback);
-
-		if (isUdf(response)) {/*ignore*/}
-		else if (response.local && response.app)
+		let response = await wrap(makeRequest, {request: "get-meta"}).catch(errorCallback);
+		if (isUdf(response)) return;
+		
+		if (response.local && response.app)
 		{
 			let m = response.local.meta;
 			m = m.concat(response.app.meta);
@@ -181,48 +333,6 @@
 		{
 			console.warn("Could not handle response:", response);
 			errorCallback(null);
-		}
-	}
-
-	function makeRequest(request, successCallback, errorCallback)
-	{
-		chrome.runtime.sendMessage({request: request}, (response) => {
-
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				errorCallback(null);
-			}
-			else if (typeof response === "object" && response.error)
-			{
-				console.log("error in request:", response.error);
-				errorCallback(null);
-			}
-			else
-			{
-				successCallback(response);
-			}
-		});
-	}
-
-	function populate(metaList)
-	{
-		if (!metaList)
-		{
-			console.warn("metaList is", metaList);
-			return;
-		}
-
-		for (let i = 0, l = metaList.length; i < l; i+=1)
-		{
-			let meta = metaList[i];
-
-			let content = createContent(meta);
-			content.addEventListener("click", () => {
-				document.location.href = CONTENT_LINK + "?" + meta.id;
-			});
-
-			el_feed.appendChild(content);
 		}
 	}
 

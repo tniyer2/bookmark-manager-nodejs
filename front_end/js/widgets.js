@@ -109,6 +109,55 @@ const Widgets = {};
 		return svg;
 	};
 
+	this.DOMQueue = class {
+		constructor(el_parent)
+		{
+			this._el_parent = el_parent;
+			this._count = 0;
+		}
+
+		get count()
+		{
+			return this._count;
+		}
+
+		next()
+		{
+			let insert = this._insert.bind(this, this._count);
+			this._count += 1;
+			return insert;
+		}
+
+		_insert(order, elm)
+		{
+			let index = 0;
+			let len = this._el_parent.childNodes.length;
+			for (let i = 0; i < len; i+=1)
+			{
+				let c = this._el_parent.childNodes[i];
+				if (!c.dataset || !("order" in c.dataset) || order > c.dataset.order)
+				{
+					index +=1;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			elm.dataset.order = order;
+			if (index === len)
+			{
+				this._el_parent.appendChild(elm);
+			}
+			else
+			{
+				let child = this._el_parent.childNodes[index];
+				this._el_parent.insertBefore(elm, child);
+			}
+		}
+	};
+
 	this.AwesomeAlerter = (function(){
 
 		const cl_hide = "noshow";
@@ -309,19 +358,19 @@ const Widgets = {};
 								  data: null };
 
 		return class {
-			constructor(parentElement, options)
+			constructor(el_parent, options)
 			{
 				this._options = extend(CLASS_DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
 
 				this._data = [];
-				this._numOfSources = 0;
 
 				this._el_list = document.createElement("ul");
 				this._el_list.classList.add(CLASSES.sourceList);
-				parentElement.appendChild(this._el_list);
-
+				el_parent.appendChild(this._el_list);
 				this._el_test = document.createElement("canvas");
+
+				this._queue = new self.DOMQueue(this._el_list);
 			}
 
 			get el_list()
@@ -349,8 +398,7 @@ const Widgets = {};
 
 			async addSource(srcUrl, sourceOptions)
 			{
-				let order = this._numOfSources;
-				this._numOfSources += 1;
+				let insertSource = this._queue.next();
 
 				sourceOptions = extend(SOURCE_DEFAULTS, sourceOptions);
 
@@ -435,15 +483,7 @@ const Widgets = {};
 					this.selected = selectedData;
 				});
 
-				if (order === this._el_list.childNodes.length)
-				{
-					this._el_list.appendChild(el_source);
-				}
-				else
-				{
-					let child = this._el_list.childNodes[order];
-					this._el_list.insertBefore(el_source, child);
-				}
+				insertSource(el_source);
 			}
 
 			_createExtensionTag(url)
@@ -467,7 +507,7 @@ const Widgets = {};
 				let elm = document.createElement("img");
 				elm.src = url;
 
-				elm.addEventListener("loadedmetadata", () => {
+				elm.addEventListener("load", () => {
 					let info = { width: elm.naturalWidth, 
 								 height: elm.naturalHeight };
 					successCallback(info);
@@ -577,6 +617,7 @@ const Widgets = {};
 						   values: [], 
 						   onConfirm: noop, 
 						   caseSensitive: false };
+		const IGNORE_MODIFIERS = ["*", "!"];
 
 		return class {
 			constructor(input, parentElement, options)
@@ -629,13 +670,17 @@ const Widgets = {};
 
 			_update(text)
 			{
-				if (!text)
+				let formatted = this._formatInput(text);
+				this._inputText = formatted.text;
+				this._modifier = formatted.modifier;
+
+				if (!this._inputText)
 				{
 					this._close();
 				}
 				else
 				{
-					let newValues = this._getSimilarValues(text, g_evaluate);
+					let newValues = this._getSimilarValues(this._inputText, g_evaluate);
 					if (newValues.length > 0)
 					{
 						this._setList(newValues);
@@ -678,7 +723,7 @@ const Widgets = {};
 			{
 				if (value)
 				{
-					this._el_input.value = value;
+					this._el_input.value = this._modifier + value;
 				}
 
 				this._options.onConfirm();
@@ -709,13 +754,34 @@ const Widgets = {};
 				});
 			}
 
-			_getSimilarValues(text, comp)
+			_formatInput(text)
 			{
+				if (!text)
+				{
+					return text;
+				}
+
 				if (!this._options.caseSensitive)
 				{
 					text = text.toLowerCase();
 				}
 
+				let modifier = "";
+				for (let m of IGNORE_MODIFIERS)
+				{
+					if (text.charAt(0) === m)
+					{
+						modifier = m;
+						text = text.substring(1);
+						break;
+					}
+				}
+
+				return {text: text, modifier: modifier};
+			}
+
+			_getSimilarValues(text, comp)
+			{
 				let cache = {};
 				for (let i = 0, l = this._options.values.length; i < l; i+=1)
 				{

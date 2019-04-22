@@ -8,6 +8,7 @@
 			{
 				this._appName = appName;
 				this._timeout = timeout;
+				this._onDisconnectQueue = [];
 			}
 
 			async connect(successCallback)
@@ -20,6 +21,10 @@
 					{
 						successCallback(null);
 						return;
+					}
+					else
+					{
+						this._onConnect(this._port);
 					}
 				}
 
@@ -53,6 +58,45 @@
 				{
 					successCallback(false);
 				}
+			}
+
+			// callback returns false if nm process disconnects, true if app disconnects.
+			onDisconnect(callback)
+			{
+				if (this._port)
+				{
+					this._attachOnDisconnect(this._port, callback);
+					return true;
+				}
+				else
+				{
+					this._onDisconnectQueue.push(callback);
+					return false;
+				}
+			}
+
+			_onConnect(port)
+			{
+				for (let i = 0, l = this._onDisconnectQueue.length; i < l; i+=1)
+				{
+					this._attachOnDisconnect(port, this._onDisconnectQueue[i]);
+				}
+			}
+
+			_attachOnDisconnect(port, callback)
+			{
+				port.onDisconnect.addListener(() => {
+					callback(false);
+				});
+				port.onMessage.addListener((message) => {
+					if (message.tag === "autostatus")
+					{
+						if (message.status === "disconnected")
+						{
+							callback(true);
+						}
+					}
+				});
 			}
 
 			async _getPort(successCallback)

@@ -4,7 +4,7 @@
 $searchby-width: 30px;
 
 $input-height: 38px;
-$input-padding-left: 8px;
+$input-padding-left: 5px;
 $input-padding-right: 5px;
 
 $container-padding: 5px;
@@ -27,6 +27,7 @@ body {
 	flex-wrap: nowrap;
 	justify-content: space-between;
 	padding: 10px;
+	margin-bottom: 15px;
 	border-radius: $search-br; }
 
 
@@ -44,6 +45,7 @@ body {
 	z-index: 0;
 	width: 80%;
 	max-width: 380px;
+	min-height: $input-height + 2px;
 	border-radius: $search-br; }
 .search__search-box { // border in box
 	position: relative;
@@ -59,6 +61,9 @@ body {
 	padding: 0;
 	padding-left: $input-padding-left;
 	padding-right: $input-padding-right; }
+.search__search-box.focus %search__input {
+	padding-left: $input-padding-left + $search-box-border-width; }
+
 .search__title-input {
 	@extend %search__input;
 	margin: 0;
@@ -66,13 +71,20 @@ body {
 	outline: none;
 	background: none;
 	font: $regular-font; }
+
 .search__tag-container {
 	@extend %search__input;
 	padding-top: $container-padding;
 	margin-right: $searchby-width;
 	cursor: text; }
+.search__search-box.focus .search__tag-container {
+	padding-top: $container-padding + $search-box-border-width; }
 .taggle_list li {
-	margin-bottom: $container-padding; }
+	margin-bottom: $container-padding + $search-box-border-width; }
+.search__search-box.focus .taggle_placeholder {
+	left: $input-padding-left + $search-box-border-width; }
+.taggle_placeholder {
+	left: $input-padding-left; }
 
 $search-br-minus: $search-br - 3px;
 %searchby {
@@ -146,8 +158,3 @@ $search-br-minus: $search-br - 3px;
 	height: $input-height;
 	box-sizing: border-box;
 	padding: $svg-padding; }
-
-
-.feed {
-	display: flex;
-}

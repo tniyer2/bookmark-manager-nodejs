@@ -1,0 +1,20 @@
+
+@import "master";
+
+.feed {
+	background: $lt-light-gray; }
+
+
+.content {
+	background: $lt-dark-gray;
+	border: 2px solid $lt-strong-gray; }
+.content:hover {
+	border-color: $blue; }
+.content__title {
+	color: $lt-font-color; }
+
+.content__favicon {
+	background: white;
+	border: 1px solid $lt-strong-gray; }
+.content__favicon:hover {
+	border-color: $blue; }

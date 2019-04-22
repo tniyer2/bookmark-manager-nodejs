@@ -187,9 +187,10 @@
 
 		const TITLE_KEY = "title";
 		const TAG_KEY = "tags";
+		const SORT_KEY = "sort";
 
 		const NO_FILTER_KEYS 	= [ TITLE_KEY ];
-		const SINGLE_VALUE_KEYS = [ TITLE_KEY, "asc", "dsc" ];
+		const SINGLE_VALUE_KEYS = [ TITLE_KEY ];
 		const STRING_KEYS 		= [ TITLE_KEY, "id", "category", "srcUrl", "docUrl" ];
 		const NUMBER_KEYS 		= [ "date", "bytes" ];
 
@@ -201,7 +202,7 @@
 		this.prototype.query = function(meta, map) {
 
 			let filter = getFilter(map);
-			let sortInfo = getComparator(map);
+			let sortMethods = [];
 
 			if (filter)
 			{
@@ -211,23 +212,29 @@
 			let title = map[TITLE_KEY];
 			if (title)
 			{
-				meta = search(meta, title);
+				let info = search(meta, title);
+				meta = info.meta;
+				sortMethods.push(info.sort);
 			}
 
 			let tags = map[TAG_KEY];
 			if (tags)
 			{
-				meta = searchTags(meta, tags);
+				let info = searchTags(meta, tags);
+				meta = info.meta
+				sortMethods.push(info.sort);
 			}
 
-			if (sortInfo)
+			let sortKeys = map[SORT_KEY];
+			if (sortKeys)
 			{
-				meta.sort(sortInfo.comparator);
+				let moreSortMethods = getSort(sortKeys);
+				sortMethods = sortMethods.concat(moreSortMethods);
+			}
 
-				if (sortInfo.reverse)
-				{
-					meta.reverse();
-				}
+			if (sortMethods.length)
+			{
+				sort(meta, sortMethods);
 			}
 
 			return meta;
@@ -244,9 +251,7 @@
 
 			let options = split(q, "&");
 
-			for (let i = 0, l = options.length; i < l; i+=1)
-			{
-				let opt = options[i];
+			options.forEach((opt) => {
 				let arr = opt.split("=");
 				if (arr.length !== 2)
 				{
@@ -266,7 +271,7 @@
 				}
 
 				map[key] = values;
-			}
+			});
 
 			return map;
 		};
@@ -305,52 +310,61 @@
 			return combineFilters(filters);
 		}
 
-		function getComparator(map)
+		function getSort(sortKeys)
 		{
-			let sortKey = map.asc ? map.asc:
-						  map.dsc ? map.dsc:
-						  null;
-			if (sortKey === null) return;
-
-			let info = {reverse: Boolean(map.dsc)};
-
-			if (STRING_KEYS.includes(sortKey))
+			function inner(key)
 			{
-				info.comparator = (first, second) => {
-					return first[sortKey].localeCompare(second[sortKey]);
-				};
-			}
-			else if (NUMBER_KEYS.includes(sortKey))
-			{
-				info.comparator = (first, second) => {
-					return first[sortKey] - second[sortKey];
-				};
-			}
-			else
-			{
-				throw "sortKey '" + sortKey + "' is not supported.";
+				let dsc = key.charAt(0) === NOT_MODIFIER;
+				if (dsc)
+				{
+					key = key.substring(1);
+				}
+
+				let sort;
+				if (STRING_KEYS.includes(key))
+				{
+					sort = (f, s) => f[key].localeCompare(s[key]);
+				}
+				else if (NUMBER_KEYS.includes(key))
+				{
+					sort = (f, s) => f[key] - s[key];
+				}
+				else
+				{
+					throw "'" + key + "' is not a supported sortkey.";
+				}
+
+				if (dsc)
+				{
+					return (f, s) => sort(s, f);
+				}
+				else
+				{
+					return sort;
+				}
 			}
 
-			return info;
+			let sortMethods = [];
+			sortKeys.forEach((key) => {
+				sortMethods.push(inner(key));
+			});
+			return sortMethods
 		}
 
 		function search(meta, match)
 		{
 			ratios = {};
-			for (let m of meta)
-			{
-				ratios[m.id] = Ratio(match, m.title);
-			}
-
-			meta.sort((first, second) => {
-				return ratios[second.id] - ratios[first.id];
+			meta.forEach((c) => {
+				ratios[c.id] = Ratio(match, c.title);
 			});
 
-			meta = meta.filter((obj) => {
-				return ratios[obj.id] > SEARCH_TOLERANCE;
+			meta = meta.filter((c) => {
+				return ratios[c.id] > SEARCH_TOLERANCE;
 			});
 
-			return meta;
+			let sort = (f, s) => ratios[s.id] - ratios[f.id];
+
+			return {meta: meta, sort: sort};
 		}
 
 		function searchTags(meta, match)
@@ -361,55 +375,31 @@
 			{
 				let tags = content[TAG_KEY];
 
-				for (let tag of tags)
-				{
-					if (blacklist.find(o => o === tag))
-					{
-						return 0;
-					}
-				}
+				let blFound = tags.find(tag => find(blacklist, tag));
+				if (blFound) return 0;
 
-				if (whitelist.length > 0)
+				let count = 0;
+				if (whitelist.length)
 				{
-					for (let wl of whitelist)
-					{
-						if (!tags.find(o => o === wl))
-						{
-							return 0;
-						}
-					}
-					return 1;
+					let wlMissing = whitelist.find(wl => !find(tags, wl));
+					if (wlMissing) return 0;
+					count += 1;
 				}
-				else if (optional.length > 0)
-				{
-					let count = 0;
-					for (let tag of tags)
-					{
-						if (optional.find(o => o === tag))
-						{
-							count += 1;
-						}
-					}
-					return count;
-				}
-				else
-				{
-					return 1;
-				}
+				let found = tags.filter(tag => find(optional, tag));
+				count += found.length;
+
+				return count;
 			}
 
 			let cache = {};
-			for (let content of meta)
-			{
+			meta.forEach((content) => {
 				cache[content.id] = evaluate(content);
-			}
-
-			meta = meta.filter(c => cache[c.id] !== 0);
-			meta.sort((first, second) => {
-				return cache[first.id] - cache[second.id];
 			});
 
-			return meta;
+			meta = meta.filter(c => cache[c.id] !== 0);
+			let sort = (f, s) => cache[s.id] - cache[f.id];
+
+			return {meta: meta, sort: sort};
 		}
 
 		function getStringFilter(key, values)
@@ -466,10 +456,9 @@
 			}
 			else
 			{
-				for (let val of values)
-				{
+				values.forEach((val) => {
 					inner(val);
-				}
+				});
 			}
 
 			return { whitelist: whitelist, 
@@ -506,10 +495,9 @@
 			}
 			else
 			{
-				for (let val of values)
-				{
+				values.forEach((val) => {
 					filters.push(inner(val));
-				}
+				});
 			}
 
 			return combineFilters(filters);
@@ -518,15 +506,32 @@
 		function combineFilters(filters)
 		{
 			return (obj) => {
-				for (let f of filters)
-				{
-					if (!f(obj))
-					{
-						return false;
-					}
-				}
-				return true;
+				return !filters.find(f => !f(obj));
 			}; 
+		}
+
+		function sort(arr, sortMethods)
+		{
+			function recursiveSort(o1, o2, i)
+			{
+				let val = sortMethods[i](o1, o2);
+				let next = i + 1;
+				if (val === 0 && next < sortMethods.length)
+				{
+					return recursiveSort(o1, o2, next);
+				}
+				else
+				{
+					return val;
+				}
+			}
+
+			arr.sort((o1, o2) => recursiveSort(o1, o2, 0));
+		}
+
+		function find(arr, item)
+		{
+			return arr.find(o => o === item);
 		}
 	}).call(function(){});
 }).call(this);

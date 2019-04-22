@@ -1,6 +1,7 @@
 
 @import "master";
 
+$input-br: 7px;
 $container-padding: 5px;
 
 /*utilities*/
@@ -49,7 +50,7 @@ body {
 .save-menu__title-box {
   margin-top: 10px;
   padding: 5px;
-  border-radius: 3px; }
+  border-radius: $input-br; }
 .save-menu__title {
   width: 100%;
   height: 20px;
@@ -69,11 +70,13 @@ body {
   padding-bottom: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: 3px;
+  border-radius: $input-br;
   cursor: text; }
 .save-menu__tag-container::-webkit-scrollbar { width: 0; }
 .taggle_list li {
   margin-bottom: $container-padding; }
+.taggle_placeholder {
+  left: 5px; }
 
 
 /*css relating to the svg buttons*/

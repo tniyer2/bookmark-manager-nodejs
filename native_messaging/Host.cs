@@ -13,11 +13,13 @@ class Host
     private const string 
         STATUS_MESSAGE = "\"status\"",
         CONNECTED_MESSAGE    = "{\"status\": \"connected\", \"tag\": \"status\"}",
-        DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"status\"}";
+        DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"status\"}",
+        IMMEDIATE_DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"autostatus\"}";
 
-    private readonly byte[] STATUS_MESSAGE_BYTES;
-    private readonly byte[] CONNECTED_MESSAGE_BYTES;
-    private readonly byte[] DISCONNECTED_MESSAGE_BYTES;
+    private readonly byte[] B_STATUS_MESSAGE,
+                            B_CONNECTED_MESSAGE,
+                            B_DISCONNECTED_MESSAGE,
+                            B_IMMEDIATE_DISCONNECTED_MESSAGE;
 
     private Stream _appStream;
     public Stream appStream
@@ -45,9 +47,10 @@ class Host
     public Host()
     {
         var encoding = new UTF8Encoding();
-        STATUS_MESSAGE_BYTES = encoding.GetBytes(STATUS_MESSAGE);
-        CONNECTED_MESSAGE_BYTES = encoding.GetBytes(CONNECTED_MESSAGE);
-        DISCONNECTED_MESSAGE_BYTES = encoding.GetBytes(DISCONNECTED_MESSAGE);
+        B_STATUS_MESSAGE = encoding.GetBytes(STATUS_MESSAGE);
+        B_CONNECTED_MESSAGE = encoding.GetBytes(CONNECTED_MESSAGE);
+        B_DISCONNECTED_MESSAGE = encoding.GetBytes(DISCONNECTED_MESSAGE);
+        B_IMMEDIATE_DISCONNECTED_MESSAGE = encoding.GetBytes(IMMEDIATE_DISCONNECTED_MESSAGE);
 
         stdin     = Console.OpenStandardInput();
         stdout    = Console.OpenStandardOutput();
@@ -92,14 +95,14 @@ class Host
             {
                 if (socket == null || !socket.Connected)
                 { 
-                    write(stdout, DISCONNECTED_MESSAGE_BYTES);
+                    write(stdout, B_DISCONNECTED_MESSAGE);
                     continue;
                 }
             }
 
-            if (Enumerable.SequenceEqual(b, STATUS_MESSAGE_BYTES))
+            if (Enumerable.SequenceEqual(b, B_STATUS_MESSAGE))
             {
-                write(stdout, CONNECTED_MESSAGE_BYTES);
+                write(stdout, B_CONNECTED_MESSAGE);
             }
             else
             {
@@ -129,6 +132,7 @@ class Host
                     appStream.Close();
                     socket = null;
                     appStream = null;
+                    write(stdout, B_IMMEDIATE_DISCONNECTED_MESSAGE);
                     connectApp(true);
                     continue;
                 }

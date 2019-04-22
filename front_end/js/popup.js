@@ -1,7 +1,7 @@
 
 (function(){
 
-	injectThemeCss("light", ["popup", "taggle", "scrollbar", "alerts"]);
+	injectThemeCss("light", ["scrollbar", "alerts", "taggle", "popup"]);
 
 	// caching stops after this limit
 	const VIDEO_DURATION_LIMIT = 120;
