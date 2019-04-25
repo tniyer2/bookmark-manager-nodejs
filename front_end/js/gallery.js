@@ -2,8 +2,9 @@
 const FeedBox = (function(){
 
 	const CONTENT_LINK  = "singleView.html";
-	const DEFAULTS = { bufferSize: 20, 
-					   bufferOnScrollBottom: true, 
+	const DEFAULT_TITLE = "untitled";
+	const DEFAULTS = { bufferSize: 20,
+					   bufferOnScrollBottom: true,
 					   scrollBottomOffset: 500,
 					   scrollBottomBufferDelay: 0 };
 	return class {
@@ -39,7 +40,7 @@ const FeedBox = (function(){
 
 			return this._numLoaded - initial;
 		}
-		
+
 		_createContent(content, successCallback, errorCallback)
 		{
 			let el_contentBlock = document.createElement("div");
@@ -55,7 +56,9 @@ const FeedBox = (function(){
 
 			let el_title = document.createElement("p");
 			el_title.classList.add("content__title");
-			let titleTextNode = document.createTextNode(content.title);
+
+			let titleText = content.title ? content.title : DEFAULT_TITLE;
+			let titleTextNode = document.createTextNode(titleText);
 			el_title.appendChild(titleTextNode);
 			el_infoBlock.appendChild(el_title);
 
@@ -63,6 +66,9 @@ const FeedBox = (function(){
 			function successCallbackWrapper()
 			{
 				el_content.classList.add("content__source");
+				el_infoBlock.addEventListener("click", (evt) => {
+					evt.stopPropagation();
+				});
 				el_contentBlock.addEventListener("click", () => {
 					let url = CONTENT_LINK + "?" + content.id;
 					window.open(url, "_blank");
@@ -95,13 +101,7 @@ const FeedBox = (function(){
 			}
 			else if (content.category === "bookmark")
 			{
-				let faviconUrl = ContentCreator.getFaviconUrl(source);
-				let el_favicon = ContentCreator.createImage(faviconUrl);
-				el_content = document.createElement("a");
-				el_content.classList.add("content__favicon");
-				el_content.appendChild(el_favicon);
-				el_content.href = source;
-				el_content.target = "_blank";
+				el_content = ContentCreator.createBookmark(source);
 				el_content.addEventListener("click", (evt) => {
 					evt.stopPropagation();
 				});
@@ -124,8 +124,8 @@ const FeedBox = (function(){
 
 		_onScroll()
 		{
-			if (( window.innerHeight 
-				+ Math.ceil(window.pageYOffset + 1) 
+			if (( window.innerHeight
+				+ Math.ceil(window.pageYOffset + 1)
 				+ this._options.scrollBottomOffset ) >= document.body.offsetHeight)
 			{
 				window.removeEventListener("scroll", this._onScrollBound);
@@ -159,12 +159,12 @@ const FeedBox = (function(){
 	const el_feed = document.getElementById("feed");
 
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."});
-	
+
 	let g_titleWidget, g_tagWidget, g_feedBox;
 	let g_searchByTag;
 	let g_submitted = false;
 
-	hideInput(true)
+	hideInput(true);
 	attachSubmit();
 	el_searchByBtn.addEventListener("click", switchSearch);
 	attachStyleEvents();
@@ -273,7 +273,7 @@ const FeedBox = (function(){
 		{
 			for (let tag of map.tags)
 			{
-				g_taggle.add(tag);	
+				g_taggle.add(tag);
 			}
 			if (!g_searchByTag) switchSearch();
 		}
@@ -314,7 +314,7 @@ const FeedBox = (function(){
 	{
 		let response = await wrap(makeRequest, {request: "get-meta"}).catch(errorCallback);
 		if (isUdf(response)) return;
-		
+
 		if (response.local && response.app)
 		{
 			let m = response.local.meta;
@@ -347,7 +347,7 @@ const FeedBox = (function(){
 			});
 		};
 
-		el_form.addEventListener("submit", (evt) => { 
+		el_form.addEventListener("submit", (evt) => {
 			evt.preventDefault();
 		});
 		el_submit.addEventListener("click", submitSearch, {once: true});
@@ -362,12 +362,12 @@ const FeedBox = (function(){
 
 	function attachStyleEvents()
 	{
-		g_titleWidget = Widgets.styleOnFocus(el_searchBox, "focus", 
-							{ focusTarget: el_titleInput, 
+		g_titleWidget = Widgets.styleOnFocus(el_searchBox, "focus",
+							{ focusTarget: el_titleInput,
 							  mouseTarget: el_searchBox,
 							  disable: g_searchByTag });
 		g_tagWidget = Widgets.styleOnFocus(el_searchBox, "focus",
-							{ focusTarget: el_tagContainer, 
+							{ focusTarget: el_tagContainer,
 			  				  mouseTarget: el_searchBox,
 							  disable: !g_searchByTag });
 	}

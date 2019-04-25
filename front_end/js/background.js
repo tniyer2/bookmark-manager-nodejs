@@ -1,6 +1,6 @@
 
 (function(){
-	
+
 	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
 	const NEW_TAB = "chrome://newtab/";
 	const CONTEXT_OPTIONS = { title: "Save",
@@ -16,7 +16,7 @@
 
 	let g_recentPopupInfo;
 	let g_allPopupInfo = {};
-	
+
 	chrome.runtime.onMessage.addListener((m, s, cb) => {
 		(async() => {
 			serveRequest(m, s, cb);

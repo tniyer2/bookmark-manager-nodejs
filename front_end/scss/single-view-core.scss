@@ -1,0 +1,96 @@
+
+@import "master";
+
+.noshow {
+	display: none !important; }
+
+body {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	margin: 0; }
+.main {	
+	display: inline-block;
+	padding: 20px;
+	border-radius: 8px; }
+
+
+.content-block {
+	display: flex;
+	justify-content: flex-start;
+}
+.content-block__content {
+	max-height: 400px;
+}
+.content-block__image {}
+.content-block__video {}
+.content-block__favicon {
+	width: $favicon-resolution;
+	height: $favicon-resolution;
+	padding: 5px;
+	border-radius: 8px; }
+.content-block__favicon img {
+	width: 100%;
+	height: 100%;
+	border-radius: inherit; }
+.content-block__youtube {
+
+}
+
+
+.info-block {
+	margin: 5px 0;
+	padding: 0;
+	font: $regular-font;
+	text-align: left;
+	list-style-type: none;
+	user-select: none; }
+.info-block li {
+	display: inline-block;
+	vertical-align: bottom;
+	margin-right: 5px;
+	border-radius: 5px; }
+$info-tag-padding: 3px;
+.info-block__tag {
+	padding: $info-tag-padding;
+	user-select: text; }
+.info-block__source-link {}
+.info-block__source-link a {
+	display: block;
+	padding: $info-tag-padding; }
+
+%removeDefaultButton {
+	background: none;
+	font: inherit;
+	color: inherit;
+	border: none;
+	outline: none; 
+	cursor: pointer;
+}
+.info-block__update-btn {}
+.info-block__update-btn button {
+	@extend %removeDefaultButton;
+	padding: $info-tag-padding; }
+.info-block__delete-btn {}
+.info-block__delete-btn button {
+	@extend %removeDefaultButton;
+	padding: $info-tag-padding; }
+
+
+.title-input {
+	margin-bottom: 10px; }
+$taggle-padding: 5px;
+.tag-container-wrapper {
+	position: relative;
+	width: 400px;
+	min-height: 40px;
+	box-sizing: border-box;
+	padding: $taggle-padding;
+	padding-bottom: 0;
+	border-radius: 5px; }
+.tag-container {
+	overflow: hidden;
+}
+.taggle_list li {
+	margin-bottom: $taggle-padding; }

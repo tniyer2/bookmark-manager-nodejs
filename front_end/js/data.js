@@ -194,7 +194,7 @@
 				let success = await wrap(save, this._meta).catch(errorCallback);
 				if (isUdf(success))
 				{
-					this._meta.pop(); 
+					this._meta.pop();
 					return;
 				}
 
@@ -217,7 +217,7 @@
 				}
 				else
 				{
-					errorCallback(null);
+					errorCallback({notFound: true});
 				}
 			}
 
@@ -230,7 +230,7 @@
 				}
 				else
 				{
-					errorCallback(null);
+					errorCallback({notFound: true});
 				}
 			}
 
@@ -254,7 +254,7 @@
 				}
 				else
 				{
-					errorCallback(null);
+					errorCallback({notFound: true});
 				}
 			}
 		};
@@ -351,12 +351,11 @@
 				});
 			});
 		}
-	}).call(function(){});
+	}).call({});
 
 	this.RequestManager = (function(){
 		const APP_ID_PREFIX = "app_";
 		const TITLE_KEY = "title";
-		const DEFAULT_TITLE = "untitled";
 
 		const GET_TYPE = "get";
 		const ADD_TYPE = "add";
@@ -375,7 +374,7 @@
 			{
 				this._appCount += 1;
 				return this._appCount;
-			} 
+			}
 
 			async getContent(successCallback, errorCallback)
 			{
@@ -397,11 +396,6 @@
 
 			async addContent(content, cache, successCallback, errorCallback)
 			{
-				if (!content[TITLE_KEY])
-				{
-					content[TITLE_KEY] = DEFAULT_TITLE;
-				}
-
 				let tag = makeTag(ADD_TYPE, this.appCount);
 				let request = { type: ADD_TYPE,
 								tag: tag,
@@ -444,24 +438,21 @@
 
 			async _findContent(type, contentId, updateInfo, appCallback, localCallback, errorCallback)
 			{
-				let throwNMError = () => {
-					console.warn(`Cannot connect to app. Connection required for '${type}' request.`);
-					errorCallback({NMError: true});
-				};
-
 				if (fromApp(contentId))
 				{
 					let tag = makeTag(type, this.appCount);
 
 					let request = { tag: tag,
-									type: type, 
+									type: type,
 									id: contentId };
 					if (updateInfo)
-					{ 
+					{
 						request.info = updateInfo;
 					}
 
-					this._requestApp(request, appCallback, throwNMError);
+					this._requestApp(request, appCallback, () => {
+						errorCallback({connectionRequired: true});
+					});
 				}
 				else
 				{
@@ -501,7 +492,7 @@
 					return;
 				}
 
-				let port = await bindWrap(this._connector.connect, 
+				let port = await bindWrap(this._connector.connect,
 										  this._connector);
 
 				if (port)

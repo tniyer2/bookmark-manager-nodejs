@@ -58,7 +58,7 @@
 			let percentage = (totalCharacters - totalDistance) / totalCharacters * 100;
 			// console.log("ratio: " + Math.round(percentage) + "%");
 			return percentage;
-		}
+		};
 
 		function isInside (x, y)
 		{
@@ -186,60 +186,62 @@
 	this.Searcher = (function(){
 
 		const TITLE_KEY = "title";
-		const TAG_KEY = "tags";
-		const SORT_KEY = "sort";
+		const TAG_KEY   = "tags";
+		const SORT_KEY  = "sort";
 
-		const NO_FILTER_KEYS 	= [ TITLE_KEY ];
+		// keys listed will be parsed as a single value instead of an array of values.
 		const SINGLE_VALUE_KEYS = [ TITLE_KEY ];
-		const STRING_KEYS 		= [ TITLE_KEY, "id", "category", "srcUrl", "docUrl" ];
-		const NUMBER_KEYS 		= [ "date", "bytes" ];
+
+		// keys in STRING_KEYS or NUMBER_KEYS will be sorted.
+		// keys in STRING_KEYS or NUMBER_KEYS but not in NO_FILTER_KEYS will be filtered.
+		const STRING_KEYS = [ TITLE_KEY, "id", "category", "srcUrl", "docUrl" ];
+		const NUMBER_KEYS = [ "date", "bytes" ];
+		const NO_FILTER_KEYS = [ TITLE_KEY ];
 
 		const NOT_MODIFIER = "!";
 		const OR_MODIFIER = "*";
 
 		const SEARCH_TOLERANCE = 70;
 
-		this.prototype.query = function(meta, map) {
+		// meta should be a copy. it WILL be mutated.
+		this.query = function(meta, map) {
 
-			let filter = getFilter(map);
-			let sortMethods = [];
+			let sortFunctions = [];
 
-			if (filter)
-			{
-				meta = meta.filter(filter);
-			}
+			meta = meta.filter(getFilter(map));
 
 			let title = map[TITLE_KEY];
 			if (title)
 			{
-				let info = search(meta, title);
-				meta = info.meta;
-				sortMethods.push(info.sort);
+				let info = getSearchInfo(meta, title);
+				meta = meta.filter(info.filter);
+				sortFunctions.push(info.sorter);
 			}
 
 			let tags = map[TAG_KEY];
 			if (tags)
 			{
-				let info = searchTags(meta, tags);
-				meta = info.meta
-				sortMethods.push(info.sort);
+				let info = getSearchTagsInfo(meta, tags);
+				meta = meta.filter(info.filter);
+				sortFunctions.push(info.sorter);
 			}
 
 			let sortKeys = map[SORT_KEY];
 			if (sortKeys)
 			{
-				let moreSortMethods = getSort(sortKeys);
-				sortMethods = sortMethods.concat(moreSortMethods);
+				sortKeys.forEach((key) => {
+					sortFunctions.push(getSorter(key));
+				});
 			}
 
-			if (sortMethods.length)
+			if (sortFunctions.length)
 			{
-				sort(meta, sortMethods);
+				multiSort(meta, sortFunctions);
 			}
 
 			return meta;
 		};
-		this.prototype.parse = function(q) {
+		this.parse = function(q) {
 
 			function split(arr, reg)
 			{
@@ -275,7 +277,7 @@
 
 			return map;
 		};
-		return new this();
+		return this;
 
 		function getFilter(map)
 		{
@@ -310,64 +312,53 @@
 			return combineFilters(filters);
 		}
 
-		function getSort(sortKeys)
+		function getSorter(key)
 		{
-			function inner(key)
+			let dsc = key.charAt(0) === NOT_MODIFIER;
+			if (dsc)
 			{
-				let dsc = key.charAt(0) === NOT_MODIFIER;
-				if (dsc)
-				{
-					key = key.substring(1);
-				}
-
-				let sort;
-				if (STRING_KEYS.includes(key))
-				{
-					sort = (f, s) => f[key].localeCompare(s[key]);
-				}
-				else if (NUMBER_KEYS.includes(key))
-				{
-					sort = (f, s) => f[key] - s[key];
-				}
-				else
-				{
-					throw "'" + key + "' is not a supported sortkey.";
-				}
-
-				if (dsc)
-				{
-					return (f, s) => sort(s, f);
-				}
-				else
-				{
-					return sort;
-				}
+				key = key.substring(1);
 			}
 
-			let sortMethods = [];
-			sortKeys.forEach((key) => {
-				sortMethods.push(inner(key));
-			});
-			return sortMethods
+			let sorter;
+			if (STRING_KEYS.includes(key))
+			{
+				sorter = (f, s) => f[key].localeCompare(s[key]);
+			}
+			else if (NUMBER_KEYS.includes(key))
+			{
+				sorter = (f, s) => f[key] - s[key];
+			}
+			else
+			{
+				throw "'" + key + "' is not a supported sortkey.";
+			}
+
+			if (dsc)
+			{
+				return (f, s) => sorter(s, f);
+			}
+			else
+			{
+				return sorter;
+			}
 		}
 
-		function search(meta, match)
+		function getSearchInfo(meta, match)
 		{
-			ratios = {};
+			let ratios = {};
 			meta.forEach((c) => {
 				ratios[c.id] = Ratio(match, c.title);
 			});
 
-			meta = meta.filter((c) => {
-				return ratios[c.id] > SEARCH_TOLERANCE;
-			});
+			let filter = (c) => ratios[c.id] > SEARCH_TOLERANCE;
 
-			let sort = (f, s) => ratios[s.id] - ratios[f.id];
+			let sorter = (f, s) => ratios[s.id] - ratios[f.id];
 
-			return {meta: meta, sort: sort};
+			return {filter: filter, sorter: sorter};
 		}
 
-		function searchTags(meta, match)
+		function getSearchTagsInfo(meta, match)
 		{
 			let {whitelist, optional, blacklist} = parseModifiers(match);
 
@@ -375,18 +366,24 @@
 			{
 				let tags = content[TAG_KEY];
 
-				let blFound = tags.find(tag => find(blacklist, tag));
+				let blFound = tags.find(tag => findInArray(blacklist, tag));
 				if (blFound) return 0;
 
 				let count = 0;
 				if (whitelist.length)
 				{
-					let wlMissing = whitelist.find(wl => !find(tags, wl));
+					let wlMissing = whitelist.find(wl => !findInArray(tags, wl));
 					if (wlMissing) return 0;
+
 					count += 1;
 				}
-				let found = tags.filter(tag => find(optional, tag));
-				count += found.length;
+
+				tags.forEach((tag) => {
+					if (findInArray(optional, tag))
+					{
+						count += 1;
+					}
+				});
 
 				return count;
 			}
@@ -396,10 +393,11 @@
 				cache[content.id] = evaluate(content);
 			});
 
-			meta = meta.filter(c => cache[c.id] !== 0);
-			let sort = (f, s) => cache[s.id] - cache[f.id];
+			let filter = (c) => cache[c.id] !== 0;
+			
+			let sorter = (f, s) => cache[s.id] - cache[f.id];
 
-			return {meta: meta, sort: sort};
+			return {filter: filter, sorter: sorter};
 		}
 
 		function getStringFilter(key, values)
@@ -417,11 +415,11 @@
 
 				if (whitelist.length > 0)
 				{
-					return whitelist.every(equalTo)
+					return whitelist.every(equalTo);
 				}
 				else
 				{
-					return optional.find(equalTo)
+					return optional.find(equalTo);
 				}
 			};
 		}
@@ -461,8 +459,8 @@
 				});
 			}
 
-			return { whitelist: whitelist, 
-					 optional: optional, 
+			return { whitelist: whitelist,
+					 optional: optional,
 					 blacklist: blacklist };
 		}
 
@@ -507,16 +505,16 @@
 		{
 			return (obj) => {
 				return !filters.find(f => !f(obj));
-			}; 
+			};
 		}
 
-		function sort(arr, sortMethods)
+		function multiSort(arr, sortFunctions)
 		{
 			function recursiveSort(o1, o2, i)
 			{
-				let val = sortMethods[i](o1, o2);
+				let val = sortFunctions[i](o1, o2);
 				let next = i + 1;
-				if (val === 0 && next < sortMethods.length)
+				if (val === 0 && next < sortFunctions.length)
 				{
 					return recursiveSort(o1, o2, next);
 				}
@@ -529,9 +527,9 @@
 			arr.sort((o1, o2) => recursiveSort(o1, o2, 0));
 		}
 
-		function find(arr, item)
+		function findInArray(arr, item)
 		{
 			return arr.find(o => o === item);
 		}
-	}).call(function(){});
+	}).call({});
 }).call(this);

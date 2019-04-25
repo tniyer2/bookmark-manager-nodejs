@@ -158,7 +158,7 @@ const Widgets = {};
 		}
 	};
 
-	this.AwesomeAlerter = (function(){
+	this.AwesomeAlerter = function(){
 
 		const cl_hide = "noshow";
 		const cl_fadeIn = "fade-in";
@@ -328,9 +328,9 @@ const Widgets = {};
 				this._list.style.height = final + "px";
 			}
 		};
-	}).call(this);
+	}();
 
-	this.ListManager = (function(){
+	this.ListManager = function(){
 
 		const cl_activeSource = "active";
 		const CLASSES = { sourceList: "list",
@@ -603,9 +603,9 @@ const Widgets = {};
 				chrome.downloads.download({url: url});
 			}
 		};
-	}).call(this);
+	}();
 
-	this.AutoComplete = (function(){
+	this.AutoComplete = function(){
 
 		const g_evaluate = (b, s) => { return shortestMatch(b, s, true); };
 
@@ -664,6 +664,7 @@ const Widgets = {};
 				if (elm)
 				{
 					elm.classList.add(cl_activeLi);
+					elm.scrollIntoView({block: "nearest"});
 				}
 				this._el_selected = elm;
 			}
@@ -704,19 +705,13 @@ const Widgets = {};
 					{
 						this.selected = this.selected.previousSibling;
 					}
+					else {/*ignore*/}
 				}
-				else
+				else if (inward)
 				{
-					if (inward)
-					{
-						this.selected = this._el_list.firstChild;
-					}
+					this.selected = this._el_list.firstChild;	
 				}
-
-				if (this.selected)
-				{
-					this.selected.scrollIntoView({block: "nearest"});
-				}
+				else {/*ignore*/}
 			}
 
 			_confirm(value)
@@ -928,5 +923,5 @@ const Widgets = {};
 				}
 			}
 		}
-	}).call(this);
+	}();
 }).call(Widgets);

@@ -1,0 +1,49 @@
+
+@import "master";
+
+
+.main {
+	background: $lt-gray; 
+	border: 3px solid $lt-strong-gray; }
+
+
+.content-block__favicon {
+	background: white;
+	border: 2px solid $lt-strong-gray; }
+.content-block__favicon:hover {
+	border-color: $red; }
+
+
+.info-block {
+	color: $lt-font-color; }
+.info-block li {
+	border-width: 2px;
+	border-style: solid; }
+.info-block__tag {
+	background: $yellow;
+	border-color: $dark-yellow; }
+.info-block__tag::selection {
+	background: $chrome-selected-color;
+	color: $lt-font-color; }
+.info-block__source-link {
+	background: $blue;
+	border-color: $dark-blue; }
+.info-block__source-link:hover {
+	background: $medium-blue; }
+.info-block__source-link a {
+	color: $lt-font-color;
+	text-decoration: none; }
+.info-block__update-btn {
+	background: $blue;
+	border-color: $dark-blue; }
+.info-block__update-btn:hover {
+	background: $medium-blue; }
+.info-block__delete-btn {
+	background: $red;
+	border-color: $strong-red; }
+.info-block__delete-btn:hover {
+	background: $dark-red; }
+
+
+.tag-container-wrapper {
+	background: white; }

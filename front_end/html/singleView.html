@@ -1,15 +1,35 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" type="text/css" href="../css/scrollbar-core.css">
     <link rel="stylesheet" type="text/css" href="../css/alerts-core.css">
+    <link rel="stylesheet" type="text/css" href="../css/taggle-core.css">
     <link rel="stylesheet" type="text/css" href="../css/single-view-core.css">
   </head>
   <body>
-    <div id="main" class="main">
-      <p id="log"></p>
-      <button id="delete-btn" class="delete-btn" disabled>Delete</button>
+    <div class="main">
+      <div id="content-block" class="content-block"></div>
+      <ul id="info-block" class="noshow info-block">
+        <li id="category" class="info-block__tag"></li>
+        <li id="date" class="info-block__tag"></li>
+        <li class="info-block__source-link">
+          <a id="source-link" target="_blank">source</a>
+        </li>
+        <li class="info-block__update-btn">
+          <button id="update-btn" disabled>update</button>
+        </li>
+        <li class="info-block__delete-btn">
+          <button id="delete-btn" disabled>delete</button>
+        </li>
+      </ul>
+      <input id="title-input" class="noshow title-input" type="text">
+      <div class="tag-container-wrapper">
+        <div id="tag-container" class="noshow tag-container"></div>
+      </div>
     </div>
+    <script src="../taggle.js"></script>
     <script src="../js/utility.js"></script>
+    <script src="../js/myTaggle.js"></script>
     <script src="../js/widgets.js"></script>
     <script src="../js/contentCreator.js"></script>
     <script src="../js/singleView.js"></script>

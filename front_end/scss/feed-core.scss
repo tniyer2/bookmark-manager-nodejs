@@ -29,7 +29,7 @@ $br: 8px;
 	display: flex;
 	justify-content: center;
 	min-width: 100px;
-	height: 320px; }
+	height: 300px; }
 .content__info-block {
 	display: flex;
 	padding: ($content-padding / 2) 0; }
@@ -45,10 +45,9 @@ $br: 8px;
 	max-height: 100%; }
 .content__image {
 	border-radius: 5px; }
-$resolution: 128px;
 .content__favicon {
-	width: $resolution;
-	height: $resolution;
+	width: $favicon-resolution;
+	height: $favicon-resolution;
 	padding: 5px;
 	border-radius: $br; }
 .content__favicon img {

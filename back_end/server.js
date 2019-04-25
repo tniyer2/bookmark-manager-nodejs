@@ -15,8 +15,7 @@ const RESOURCES_PATH = "back_end/resources";
 const APP_ID_PREFIX	= "app_";
 const ID_LENGTH = 40;
 
-class NativeMessagingServer
-{
+module.exports = class {
 	constructor(loader, portPath)
 	{
 		loader.loadSync();
@@ -153,7 +152,7 @@ class NativeMessagingServer
 		else
 		{
 			console.log("\t", "could not find", request.id);
-			return {error: true};
+			return {notFound: true};
 		}
 	}
 
@@ -177,7 +176,7 @@ class NativeMessagingServer
 		else
 		{
 			console.log("\t", "could not find", request.id);
-			return {error: true};
+			return {notFound: true};
 		}
 	}
 
@@ -194,7 +193,7 @@ class NativeMessagingServer
 		else
 		{
 			console.log("\t", "could not find", request.id);
-			return {error: true};
+			return {notFound: true};
 		}
 	}
 
@@ -207,8 +206,6 @@ class NativeMessagingServer
 	{
 		let e = `NM Server: client sent invalid request type: '${request.type}'`;
 		console.log(e);
-		return {error: true};
+		return {error: e};
 	}
 }
-
-module.exports = NativeMessagingServer;

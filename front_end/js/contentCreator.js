@@ -5,6 +5,13 @@ const ContentCreator = {};
 	const FAVICON_CRAWLER_URL = "https://www.google.com/s2/favicons";
 	const FAVICON_PATH = "/favicon.ico";
 
+	function getFaviconUrl(source)
+	{
+		let url = new URL(source);
+		let faviconUrl = url.origin + FAVICON_PATH;
+		return faviconUrl;
+	}
+
 	this.createImage = function(source) {
 		let image = document.createElement("img");
 		image.src = source;
@@ -25,9 +32,15 @@ const ContentCreator = {};
 		return iframe;
 	};
 
-	this.getFaviconUrl = function(source) {
-		let url = new URL(source);
-		let faviconUrl = url.origin + FAVICON_PATH;
-		return faviconUrl;
+	this.createBookmark = function(source) {
+		let bookmark = document.createElement("a");
+		bookmark.classList.add("content__favicon");
+		bookmark.href = source;
+		bookmark.target = "_blank";
+
+		let faviconUrl = getFaviconUrl(source);
+		let favicon = this.createImage(faviconUrl);
+		bookmark.appendChild(favicon);
+		return bookmark;
 	};
 }).call(ContentCreator);

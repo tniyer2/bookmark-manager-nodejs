@@ -40,6 +40,8 @@
 .taggle:hover {
   padding: 5px;
   padding-right: 15px; }
+.taggle_text {
+  font: $regular-font; }
 .taggle .close {
   display: none;
   position: absolute;

@@ -9,7 +9,7 @@
 
 	this.clamp = function(val, low, high) {
 		return Math.min(Math.max(val, low), high);
-	}
+	};
 
 	this.makeTag = function() {
 		let tag = Array.from(arguments).join("-");

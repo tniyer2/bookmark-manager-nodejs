@@ -60,7 +60,7 @@
 
 	function saveMeta(srcUrl, category, cache)
 	{
-		let meta = { title: el_title.value,
+		let meta = { title: el_title.value.trim(),
 					 tags: g_taggle.getTags().values,
 					 category: category,
 					 date: Date.now()/*getRandomDate(35)*/,
@@ -166,7 +166,7 @@
 			}
 			else if (data.category === "video")
 			{
-				if (data.sourceMeta && 
+				if (data.sourceMeta &&
 					data.sourceMeta.duration <= VIDEO_DURATION_LIMIT)
 				{
 					g_cache = true;
@@ -177,7 +177,7 @@
 				}
 			}
 		};
-		let manager = new Widgets.ListManager(el_sourceMenu, 
+		let manager = new Widgets.ListManager(el_sourceMenu,
 											  { BEMBlock: "source-menu",
 											    selectFirst: false,
 												onSelect: setMeta });
@@ -235,10 +235,10 @@
 		}
 	}
 
-	function createAlerter() 
+	function createAlerter()
 	{
-		let a =  new Widgets.AwesomeAlerter(document.body, 
-				{ BEMBlock: "alerts", 
+		let a =  new Widgets.AwesomeAlerter(document.body,
+				{ BEMBlock: "alerts",
 	  	  		  insertAtTop: false });
 		a.list.addEventListener("click", (evt) => {
 			evt.stopPropagation();

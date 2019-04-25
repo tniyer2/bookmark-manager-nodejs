@@ -1,23 +1,21 @@
 {
+	"manifest_version": 2,
 	"name": "Tagger Plus",
 	"version": "0.5.0",
-	"manifest_version": 2,
 
-	"icons": 
-	{
+	"description": "Chrome extension for saving and tagging pictures and videos.",
+	"icons": {
 		"16": "icons/icon16.png",
 		"48": "icons/icon48.png",
 		"128": "icons/icon128.png"
 	},
 
-	"permissions": [ "nativeMessaging",
-					 "downloads",
+	"permissions": [ "activeTab", 
+					 "storage",
 					 "contextMenus",
-					 "tabs",
-					 "activeTab", 
-					 "storage" ],
-	"background": 
-	{
+					 "nativeMessaging",
+					 "downloads" ],
+	"background": {
 		"scripts": [ "js/utility.js",
 					 "js/data.js", 
 					 "js/background.js" ],
@@ -27,13 +25,8 @@
      	"matches": ["<all_urls>"],
     	"js": ["js/scanner.js"]
    	}],
-    "browser_action":
-    {
-
-    },
-    "web_accessible_resources": 
-    [
-    	"html/popup.html",
-    	"css/content.css"
-    ]
+    "browser_action": {
+    	"default_title": "tagger-plus" },
+    "options_page": "html/settings.html",
+    "web_accessible_resources": ["html/popup.html"]
 }
