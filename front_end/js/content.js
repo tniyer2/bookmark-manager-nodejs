@@ -17,17 +17,19 @@ document.body.insertBefore(el_iframe, document.body.firstChild);
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 	if (msg.to !== "content.js")
+	{
 		return;
+	}
 
-	if (msg.check)
+	if (msg.check === true)
 	{
 		sendResponse(true);
 	}
-	else if (msg.open)
+	else if (msg.open === true)
 	{
 		openPopup();
 	}
-	else if(msg.close)
+	else if(msg.close === true)
 	{
 		closePopup();
 	}
@@ -40,6 +42,7 @@ function openPopup()
 		el_iframe.style.display = "block";
 	});
 }
+
 function closePopup()
 {
 	el_iframe.style.display = "none";

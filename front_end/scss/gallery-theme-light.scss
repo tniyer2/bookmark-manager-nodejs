@@ -31,9 +31,11 @@ body {
 	fill: $lt-black; }
 
 .search__svg {
-	fill: $lt-black; }
+	fill: $lt-black;
+	stroke: $lt-black; }
 .search__svg:hover {
-	fill: $blue; }
+	fill: $blue;
+	stroke: $blue; }
 
 .search__dropdown {
 	color: $lt-font-color; }

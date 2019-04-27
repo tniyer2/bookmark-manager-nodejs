@@ -1,55 +1,89 @@
 
+this.getTaggleInputFormatter = (function(){
+	const RESERVED_KEYS = ['*', '!'];
+	const getMessage = (character) => `'${character}' is a reserved character`;
+	const DELAY = 5;
+	const REGEX = RegExp(`[${RESERVED_KEYS.join("")}]`, 'g');
+
+	function Inner(input)
+	{
+		input.addEventListener("input", () => {
+			input.value = input.value.replace(REGEX, "");
+		});
+		input.addEventListener("keydown", (evt) => {
+			if (RESERVED_KEYS.includes(evt.key))
+			{
+				if (this._alert)
+				{
+					this._alert.removeImmediately();
+				}
+
+				this._alert = this._alerter.alert(getMessage(evt.key), DELAY);
+			}
+		});
+	}
+
+	return function(alerter) {
+		let context = {_alerter: alerter};
+		return Inner.bind(context);
+	};
+})();
+
 (function(){
 
-	injectThemeCss("light", ["scrollbar", "alerts", "taggle", "popup"]);
-
-	// caching stops after this limit
-	const VIDEO_DURATION_LIMIT = 120;
-	const NO_SOURCE_MESSAGE = "Pick a source first.";
-	const NO_SOURCE_ALERT_DELAY = 5;
-
-	const RESERVED_KEYS = ['*', '!'];
-	const RESERVED_KEYS_REGEX = RegExp(`[${RESERVED_KEYS.join('')}]`, 'g');
-	const RESERVED_KEY_MESSAGE = (character) => `'${character}' is a reserved character`;
-	const RESERVED_KEY_ALERT_DELAY = 5;
-
-    const cl_hide = "noshow";
-    const cl_scrollbar = "customScrollbar1";
+	const NO_SOURCE_MESSAGE = "Pick a source first.",
+		  NO_SOURCE_ALERT_DELAY = 5,
+		  g_taggleOptions = { placeholder: "enter tags...",
+							  tabIndex: 0 };
+    const cl_hide = "noshow",
+    	  cl_scrollbar = "customScrollbar1";
 
 	const el_sizer = document.getElementById("sizer");
-	const el_saveMenu = document.getElementById("save-menu");
-	const el_title 		  = el_saveMenu.querySelector("#title");
-	const el_tagContainer = el_saveMenu.querySelector("#tag-container");
-	const el_saveBtn 	  = el_saveMenu.querySelector("#save-btn");
-	const el_bookmarkBtn  = el_saveMenu.querySelector("#bookmark-btn");
-	const el_sourceMenu = document.getElementById("source-menu");
 
-	const g_taggleOptions = { placeholder: "enter tags...",
-							  tabIndex: 0 };
-	let g_taggle = createTaggle(el_tagContainer, g_taggleOptions);
+	const el_saveMenu = document.getElementById("save-menu"),
+		  el_title 		  = el_saveMenu.querySelector("#title"),
+		  el_tagContainer = el_saveMenu.querySelector("#tag-container"),
+		  el_saveBtn 	  = el_saveMenu.querySelector("#save-btn"),
+		  el_bookmarkBtn  = el_saveMenu.querySelector("#bookmark-btn"),
+		  el_sourceMenu = document.getElementById("source-menu");
 
-	let g_meta, g_popupId, g_tabId;
-	let g_cache = false;
-	let g_noSourceAlert;
+	let g_alerter,
+		g_noSourceAlert,
+		g_taggle;
 
-	attachMaskEvents();
-	attachButtonEvents();
-	attachStyleEvents();
-	let alerter = createAlerter();
+	let g_source,
+		g_docUrl,
+		g_popupId,
+		g_tabId;
 
-	(async () => {
-		let response = await wrap(getPopupInfo).catch(noop);
-		if (isUdf(response)) return;
+	return function() {
+		U.injectThemeCss("light", ["scrollbar", "alerts", "taggle", "popup"]);
+
+		g_alerter = createAlerter();
+		g_taggleOptions.inputFormatter = getTaggleInputFormatter(g_alerter);
+		g_taggle = MyTaggle.createTaggle(el_tagContainer, g_taggleOptions);
+
+		attachMaskEvents();
+		attachButtonEvents();
+		attachStyleEvents();
+		load();
+	};
+
+	async function load()
+	{
+		let response = await U.wrap(ApiUtility.makeRequest, {request: "get-popup-info"}).catch(U.noop);
+		if (U.isUdf(response)) return;
 
 		g_tabId = response.tabId;
 		g_popupId = response.popupId;
+		g_docUrl = response.docUrl;
 
-		enableElement(el_bookmarkBtn);
-		enableElement(el_saveMenu);
+		U.removeClass(el_bookmarkBtn, cl_hide);
+		U.removeClass(el_saveMenu, cl_hide);
 		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
-		createSourceList(response.srcUrl, response.docUrl,
+		createSourceList(response.srcUrl, g_docUrl,
 						 response.scanInfo, response.mediaType === "image");
-	})();
+	}
 
 	function getRandomDate(days)
 	{
@@ -66,19 +100,11 @@
 					 date: Date.now()/*getRandomDate(35)*/,
 					 srcUrl: srcUrl };
 
-		let msg = { request: "add-meta",
-					meta: meta,
-					cache: cache,
-					popupId: g_popupId };
+		let message = { request: "add-meta",
+						meta: meta,
+						popupId: g_popupId };
 
-		chrome.runtime.sendMessage(msg, (response) => {
-
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				return;
-			}
-
+		ApiUtility.makeRequest(message, (response) => {
 			if (response.success)
 			{
 				closePopup();
@@ -95,21 +121,6 @@
 		});
 	}
 
-	function getPopupInfo(successCallback, errorCallback)
-	{
-		chrome.runtime.sendMessage({request: "get-popup-info"}, (response) => {
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				errorCallback(null);
-			}
-			else
-			{
-				successCallback(response);
-			}
-		});
-	}
-
 	function closePopup()
 	{
 		if (g_tabId)
@@ -119,36 +130,12 @@
 		}
 	}
 
-	function createTaggle(container, options)
-	{
-		options.inputFormatter = (input) => {
-			let prevAlert;
-
-			input.addEventListener("input", () => {
-				input.value = input.value.replace(RESERVED_KEYS_REGEX, '');
-			});
-			input.addEventListener("keydown", (evt) => {
-				if (RESERVED_KEYS.includes(evt.key))
-				{
-					if (prevAlert)
-					{
-						prevAlert.removeImmediately();
-					}
-
-					prevAlert = alerter.alert(RESERVED_KEY_MESSAGE(evt.key), RESERVED_KEY_ALERT_DELAY);
-				}
-			});
-		};
-		taggle = MyTaggle.createTaggle(container, options);
-		return taggle;
-	}
-
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
 	{
 		let setMeta = (li, data) => {
 
-			g_meta = { srcUrl: data.srcUrl,
-					   category: data.category };
+			g_source = { url: data.srcUrl,
+					   	 category: data.category };
 
 			if (!el_title.value)
 			{
@@ -160,20 +147,11 @@
 				g_noSourceAlert.remove();
 			}
 
-			if (data.category === "image")
+			if (data.category === "video")
 			{
-				g_cache = true;
-			}
-			else if (data.category === "video")
-			{
-				if (data.sourceMeta &&
-					data.sourceMeta.duration <= VIDEO_DURATION_LIMIT)
+				if (data.sourceMeta && data.sourceMeta.duration)
 				{
-					g_cache = true;
-				}
-				else
-				{
-					g_cache = false;
+					g_duration = data.sourceMeta.duration;
 				}
 			}
 		};
@@ -185,8 +163,8 @@
 
 		if (isImage)
 		{
-			enableElement(el_saveBtn);
-			// enableElement(el_sourceMenu);
+			U.removeClass(el_saveBtn, cl_hide);
+			// U.removeClass(el_sourceMenu, cl_hide);
 
 			let options = { title: "source clicked on",
 							type: "image",
@@ -207,8 +185,8 @@
 
 		if (scanInfo.list && scanInfo.list.length)
 		{
-			enableElement(el_saveBtn);
-			enableElement(el_sourceMenu);
+			U.removeClass(el_saveBtn, cl_hide);
+			U.removeClass(el_sourceMenu, cl_hide);
 			attachResizeEvents();
 
 			scanInfo.list.forEach((video) => {
@@ -226,7 +204,7 @@
 		}
 		else if (scanInfo.single)
 		{
-			enableElement(el_saveBtn);
+			U.removeClass(el_saveBtn, cl_hide);
 
 			let video = scanInfo.single;
 			setMeta(null, { srcUrl: video.url,
@@ -267,18 +245,23 @@
 				g_noSourceAlert.removeImmediately();
 			}
 
-			if (g_meta)
+			if (g_source)
 			{
-				saveMeta(g_meta.srcUrl, g_meta.category, g_cache);
+				saveMeta(g_source.url, g_source.category);
 			}
 			else
 			{
-				g_noSourceAlert = alerter.alert(NO_SOURCE_MESSAGE, NO_SOURCE_ALERT_DELAY);
+				g_noSourceAlert = g_alerter.alert(NO_SOURCE_MESSAGE, NO_SOURCE_ALERT_DELAY);
 				attachSave();
 			}
 		};
 		let bookmark = () => {
-			saveMeta("docUrl", "bookmark", false);
+			IconGrabber.getUrl(g_docUrl, (url) => {
+				saveMeta(url, "bookmark");
+			}, () => {
+				let url = IconGrabber.getFaviconUrl(g_docUrl);
+				saveMeta(url, "bookmark");
+			});
 		};
 
 		attachSave();
@@ -296,11 +279,11 @@
 
 			if (hdiff === tdiff)
 			{
-				enableElement(el_sizer);
+				U.removeClass(el_sizer, cl_hide);
 			}
 			else
 			{
-				disableElement(el_sizer);
+				U.removeClass(el_sizer, cl_hide);
 			}
 		};
 		onResize();
@@ -335,20 +318,4 @@
 		el_title.addEventListener("focus", () => {fgs.tabIndex = 0;});
 		el_title.addEventListener("blur", () => {fgs.tabIndex = -1;});
 	}
-
-	function enableElement(elm)
-	{
-		if (elm.classList.contains(cl_hide))
-		{
-			elm.classList.remove(cl_hide);
-		}
-	}
-
-	function disableElement(elm)
-	{
-		if (!elm.classList.contains(cl_hide))
-		{
-			elm.classList.add(cl_hide);
-		}
-	}
-}).call(this);
+})()();

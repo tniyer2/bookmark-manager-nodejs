@@ -6,8 +6,6 @@
  * @description Taggle is a dependency-less tagging library
  */
 
-// @todo remove bower from next major version
-
 (function(root, factory) {
     'use strict';
     var libName = 'Taggle';
@@ -684,6 +682,10 @@
      * @param  {Event} e
      */
     Taggle.prototype._blurEvent = function(e) {
+        if (this.tag.values.length) {
+            this._checkLastTag(e);
+        }
+
         if (this.container.classList.contains(this.settings.containerFocusClass)) {
             this.container.classList.remove(this.settings.containerFocusClass);
         }
@@ -696,10 +698,6 @@
             if (this.input.value !== '') {
                 this._confirmValidTagEvent(e);
                 return;
-            }
-
-            if (this.tag.values.length) {
-                this._checkLastTag(e);
             }
         }
         else if (this.settings.clearOnBlur) {

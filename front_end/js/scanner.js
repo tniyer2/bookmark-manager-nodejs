@@ -368,4 +368,4 @@
 		let trimmed = !txt ? "" : txt.replace(/^[\s_]+|[\s_]+$/gi, '').replace(/(_){2,}/g, "_");
 		return trimmed;
 	}
-}).call(this);
+})();

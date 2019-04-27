@@ -1,35 +1,36 @@
 
 (function(){
 
-	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
-	const NEW_TAB = "chrome://newtab/";
-	const CONTEXT_OPTIONS = { title: "Save",
+	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html"),
+		  NEW_TAB = "chrome://newtab/",
+		  APP_NAME = "tagger_plus_desktop",
+		  APP_TIMEOUT = 1000,
+		  CONTEXT_OPTIONS = { title: "Save",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
 				   	   		  documentUrlPatterns: [ "http://*/*",
 				 							  		 "https://*/*",
 				 							  		 "data:image/*",
 				 							  		 "file://*" ] };
+	let g_connector, 
+		g_requester;
 
-	const g_connector = new AppConnector("tagger_plus_desktop", 1000);
-	const g_requester = new RequestManager(g_connector);
+	let g_recentPopupInfo,
+		g_allPopupInfo = {};
 
-	let g_recentPopupInfo;
-	let g_allPopupInfo = {};
+	return function() {
+		g_connector = new AppConnector(APP_NAME, APP_TIMEOUT);
+		g_requester = new RequestManager(g_connector);
 
-	chrome.runtime.onMessage.addListener((m, s, cb) => {
-		(async() => {
-			serveRequest(m, s, cb);
-		})();
-		return true;
-	});
-	chrome.browserAction.onClicked.addListener(openGallery);
-	chrome.contextMenus.removeAll(() => {
-		chrome.contextMenus.create(CONTEXT_OPTIONS);
-	});
-	chrome.contextMenus.onClicked.addListener(onContextClicked);
+		chrome.runtime.onMessage.addListener(handleRequest);
+		chrome.browserAction.onClicked.addListener(openGallery);
+		chrome.contextMenus.removeAll(() => {
+			chrome.contextMenus.create(CONTEXT_OPTIONS);
+			chrome.contextMenus.onClicked.addListener(onContextClicked);
+		});
+	};
 
-	function serveRequest(msg, sender, sendResponse)
+	function handleRequest(msg, sender, sendResponse)
 	{
 		let onErr = (e) => {
 			let response = e ? e : {error: true};
@@ -38,7 +39,7 @@
 
 		if (msg.request === "get-popup-info")
 		{
-			getPopupInfo(sender, sendResponse, onErr);
+			collectPopupInfo(sender, sendResponse, onErr);
 		}
 		else if (msg.request === "get-tags")
 		{
@@ -53,7 +54,7 @@
 			let info = g_allPopupInfo[msg.popupId];
 			fillInSource(msg.meta, info);
 
-			g_requester.addContent(msg.meta, msg.cache, sendResponse, onErr);
+			g_requester.addContent(msg.meta, false, sendResponse, onErr);
 		}
 		else if (msg.request === "find-meta")
 		{
@@ -71,9 +72,11 @@
 		{
 			console.warn("Content script sent unknown message:", msg);
 		}
+
+		return true;
 	}
 
-	async function getPopupInfo(sender, successCallback, errorCallback)
+	async function collectPopupInfo(sender, successCallback, errorCallback)
 	{
 		let info = {};
 
@@ -84,8 +87,8 @@
 
 		try
 		{
-			info.scanInfo = await wrap(requestScanInfo, sender.tab.id);
-			info.tags = await bindWrap(g_requester.getTags, g_requester);
+			info.scanInfo = await U.wrap(requestScanInfo, sender.tab.id);
+			info.tags = await U.bindWrap(g_requester.getTags, g_requester);
 		}
 		catch (e)
 		{
@@ -93,7 +96,7 @@
 			return;
 		}
 
-		let popupId = makeTag(sender.tab.id, "get-popup-info");
+		let popupId = U.makeTag(sender.tab.id, "get-popup-info");
 
 		info.popupId = popupId;
 		g_allPopupInfo[popupId] = info;
@@ -172,4 +175,4 @@
 			}
 		});
 	}
-}).call(this);
+})()();

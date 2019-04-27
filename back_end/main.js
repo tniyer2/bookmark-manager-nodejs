@@ -1,12 +1,12 @@
 
-const {app}   = require("electron");
-const console = require("console");
+const {app}   = require("electron"),
+	  console = require("console");
 
-const NativeMessagingServer  = require("./server");
-const MetaLoader = require("./appdata");
+const NativeMessagingServer = require("./server"),
+	  MetaLoader = require("./appdata");
 
-const META_PATH = "back_end/meta/meta.txt";
-const PORT_PATH = "native_messaging/port";
+const META_PATH = "back_end/meta/meta.txt",
+	  PORT_PATH = "native_messaging/port";
 
 function main()
 {

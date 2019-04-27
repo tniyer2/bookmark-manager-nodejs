@@ -1,23 +1,24 @@
 
-const MyTaggle = {};
-(function(){
+this.MyTaggle = new (function(){
 
-	const TAG_CHARCTER_LIMIT = 30;
+	const TAG_LENGTH_LIMIT = 30;
 	const cl_scrollbar = "customScrollbar1";
 
-	const self = this;
+    let TAB = 9;
+    let ENTER = 13;
+	let COMMA = 188;
 
-    this.TAB_CODE = 9;
-    this.ENTER_CODE = 13;
-	this.COMMA_CODE = 188;
+	let TAGGLE_DEFAULTS = { submitKeys: [COMMA, ENTER, TAB] };
+	let AC_TAGGLE_DEFAULTS = { submitKeys: [COMMA] };
 
 	this.createTaggle = function(container, options) {
-		options.submitKeys = [self.COMMA_CODE];
+
+		options = U.extend(options, TAGGLE_DEFAULTS);
 
 		let taggle = new Taggle(container, options);
 		let taggleInput = taggle.getInput();
 
-		taggleInput.maxLength = TAG_CHARCTER_LIMIT;
+		taggleInput.maxLength = TAG_LENGTH_LIMIT;
 
 		taggleInput.addEventListener("focus", () => {
 			container.dispatchEvent(new Event("focus"));
@@ -46,14 +47,15 @@ const MyTaggle = {};
 	};
 
 	this.createAutoComplete = function(taggle, parentElement, values) {
+
 		let taggleInput = taggle.getInput();
-		let confirmEvent = new KeyboardEvent("keydown", {keyCode: self.COMMA_CODE});
+		let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA});
 		let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
 
-		let ac = new Widgets.AutoComplete(taggleInput, parentElement,
-					 { BEMBlock: "",
-					   values: values,
-					   onConfirm: confirmInput });
+		let acOptions = { values: values,
+						  onConfirm: confirmInput };
+		let ac = new Widgets.AutoComplete(taggleInput, parentElement, acOptions);
 		ac.el_list.classList.add(cl_scrollbar);
+		taggle.setOptions(AC_TAGGLE_DEFAULTS);
 	};
-}).call(MyTaggle);
+})();

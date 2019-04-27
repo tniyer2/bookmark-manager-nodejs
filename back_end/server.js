@@ -1,19 +1,19 @@
 
-const net 	  = require("net");
-const url     = require("url");
-const fs  	  = require("fs");
-const path    = require("path");
-const buffer  = require("buffer");
-const console = require("console");
+const net 	  = require("net"),
+	  url     = require("url"),
+	  fs  	  = require("fs"),
+	  path    = require("path"),
+	  buffer  = require("buffer"),
+	  console = require("console");
 
 const getDownloader = require("./downloader");
 
-const {Searcher} = require("../front_end/js/query");
-const {wrap, bindWrap, bindAll, getRandomString} = require("../front_end/js/utility");
+const {U} = require("../front_end/js/utility");
+const {MetaUtility} = require("../front_end/js/metaUtility");
 
-const RESOURCES_PATH = "back_end/resources";
-const APP_ID_PREFIX	= "app_";
-const ID_LENGTH = 40;
+const RESOURCES_PATH = "back_end/resources",
+	  APP_ID_PREFIX	= "app_",
+	  ID_LENGTH = 40;
 
 module.exports = class {
 	constructor(loader, portPath)
@@ -57,7 +57,7 @@ module.exports = class {
 		    		return;
 		    	}
 
-		    	let f = bindAll( this, this._get, this._add, 
+		    	let f = U.bindAll( this, this._get, this._add, 
 		    					 this._update, this._find, 
 		    					 this._delete, this._getTags, 
 		    					 this._handleInvalid );
@@ -111,7 +111,7 @@ module.exports = class {
 		console.log(`NM Server: adding content to meta: '${request.content.title}'`);
 
 		let content = request.content;
-		content.id = APP_ID_PREFIX + getRandomString(ID_LENGTH);
+		content.id = APP_ID_PREFIX + MetaUtility.getRandomString(ID_LENGTH);
 
 		this._loader.add(content);
 
@@ -126,7 +126,7 @@ module.exports = class {
 				let d;
 				try {
 					d = getDownloader(srcUrl, filePath);
-					await bindWrap(d.download, d);
+					await U.bindWrap(d.download, d);
 				} catch (e) {
 					console.log(e.message);
 					return;
@@ -208,4 +208,4 @@ module.exports = class {
 		console.log(e);
 		return {error: e};
 	}
-}
+};

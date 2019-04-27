@@ -17,6 +17,7 @@
 					 "downloads" ],
 	"background": {
 		"scripts": [ "js/utility.js",
+					 "js/metaUtility.js",
 					 "js/data.js", 
 					 "js/background.js" ],
 		"persistent": false

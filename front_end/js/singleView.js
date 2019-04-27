@@ -1,56 +1,54 @@
 
-(function(){
-
-	const formatDate = (function(){
-		const SECOND = 1000;
-		const MINUTE = 60 * SECOND;
-		const HOUR = 60 * MINUTE;
-		const DAY = 24 * HOUR;
-		const MONTH_NAMES = [ "Jan", "Feb", "Mar",
-							  "Apr", "May", "Jun",
-							  "Jul", "Aug", "Sept",
-							  "Oct", "Nov", "Dec" ];
-		return function(ms) {
-			let now = new Date();
-			let offset = now.getTime() - ms;
-			let val, unit;
-			if (offset < DAY)
+this.formatDate = (function(){
+	const SECOND = 1000;
+	const MINUTE = 60 * SECOND;
+	const HOUR = 60 * MINUTE;
+	const DAY = 24 * HOUR;
+	const MONTH_NAMES = [ "Jan", "Feb", "Mar",
+						  "Apr", "May", "Jun",
+						  "Jul", "Aug", "Sept",
+						  "Oct", "Nov", "Dec" ];
+	return function(ms) {
+		let now = new Date();
+		let offset = now.getTime() - ms;
+		let val, unit;
+		if (offset < DAY)
+		{
+			if (offset < MINUTE)
 			{
-				if (offset < MINUTE)
-				{
-					val = Math.floor(offset / SECOND);
-					unit = "second";
-				}
-				else if (offset < HOUR)
-				{
-					val = Math.floor(offset / MINUTE);
-					unit = "minute";
-				}
-				else
-				{
-					val = Math.floor(offset / HOUR);
-					unit = "hour";
-				}
-				let plural = val === 1 ? "" : "s";
-				return val + " " + unit + plural + " ago";
+				val = Math.floor(offset / SECOND);
+				unit = "second";
+			}
+			else if (offset < HOUR)
+			{
+				val = Math.floor(offset / MINUTE);
+				unit = "minute";
 			}
 			else
 			{
-				let then = new Date(ms);
-
-				let currentYear = now.getFullYear();
-				let otherYear = then.getFullYear();
-				let year = currentYear === otherYear ? "" : " " + otherYear;
-
-				let month = MONTH_NAMES[then.getMonth()];
-				let day = then.getDate();
-
-				return month + " " + day + year;
+				val = Math.floor(offset / HOUR);
+				unit = "hour";
 			}
-		};
-	}).call(this);
+			let plural = val === 1 ? "" : "s";
+			return val + " " + unit + plural + " ago";
+		}
+		else
+		{
+			let then = new Date(ms);
 
-	injectThemeCss("light", ["scrollbar", "alerts", "taggle", "single-view"]);
+			let currentYear = now.getFullYear();
+			let otherYear = then.getFullYear();
+			let year = currentYear === otherYear ? "" : " " + otherYear;
+
+			let month = MONTH_NAMES[then.getMonth()];
+			let day = then.getDate();
+
+			return month + " " + day + year;
+		}
+	};
+})();
+
+(function(){
 
 	const CONTENT_ID = getIdFromHref();
 	const cl_hide = "noshow";
@@ -80,12 +78,16 @@
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {});
 	const g_alerter = new Widgets.AwesomeAlerter(document.body, {BEMBlock: "alerts"});
 
-	load();
+
+	return function() {
+		U.injectThemeCss("light", ["scrollbar", "alerts", "taggle", "single-view"]);
+		load();
+	};
 
 	async function load()
 	{
-		let content = await wrap(requestContent).catch(noop);
-		if (isUdf(content)) return;
+		let content = await U.wrap(requestContent).catch(U.noop);
+		if (U.isUdf(content)) return;
 
 		createContent(content);
 		el_deleteBtn.addEventListener("click", requestDelete, {once: true});
@@ -95,7 +97,7 @@
 
 		let tags;
 		try {
-			tags = await wrap(makeRequest, {request: "get-tags"});
+			tags = await U.wrap(ApiUtility.makeRequest, {request: "get-tags"});
 		} catch (e) {
 			g_taggle.setOptions({submitKeys: [MyTaggle.COMMA_CODE, MyTaggle.ENTER_CODE]});
 		}
@@ -111,7 +113,7 @@
 			errorCallback();
 		}
 
-		makeRequest({request: "find-meta", id: CONTENT_ID}, (response) => {
+		ApiUtility.makeRequest({request: "find-meta", id: CONTENT_ID}, (response) => {
 			if (response.content)
 			{
 				successCallback(response.content);
@@ -137,7 +139,7 @@
 		}
 
 		let message = {request: "delete-meta", id: CONTENT_ID};
-		makeRequest(message, (response) => {
+		ApiUtility.makeRequest(message, (response) => {
 			if (response.success)
 			{
 				window.close();
@@ -158,7 +160,7 @@
 	{
 		let info = { title: el_titleInput.value,
 					 tags: g_taggle.getTags().values };
-		makeRequest({request: "update-meta", id: CONTENT_ID, info: info}, (response) => {
+		ApiUtility.makeRequest({request: "update-meta", id: CONTENT_ID, info: info}, (response) => {
 			if (response.success)
 			{
 				g_alerter.alert("Successfully updated", 5);
@@ -178,6 +180,8 @@
 
 	function createContent(content)
 	{
+		console.log("content:", content);
+
 		let source = content.path ? content.path : content.srcUrl;
 		let el_content;
 		if (content.category === "image")
@@ -192,8 +196,9 @@
 		}
 		else if (content.category === "bookmark")
 		{
-			el_content = ContentCreator.createBookmark(source);
+			el_content = ContentCreator.createBookmark(source, content.docUrl);
 			el_content.classList.add("content-block__favicon");
+			el_sourceLink.parentElement.classList.add("noshow");
 		}
 		else if (content.category === "youtube")
 		{
@@ -210,13 +215,13 @@
 		el_contentBlock.appendChild(el_content);
 
 		el_titleInput.value = content.title;
-		removeClass(el_titleInput, cl_hide);
+		U.removeClass(el_titleInput, cl_hide);
 
 		for (let i = 0, l = content.tags.length; i < l; i+=1)
 		{
 			g_taggle.add(content.tags[i]);
 		}
-		removeClass(el_tagContainer, cl_hide);
+		U.removeClass(el_tagContainer, cl_hide);
 
 		let formattedCategory = formatCategory(content.category);
 		let categoryTextNode = document.createTextNode(formattedCategory);
@@ -229,7 +234,7 @@
 
 		el_sourceLink.href = content.docUrl;
 
-		removeClass(el_infoBlock, cl_hide);
+		U.removeClass(el_infoBlock, cl_hide);
 	}
 
 	function formatCategory(category)
@@ -254,4 +259,4 @@
 
 		return id;
 	}
-}).call(this);
+})()();

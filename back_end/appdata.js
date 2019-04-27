@@ -1,16 +1,17 @@
 
 const fs = require("fs");
 const console = require("console");
-const {TagCounter, searchId, extend} = require("../front_end/js/utility.js");
+
+const {U} = require("../front_end/js/utility");
+const {MetaUtility} = require("../front_end/js/metaUtility");
 
 const TAGS_KEY = "tags";
 
-class MetaLoader
-{
+module.exports = class {
 	constructor(metaPath)
 	{
 		this._metaPath = metaPath;
-		this._tracker = new TagCounter();
+		this._tracker = new MetaUtility.TagCounter();
 	}
 
 	get meta()
@@ -32,13 +33,13 @@ class MetaLoader
 
 	find(contentId)
 	{
-		let {content} = searchId(this._meta, contentId);
+		let {content} = MetaUtility.searchId(this._meta, contentId);
 		return content;
 	}
 
 	remove(contentId)
 	{
-		let {content, index} = searchId(this._meta, contentId);
+		let {content, index} = MetaUtility.searchId(this._meta, contentId);
 		if (!content) return null;
 
 		this._tracker.decrement(content[TAGS_KEY]);
@@ -51,7 +52,7 @@ class MetaLoader
 
 	update(contentId, info)
 	{
-		let {content, index} = searchId(this._meta, contentId);
+		let {content, index} = MetaUtility.searchId(this._meta, contentId);
 		if (!content) return null;
 
 		if (info[TAGS_KEY])
@@ -61,7 +62,7 @@ class MetaLoader
 		}
 
 		delete info.id;
-		this._meta[index] = extend(content, info);
+		this._meta[index] = U.extend(content, info);
 		
 		this._saveSync();
 
@@ -105,6 +106,4 @@ class MetaLoader
 		let serializedData = JSON.stringify(data);
 		fs.writeFileSync(this._metaPath, serializedData);
 	}
-}
-
-module.exports = MetaLoader;
+};

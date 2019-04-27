@@ -25,7 +25,11 @@ $yellow: #ffbe3a;
 $dark-yellow: #cc9424;
 
 // Text
-$regular-font: 300 16px arial, sans-serif;
+$regular-font-weight: 300;
+$regular-font-size: 16px;
+$regular-font-family: arial, sans-serif;
+$regular-font: $regular-font-weight $regular-font-size $regular-font-family;
+
 $lt-font-color: black;
 $chrome-selected-color: #3297FD;
 

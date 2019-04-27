@@ -1,6 +1,5 @@
 
-const Widgets = {};
-(function(){
+this.Widgets = new (function(){
 	const self = this;
 	const SVGNS   = "http://www.w3.org/2000/svg";
 	const XLINKNS = "http://www.w3.org/1999/xlink";
@@ -49,6 +48,8 @@ const Widgets = {};
 				this._blurCallback();
 			}).bind(this);
 
+			this._enabled = false;
+
 			if (options.disable !== true)
 			{
 				this.enable();
@@ -57,14 +58,22 @@ const Widgets = {};
 
 		enable()
 		{
-			this._listenMouse();
-			this._listenFocus();
+			if (this._enabled === false)
+			{
+				this._listenMouse();
+				this._listenFocus();
+				this._enabled = !this._enabled;
+			}
 		}
 
 		disable()
 		{
-			this._removeMouse();
-			this._removeFocus();
+			if (this._enabled === true)
+			{
+				this._removeMouse();
+				this._removeFocus();
+				this._enabled = !this._enabled;
+			}
 		}
 
 		_listenFocus()
@@ -94,9 +103,9 @@ const Widgets = {};
 
 	this.styleOnFocus = function(elm, cl, options) {
 		return new self.AwesomeFocus(() => {
-			addClass(elm, cl);
+			U.addClass(elm, cl);
 		}, () => {
-			removeClass(elm, cl);
+			U.removeClass(elm, cl);
 		}, options);
 	};
 
@@ -197,7 +206,7 @@ const Widgets = {};
 		return class {
 			constructor(parentElement, options)
 			{
-				this._options = extend(DEFAULTS, options);
+				this._options = U.extend(DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
 
 				this._height = 0;
@@ -234,7 +243,7 @@ const Widgets = {};
 						setTimeout(() => {
 							this._removeOnTransition(li);
 						}, duration * 1000);
-					};
+					}
 				}
 				return new AlertController(
 					this._removeOnTransition.bind(this, li), 
@@ -281,7 +290,7 @@ const Widgets = {};
 
 			_add(li)
 			{
-				removeClass(this._list, cl_hide);
+				U.removeClass(this._list, cl_hide);
 				this._list.append(li);
 				this._updateHeight(li.clientHeight);
 				li.classList.add(cl_fadeIn);
@@ -308,7 +317,7 @@ const Widgets = {};
 
 					if (this._list.childNodes.length === 0)
 					{
-						addClass(this._list, cl_hide);
+						U.addClass(this._list, cl_hide);
 					}
 				}
 			}
@@ -346,9 +355,9 @@ const Widgets = {};
 								 selectFirst: true,
 								 // @param li selected element
 								 // @param data data associated with the element
-								 onSelect: noop,
+								 onSelect: U.noop,
 								 // same signature
-								 onDeselect: noop };
+								 onDeselect: U.noop };
 		const SOURCE_DEFAULTS = { createLink: true,
 								  allowDownload: true,
 								  type: "",
@@ -360,7 +369,7 @@ const Widgets = {};
 		return class {
 			constructor(el_parent, options)
 			{
-				this._options = extend(CLASS_DEFAULTS, options);
+				this._options = U.extend(CLASS_DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
 
 				this._data = [];
@@ -400,7 +409,7 @@ const Widgets = {};
 			{
 				let insertSource = this._queue.next();
 
-				sourceOptions = extend(SOURCE_DEFAULTS, sourceOptions);
+				sourceOptions = U.extend(SOURCE_DEFAULTS, sourceOptions);
 
 				const el_source = document.createElement("li");
 				el_source.classList.add(CLASSES.source);
@@ -408,7 +417,7 @@ const Widgets = {};
 				const p = document.createElement("p");
 				p.classList.add(CLASSES.text);
 				const titleTextNode = document.createTextNode(sourceOptions.title);
-				p.appendChild(titleTextNode)
+				p.appendChild(titleTextNode);
 				el_source.appendChild(p);
 
 				const el_tagList = document.createElement("ul");
@@ -429,7 +438,7 @@ const Widgets = {};
 				{
 					try
 					{
-						sourceMeta = await bindWrap(this._testImageDimensions, 
+						sourceMeta = await U.bindWrap(this._testImageDimensions, 
 									   		  		this, srcUrl);
 						sourceMeta.text = sourceMeta.width + "x" + sourceMeta.height;
 					}
@@ -439,7 +448,7 @@ const Widgets = {};
 				{
 					try
 					{
-						sourceMeta = await bindWrap(this._testVideoDimensions, 
+						sourceMeta = await U.bindWrap(this._testVideoDimensions, 
 											  		this, srcUrl);
 						sourceMeta.text = sourceMeta.height + "p";
 					}
@@ -451,7 +460,7 @@ const Widgets = {};
 								 sourceOptions.type);
 				}
 
-				if (!isUdf(sourceMeta))
+				if (!U.isUdf(sourceMeta))
 				{
 					sourceOptions.data.sourceMeta = sourceMeta;
 					if (sourceOptions.showDimensions === true)
@@ -488,7 +497,7 @@ const Widgets = {};
 
 			_createExtensionTag(url)
 			{
-				let arr = parseFileName(url, true);
+				let arr = U.parseFileName(url, true);
 				let ext = arr ? arr[1].substring(1) : null;
 
 				if (ext)
@@ -615,15 +624,15 @@ const Widgets = {};
 						  li: "auto-complete-li" };
 		const DEFAULTS = { BEMBlock: "", 
 						   values: [], 
-						   onConfirm: noop, 
+						   onConfirm: U.noop, 
 						   caseSensitive: false };
 		const IGNORE_MODIFIERS = ["*", "!"];
 
 		return class {
 			constructor(input, parentElement, options)
 			{
-				this._options = extend(DEFAULTS, options);
-				self.prependBEMBlock(CLASSES, this._options.BEMBlock)
+				this._options = U.extend(DEFAULTS, options);
+				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
 
 				this._el_input = input;
 				this._el_list = document.createElement("ul");
@@ -924,4 +933,4 @@ const Widgets = {};
 			}
 		}
 	}();
-}).call(Widgets);
+})();

@@ -1,18 +1,17 @@
 
-const fs  	= require("fs");
-const http  = require("http");
-const https = require("https");
+const fs  	= require("fs"),
+	  http  = require("http"),
+	  https = require("https");
 
-const parseDataUri = require("parse-data-uri");
-const fileType = require("file-type");
+const parseDataUri = require("parse-data-uri"),
+	  fileType = require("file-type");
 
-const {wrap, bindWrap, parseFileName, noop} = require("../front_end/js/utility.js");
+const {U} = require("../front_end/js/utility");
 
 // @param srcUrl a url object of the resource to be downloaded.
 // @param filePath path of the file without a file extension.
 // 				   the extension is added on after the download. 
-function getDownloader(srcUrl, filePath)
-{
+module.exports = function(srcUrl, filePath) {
 	if (srcUrl.protocol === "http:")
 	{
 		return new HttpDownloader(http, srcUrl, filePath);
@@ -30,10 +29,9 @@ function getDownloader(srcUrl, filePath)
 		let m = `${srcUrl.protocol} is not supported.\nOnly 'http', 'https', and 'data' are supported.`
 		throw new Error(m);
 	}
-}
+};
 
-class HttpDownloader
-{
+class HttpDownloader {
 	constructor(protocol, srcUrl, filePath)
 	{
 		this._protocol = protocol;
@@ -41,7 +39,7 @@ class HttpDownloader
 		this._filePath = filePath;
 		this._headers  = {"User-Agent": "Mozilla/5.0"};
 
-		let arr = parseFileName(srcUrl.pathname, true);
+		let arr = U.parseFileName(srcUrl.pathname, true);
 		this._ext = arr ? arr[1] : null;
 	}
 
@@ -51,7 +49,7 @@ class HttpDownloader
 	{
 		if (!this._ext)
 		{
-			this._ext = await bindWrap(this._getRemoteExtension, this).catch(() => {
+			this._ext = await U.bindWrap(this._getRemoteExtension, this).catch(() => {
 				this._ext = "";
 			});
 		}
@@ -68,7 +66,7 @@ class HttpDownloader
 			});
 		}).on("error", (err) => {
 			console.warn(err);
-			fs.unlink(this._filePath, noop);
+			fs.unlink(this._filePath, U.noop);
 			errorCallback(null);
 		});
 	}
@@ -118,8 +116,7 @@ class HttpDownloader
 	}
 }
 
-class DataURIDownloader
-{
+class DataURIDownloader {
 	constructor(srcUrl, filePath)
 	{
 		this._srcUrl   = srcUrl;
@@ -170,5 +167,3 @@ class DataURIDownloader
 		return fs.realpathSync(this._filePath + this._ext);
 	}
 }
-
-module.exports = getDownloader;

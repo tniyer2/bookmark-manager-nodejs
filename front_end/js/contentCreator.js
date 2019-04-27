@@ -1,16 +1,5 @@
 
-const ContentCreator = {};
-(function(){
-
-	const FAVICON_CRAWLER_URL = "https://www.google.com/s2/favicons";
-	const FAVICON_PATH = "/favicon.ico";
-
-	function getFaviconUrl(source)
-	{
-		let url = new URL(source);
-		let faviconUrl = url.origin + FAVICON_PATH;
-		return faviconUrl;
-	}
+this.ContentCreator = new (function(){
 
 	this.createImage = function(source) {
 		let image = document.createElement("img");
@@ -32,15 +21,14 @@ const ContentCreator = {};
 		return iframe;
 	};
 
-	this.createBookmark = function(source) {
+	this.createBookmark = function(source, link) {
 		let bookmark = document.createElement("a");
 		bookmark.classList.add("content__favicon");
-		bookmark.href = source;
+		bookmark.href = link;
 		bookmark.target = "_blank";
 
-		let faviconUrl = getFaviconUrl(source);
-		let favicon = this.createImage(faviconUrl);
+		let favicon = this.createImage(source);
 		bookmark.appendChild(favicon);
 		return bookmark;
 	};
-}).call(ContentCreator);
+})();
