@@ -11,6 +11,10 @@ this.IconGrabber = new (function(){
 	{
 		let matches = json.match(/\"(?<urls>http[^\"]+(?:.png|.jpg))\"/);
 		console.log("matches:", matches);
+		if (!matches)
+		{
+			return null;
+		}
 		return matches.groups.urls;
 	}
 
@@ -34,11 +38,17 @@ this.IconGrabber = new (function(){
 				if (this.status === 200)
 				{
 					let iconUrl = findFirstUrl(this.responseText);
-					successCallback(iconUrl);
+					if (!iconUrl)
+					{
+						errorCallback();
+					}
+					else
+					{
+						successCallback(iconUrl);
+					}
 				}
 				else
 				{
-					console.log("xhr:", this);
 					errorCallback();
 				}
 			}

@@ -7,17 +7,13 @@ class Connector
 {
 	private const string PORT_PATH = "port";
 
-    private Host host;
-    private Object appLock;
+    public delegate void onConnect(Socket socket, Stream stream);
+    private onConnect currentCallback;
 
-    public Connector(Host host, Object appLock)
-    {
-        this.host = host;
-        this.appLock = appLock;
-    }
-
-	public void connect(bool onPortChange)
+	public void connect(onConnect callback, bool onPortChange)
 	{
+        currentCallback = callback;
+
         try
         {
             if (onPortChange)
@@ -65,11 +61,7 @@ class Connector
         socket.Connect("localhost", port);
         var stream = new NetworkStream(socket, true); 
 
-        lock (appLock)
-        {
-            host.socket = socket;
-            host.appStream = stream;
-        }
+        currentCallback(socket, stream);
     }
 
     private void onChanged(object source, FileSystemEventArgs e)

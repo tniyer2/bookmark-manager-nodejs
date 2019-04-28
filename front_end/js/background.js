@@ -1,10 +1,11 @@
 
 (function(){
 
-	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html"),
-		  NEW_TAB = "chrome://newtab/",
+	const NEW_TAB = "chrome://newtab/",
+		  GALLERY_URL = chrome.runtime.getURL("html/gallery.html"),
 		  APP_NAME = "tagger_plus_desktop",
 		  APP_TIMEOUT = 1000,
+		  MAX_CACHE_DURATION = 120,
 		  CONTEXT_OPTIONS = { title: "Save",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
@@ -13,9 +14,8 @@
 				 							  		 "data:image/*",
 				 							  		 "file://*" ] };
 	let g_connector, 
-		g_requester;
-
-	let g_recentPopupInfo,
+		g_requester,
+		g_recentPopupInfo,
 		g_allPopupInfo = {};
 
 	return function() {
@@ -54,7 +54,7 @@
 			let info = g_allPopupInfo[msg.popupId];
 			fillInSource(msg.meta, info);
 
-			g_requester.addContent(msg.meta, false, sendResponse, onErr);
+			g_requester.addContent(msg.meta, canCache(msg.meta), sendResponse, onErr);
 		}
 		else if (msg.request === "find-meta")
 		{
@@ -118,6 +118,13 @@
 		}
 	}
 
+	function canCache(content)
+	{
+		return content.category === "image" || 
+			  (content.category === "video" && 
+			   content.duration < MAX_CACHE_DURATION);
+	}
+
 	function requestScanInfo(tabId, successCallback, errorCallback)
 	{
 		chrome.tabs.sendMessage(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
@@ -138,7 +145,7 @@
 		tabUrl = new URL(tab.url);
 		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
 
-		if (tabUrl.href === NEW_TAB || tabUrlWOQuery === GALLERY_URL)
+		if (tab.url === NEW_TAB || tabUrlWOQuery === GALLERY_URL)
 		{
 			chrome.tabs.update(tab.id, {url: GALLERY_URL});
 		}

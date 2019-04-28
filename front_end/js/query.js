@@ -367,13 +367,11 @@ this.Searcher = new (function(){
 			let blFound = tags.find(tag => findInArray(blacklist, tag));
 			if (blFound) return 0;
 
-			let count = 0;
+			let count = 1;
 			if (whitelist.length)
 			{
 				let wlMissing = whitelist.find(wl => !findInArray(tags, wl));
 				if (wlMissing) return 0;
-
-				count += 1;
 			}
 
 			tags.forEach((tag) => {

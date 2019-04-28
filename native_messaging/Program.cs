@@ -12,8 +12,12 @@ class Program
 
 	    	var host = new Host();
 
-	        startIOThread(() => {host.toChrome();});
-	        startIOThread(() => {host.toApp();});
+	        startIOThread(() => { 
+                host.toChrome();
+            });
+	        startIOThread(() => { 
+                host.toApp();
+            });
 	    }
 	    catch (Exception e)
 	    {

@@ -29,53 +29,43 @@ module.exports = class {
 		let tcpServer = net.createServer((stream) => {
 		    console.log("NM Server: on connection");
 
-		    let writeObject = (jsonifiable) => {
-			    if (jsonifiable)
-				{
-					let json = JSON.stringify(jsonifiable);
-					let buf = Buffer.from(json, "utf8");
+		    let sendResponse = (jsonifiable) => {
+				let json = JSON.stringify(jsonifiable);
+				let buf = Buffer.from(json, "utf8");
 
-					let lbuf = Buffer.alloc(4);
-					lbuf.writeInt32LE(buf.length, 0);
+				let lbuf = Buffer.alloc(4);
+				lbuf.writeInt32LE(buf.length, 0);
 
-					stream.write(lbuf);
-					stream.write(buf);
-				}
+				stream.write(lbuf);
+				stream.write(buf);
 			};
 
 		    stream.on("data", (buff) => {
-		    	
 		    	let request;
-		    	try
-		    	{
+		    	try {
 		    		let s = buff.toString("utf8", 4);
 		    		request = JSON.parse(s);
-		    	}
-		    	catch (e)
-		    	{
+		    	} catch (e) {
 		    		console.log(e);
 		    		return;
 		    	}
 
-		    	let f = U.bindAll( this, this._get, this._add, 
-		    					 this._update, this._find, 
-		    					 this._delete, this._getTags, 
-		    					 this._handleInvalid );
 		    	let t = request.type;
-		    	let handle = t === "get" 	? f[0]:
-		    				 t === "add" 	? f[1]:
-		    				 t === "update" ? f[2]:
-		    				 t === "find" 	? f[3]:
-		    				 t === "delete" ? f[4]:
-		    				 t === "tags" 	? f[5]:
-		    				 f[6];
+		    	let handle = t === "get-meta" 		? this._get:
+		    				 t === "add-content" 	? this._add:
+		    				 t === "update-content" ? this._update:
+		    				 t === "find-content" 	? this._find:
+		    				 t === "remove-content" ? this._remove:
+		    				 t === "get-tags" 		? this._getTags:
+		    				 this._handleInvalid;
 
-		    	let addTagAndSend = (response) => {
-		    		response.tag = request.tag;
-		    		writeObject(response);
+		    	let sendResponseWrapper = (m) => {
+		    		sendResponse({ tag: request.tag, 
+		    					   message: m });
 		    	};
-				let syncResponse = handle(request, addTagAndSend);
-				addTagAndSend(syncResponse);
+
+				let m = handle.call(this, request.message, sendResponseWrapper);
+				sendResponseWrapper(m);
 		    });
 		});
 		tcpServer.listen(0, "localhost", () => {
@@ -156,7 +146,7 @@ module.exports = class {
 		}
 	}
 
-	_delete(request, callback)
+	_remove(request, callback)
 	{
 		console.log("NM Server: removing", request.id);
 
@@ -182,17 +172,19 @@ module.exports = class {
 
 	_update(request, callback)
 	{
-		console.log("NM Server: updating", request.id);
-		console.log("\t", "keys to update:", request.info);
+		let contentId = request.id;
+		let updateInfo = request.params.info;
+		console.log("NM Server: updating", contentId);
+		console.log("\t", "keys to update:", updateInfo);
 
-		let content = this._loader.update(request.id, request.info);
+		let content = this._loader.update(contentId, updateInfo);
 		if (content)
 		{
 			return {success: true};
 		}
 		else
 		{
-			console.log("\t", "could not find", request.id);
+			console.log("\t", "could not find", contentId);
 			return {notFound: true};
 		}
 	}

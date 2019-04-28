@@ -100,6 +100,11 @@ this.getTaggleInputFormatter = (function(){
 					 date: Date.now()/*getRandomDate(35)*/,
 					 srcUrl: srcUrl };
 
+		if (g_source)
+		{
+			meta.duration = g_source.duration;
+		}
+
 		let message = { request: "add-meta",
 						meta: meta,
 						popupId: g_popupId };
@@ -151,7 +156,7 @@ this.getTaggleInputFormatter = (function(){
 			{
 				if (data.sourceMeta && data.sourceMeta.duration)
 				{
-					g_duration = data.sourceMeta.duration;
+					g_source.duration = data.sourceMeta.duration;
 				}
 			}
 		};

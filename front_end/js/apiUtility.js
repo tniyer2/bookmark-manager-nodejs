@@ -7,12 +7,12 @@ this.ApiUtility = new (function(){
 			if (chrome.runtime.lastError)
 			{
 				console.warn(chrome.runtime.lastError.message);
-				errorCallback(null);
+				errorCallback();
 			}
 			else if (response && typeof response === "object" && "error" in response)
 			{
 				console.log("error in request:", response.error);
-				errorCallback(null);
+				errorCallback();
 			}
 			else
 			{

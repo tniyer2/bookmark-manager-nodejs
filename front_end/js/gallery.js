@@ -239,7 +239,7 @@ this.FeedBox = (function(){
 
 (function(){
 	const DEFAULT_QUERY = "sort=!date",
-		  SEARCH_BY_TAG = false,
+		  SEARCH_BY_TAG = true,
 		  cl_hide = "noshow",
 		  cl_searchBoxFocused = "focus";
 
