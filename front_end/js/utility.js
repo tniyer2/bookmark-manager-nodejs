@@ -10,17 +10,15 @@ this.U = new (function(){
 
 	// @return concatenation of arguments and current date.
 	this.makeTag = function() {
-		let tag = Array.from(arguments).join("-");
-		tag += "-" + Date.now();
-		return tag;
+		let arr = Array.from(arguments);
+		arr.push(Date.now());
+		return arr.join("-");
 	};
 
 	// wraps f(...args, resolve, reject) in a Promise
 	this.wrap = function(f, ...args) {
-
 		return new Promise((resolve, reject) => {
-			f(...args, response => resolve(response),
-					   error => reject(error));
+			f(...args, resolve, reject);
 		});
 	};
 
@@ -30,11 +28,7 @@ this.U = new (function(){
 
 	// @return an array of funcs bound to context
 	this.bindAll = function(context, ...funcs) {
-		let arr = [];
-		funcs.forEach((f) => {
-			arr.push(f.bind(context));
-		});
-		return arr;
+		return funcs.map(f => f.bind(context));
 	};
 
 	this.extend = function() {
@@ -93,37 +87,32 @@ this.U = new (function(){
 		};
 	})();
 
-	this.addClass = function(element, classname) {
-		if (!element.classList.contains(classname))
+	this.addClass = function(elm, classname) {
+		if (!elm.classList.contains(classname))
 		{
-			element.classList.add(classname);
+			elm.classList.add(classname);
 		}
 	};
 
-	this.removeClass = function(element, classname) {
-		if (element.classList.contains(classname))
+	this.removeClass = function(elm, classname) {
+		if (elm.classList.contains(classname))
 		{
-			element.classList.remove(classname);
+			elm.classList.remove(classname);
 		}
 	};
 
-    // @param element the element to append the <link> to.
-    // @param chromeUrl the url of the css in the chrome extension.
-	this.injectCss = function(element, chromeUrl) {
-
+	this.injectCss = function(elm, url) {
 		let link  = document.createElement("link");
 		link.rel  = "stylesheet";
 		link.type = "text/css";
-		link.href = chrome.runtime.getURL(chromeUrl);
-		element.appendChild(link);
+		link.href = chrome.runtime.getURL(url);
+		elm.appendChild(link);
 	};
 
-	this.injectThemeCss = function(theme, cssNames) {
-		for (let i = 0, l = cssNames.length; i < l; i+=1)
-		{
-			let css = cssNames[i];
+	this.injectThemeCss = function(elm, cssList, theme) {
+		cssList.forEach((css) => {
 			let url = "css/" + css + "-theme-" + theme + ".css";
-			self.injectCss(document.head, url);
-		}
+			self.injectCss(elm, url);
+		});
 	};
 })();

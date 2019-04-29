@@ -80,7 +80,7 @@ this.formatDate = (function(){
 
 
 	return function() {
-		U.injectThemeCss("light", ["scrollbar", "alerts", "taggle", "single-view"]);
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "single-view"], "light");
 		load();
 	};
 

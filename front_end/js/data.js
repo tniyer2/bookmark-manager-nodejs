@@ -8,6 +8,7 @@ this.AppConnector = (function(){
 
 			this._appConnected = false;
 			this._port = null;
+			this._waiting = false;
 			this._messageQueue = [];
 		}
 
@@ -43,12 +44,17 @@ this.AppConnector = (function(){
 		_updateMessageQueue()
 		{
 			if (!this._waiting)
-			{			
-				let args = this._messageQueue[0];
-				if (args)
+			{
+				let params = this._messageQueue[0];
+				if (params)
 				{
+					let [message, tag, cb, onErr] = params;
+					this._messageQueue.splice(0, 1);
 					this._waiting = true;
-					this._postMessage.apply(this, args);
+					U.bindWrap(this._postMessage, this, message, tag).finally(() => {
+						this._waiting = false;
+						this._updateMessageQueue();
+					}).then(cb, onErr);
 				}
 			}
 		}
@@ -57,15 +63,18 @@ this.AppConnector = (function(){
 		{
 			let returned = false;
 
-			let onFinished = (message) => {
+			let onDisconnect = () => {
+				if (chrome.runtime.lastError) { /*ignore*/ }
 				if (returned) return;
 
-				if (message.tag === "autostatus")
+				wrapper(onErr);
+			};
+			let onAppDisconnect = (message) => {
+				if (returned) return;
+
+				if (message.tag === "autostatus" && message.status === "disconnected")
 				{
-					if (message.status === "sent")
-					{
-						this._port.onMessage.addListener(onResponse);
-					}
+					wrapper(onErr);
 				}
 			};
 			let onResponse = (message) => {
@@ -73,40 +82,23 @@ this.AppConnector = (function(){
 
 				if (message.tag === tag)
 				{
-					cleanUp();
-					cb(message.message);
-				}
-			};
-			let onDisconnect = () => {
-				if (chrome.runtime.lastError) { /*ignore*/ }
-				if (returned) return;
-
-				cleanUp();
-				onErr();
-			};
-			let onAppDisconnect = (message) => {
-				if (returned) return;
-
-				if (message.tag === "autostatus" && message.status === "disconnected")
-				{
-					cleanUp();
-					onErr();
+					wrapper(() => {
+						cb(message.message);
+					});
 				}
 			};
 
-			let cleanUp = () => {
+			let wrapper = (cb) => {
 				returned = true;
 				this._port.onDisconnect.removeListener(onDisconnect);
-				this._port.onMessage.removeListener(onFinished);
+				this._port.onMessage.removeListener(onAppDisconnect);
 				this._port.onMessage.removeListener(onResponse);
-				
-				this._waiting = false;
-				this._messageQueue.splice(0, 1);
-				this._updateMessageQueue();
+				cb();
 			};
 
 			this._port.onDisconnect.addListener(onDisconnect);
-			this._port.onMessage.addListener(onFinished);
+			this._port.onMessage.addListener(onAppDisconnect);
+			this._port.onMessage.addListener(onResponse);
 			this._port.postMessage(message);
 		}
 
@@ -144,20 +136,20 @@ this.AppConnector = (function(){
 			});
 
 			let usePort = await Promise.race([timeout, disconnect]);
+			port.onDisconnect.removeListener(listener);
 			if (usePort)
 			{
-				port.onDisconnect.removeListener(listener);
 				this._port = port;
-				this._initPort();
+				this._initPort(cb);
 			}
 			else
 			{
 				this._port = null;
+				cb(false);
 			}
-			cb(usePort);
 		}
 
-		_initPort()
+		_initPort(cb)
 		{
 			this._port.onDisconnect.addListener(() => {
 				if (chrome.runtime.lastError)
@@ -167,21 +159,63 @@ this.AppConnector = (function(){
 				this._appConnected = false;
 				this._port = null;
 			});
+			this._port.onMessage.addListener(console.log.bind(console, "message:"));
 			this._port.onMessage.addListener((message) => {
-				console.log("message:", message);
-				if (message.tag === "status" || message.tag === "autostatus")
+				if (message.tag === "autostatus")
 				{
 					if (message.status === "connected")
 					{
-						this._appConnected = true;
+						this._onAppConnect();
 					}
 					else if (message.status === "disconnected")
 					{
-						this._appConnected = false;
+						this._onAppDisconnect();
 					}
 				}
 			});
+			U.bindWrap(this._getStatus, this).then((appStatus) => {
+				if (appStatus) {
+					this._onAppConnect();
+				} else {
+					this._onAppDisconnect();
+				}
+				return appStatus;
+			}).then(cb);
+		}
+
+		_getStatus(cb)
+		{
+			let listener = (message) => {
+				if (message.tag === "status")
+				{
+					this._port.onMessage.removeListener(listener);
+					if (message.status === "connected")
+					{
+						cb(true);
+					}
+					else if (message.status === "disconnected")
+					{
+						cb(false);
+					}
+					else
+					{
+						console.warn("could not handle status message:", message);
+						cb(false);
+					}
+				}
+			};
+			this._port.onMessage.addListener(listener);
 			this._port.postMessage("status");
+		}
+
+		_onAppConnect()
+		{
+			this._appConnected = true;
+		}
+
+		_onAppDisconnect()
+		{
+			this._appConnected = false;
 		}
 	};
 })();
@@ -477,16 +511,14 @@ this.RequestManager = (function(){
 
 		async _requestApp(type, message, cb, onErr)
 		{
-			if (!this._connector.portConnected)
+			let connected = await U.bindWrap(this._connector.connect, this._connector);
+			if (!connected)
 			{
-				let connected = await U.bindWrap(this._connector.connect, this._connector);
-				if (!connected)
-				{
-					onErr();
-					return;
-				}
+				onErr();
+				return;
 			}
 
+			console.log("connector:", this._connector);
 			if (this._connector.appConnected)
 			{
 				let tag = U.makeTag(type, this._appCount);

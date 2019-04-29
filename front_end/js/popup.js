@@ -57,7 +57,7 @@ this.getTaggleInputFormatter = (function(){
 		g_tabId;
 
 	return function() {
-		U.injectThemeCss("light", ["scrollbar", "alerts", "taggle", "popup"]);
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
 
 		g_alerter = createAlerter();
 		g_taggleOptions.inputFormatter = getTaggleInputFormatter(g_alerter);

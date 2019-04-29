@@ -266,11 +266,10 @@ this.FeedBox = (function(){
 		let g_submitted = false;
 		
 		return function() {
-			if (g_submitted) {
+			if (g_submitted)
 				return;
-			} else {
+			else
 				g_submitted = true;
-			}
 
 			let queryString = makeQueryString();
 			let cookie = makeCookie();
@@ -283,7 +282,7 @@ this.FeedBox = (function(){
 	})();
 
 	return function() {
-		U.injectThemeCss("light", ["scrollbar", "alerts", "taggle", "gallery", "feed"]);
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "gallery", "feed"], "light");
 
 		listenReloadRequest();
 		attachSubmit();

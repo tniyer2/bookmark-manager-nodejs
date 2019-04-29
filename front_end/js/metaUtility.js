@@ -2,81 +2,103 @@
 this.MetaUtility = new (function(){
 
 	this.getRandomString = (function(){
-		const alphaNumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		const all = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 		return function(len) {
 			let s = "";
-			let anLen = alphaNumeric.length;
+			let allLen = all.length;
 			for (let i = 0; i < len; i+=1)
 			{
-				let rand = Math.floor(Math.random() * anLen);
-				s += alphaNumeric.charAt(rand);
+				let rand = Math.floor(Math.random() * allLen);
+				s += all.charAt(rand);
 			}
-
 			return s;
 		};
 	})();
 
 	this.searchId = function(meta, id) {
-
-		let i = meta.findIndex((m) => m.id === id);
+		let i = meta.findIndex(m => m.id === id);
 		let content = meta[i];
 
-		let final = content ? {index: i, content: content} : {index: null, content: null};
-		return final;
+		if (content)
+		{
+			return {index: i, content: content};
+		}
+		else
+		{
+			return {index: null, content: null};
+		}
 	};
 
-	this.TagCounter = class{
-		constructor()
-		{
-			this._master = {};
-		}
+	this.TagCounter = (function(){
+		let proto = "__proto__";
 
-		get tags()
-		{
-			return Object.keys(this._master);
-		}
-
-		increment(keys)
-		{
-			keys.forEach((k) => {
-				this._increment(k);
-			});
-		}
-
-		decrement(keys)
-		{
-			keys.forEach((k) => {
-				this._decrement(k);
-			});
-		}
-
-		_increment(key)
-		{
-			if (!this._master.hasOwnProperty(key))
+		return class{
+			constructor()
 			{
-				this._master[key] = 1;
+				this._master = Object.create(null);
+				this._protoCount = 0;
 			}
-			else
-			{
-				this._master[key] += 1;
-			}
-		}
 
-		_decrement(key)
-		{
-			if (this._master.hasOwnProperty(key))
+			get tags()
 			{
-				let val = this._master[key];
-				if (val === 1)
+				let keys = Object.keys(this._master);
+				if (this._protoCount > 0)
 				{
-					delete this._master[key];
+					keys.push(proto);
+				}
+				return keys;
+			}
+
+			increment(keys)
+			{
+				keys.forEach(this._increment.bind(this));
+			}
+
+			decrement(keys)
+			{
+				keys.forEach(this._decrement.bind(this));
+			}
+
+			_increment(key)
+			{
+				if (key === proto)
+				{
+					this._protoCount += 1;
+				}
+				else if (!(key in this._master))
+				{
+					this._master[key] = 1;
 				}
 				else
 				{
-					this._master[key] -= 1;
+					this._master[key] += 1;
 				}
 			}
-		}
-	};
+
+			_decrement(key)
+			{
+				if (key === proto)
+				{
+					if (this._protoCount > 0)
+					{
+						this._protoCount -= 1;
+					} 
+					else {/*ignore*/}
+				}
+				else if (key in this._master)
+				{
+					if (this._master[key] === 1)
+					{
+						delete this._master[key];
+					}
+					else
+					{
+						this._master[key] -= 1;
+					}
+				}
+				else {/*ignore*/}
+			}
+		};
+	})();
 })();

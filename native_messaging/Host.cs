@@ -99,63 +99,81 @@ class Host
 
     public void toApp()
     {
-        byte[] b;
-
     	while (true)
     	{
-            b = read(stdin);
-
-            // program terminates if extension closes
-            if (b.Length == 0)
-            {
-                lock (appLock)
-                {
+            byte[] b;
+            try {
+                b = read(stdin);
+                if (b.Length == 0) {
+                    throw new IOException();
+                }
+            } catch (IOException) {
+                lock (appLock) {
                     closeAppConnection();
                 }
-                lock (exitLock)
-                {   
+                lock (exitLock) {   
                     endProgram = true;
                 }
                 return;
             }
 
+            bool connected;
+            bool reconnect = false;
+            lock (appLock)
+            {
+                if (appSocket == null)
+                {
+                    connected = false;
+                }
+                else if (!appSocket.Connected)
+                {
+                    connected = false;
+                    closeAppConnection();
+                    reconnect = true;
+                }
+                else
+                {
+                    connected = true;
+                }
+            }
+            if (reconnect)
+            {
+                try {
+                    write(stdout, B_IMMEDIATE_DISCONNECTED_MESSAGE);
+                } catch (IOException) {/*ignore*/}
+                connectApp(true);
+            }
+
             // extension is requesting status
             if (Enumerable.SequenceEqual(b, B_STATUS_MESSAGE))
             {
-                bool connected;
-                lock (appLock)
-                {
-                    if (appSocket == null)
-                    {
-                        connected = false;
-                    }
-                    else if (!appSocket.Connected)
-                    {
-                        connected = false;
-                        closeAppConnection();
-                    }
-                    else
-                    {
-                        connected = true;
-                    }
-                }
-
                 var message = connected ? B_CONNECTED_MESSAGE : B_DISCONNECTED_MESSAGE;
-                write(stdout, message);
-                continue;
+                try {
+                    write(stdout, message);
+                } catch (IOException) {/*ignore*/}
             }
-
-            write(appStream, b);
-            write(stdout, B_SENT_MESSAGE);
+            else if (connected)
+            {
+                try {
+                    write(appStream, b);
+                } catch (IOException) {
+                    continue;
+                }
+                try {
+                    write(stdout, B_SENT_MESSAGE);
+                } catch (IOException) {
+                    continue;
+                }
+            }
+            else {/*not connected so no action to be taken*/}
     	}
     }
 
 	public void toChrome()
     {
-        byte[] b;
-
     	while (true)
     	{
+            byte[] b;
             lock (exitLock)
             {
                 if (endProgram)
@@ -164,29 +182,12 @@ class Host
                 }
             }
 
-            bool continueClosing = false;
             lock (appLock)
             {
-                if (appSocket == null)
+                if (appStream == null || appSocket == null || !appSocket.Connected)
                 {
                     continue;
                 }
-                else if (!appSocket.Connected)
-                {
-                    closeAppConnection();
-                    continueClosing = true;
-                }
-                else {/*everything is good, app is connected*/}
-            }
-            if (continueClosing)
-            {
-                try {
-                    write(stdout, B_IMMEDIATE_DISCONNECTED_MESSAGE);
-                } catch (IOException) {
-                    return;
-                }
-                connectApp(true);
-                continue;
             }
 
             try {
@@ -194,11 +195,10 @@ class Host
             } catch (IOException) {
                 continue;                   
             }
-
             try {
                 write(stdout, b);
             } catch (IOException) {
-                return;
+                continue;
             }
     	}
     }

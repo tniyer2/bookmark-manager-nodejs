@@ -47,6 +47,11 @@
 		}
 		g_lastClickedElement = null;
 
+		if (isValid(document.href))
+		{
+			final.push({url: document.href, title: document.title, priority: 0});
+		}
+
 		mySort(final);
 
 		return {list: final};
@@ -118,7 +123,7 @@
 		}
 	}
 
-	const VIDEO_PRIORITY = 2;
+	const VIDEO_PRIORITY = 3;
 	function findByVideoElm(root)
 	{
 		let sources = [];
@@ -182,7 +187,7 @@
 		return sources;
 	}
 
-	const LINK_PRIORITY = 1;
+	const LINK_PRIORITY = 2;
 	function findByLinkElm(root)
 	{
 		let sources = [];
@@ -223,7 +228,7 @@
 	    return sources;
 	}
 
-	const SEARCH_PRIORITY = 0;
+	const SEARCH_PRIORITY = 1;
 	function findAllOf(root, ext)
 	{
 		let html = root.outerHTML;
