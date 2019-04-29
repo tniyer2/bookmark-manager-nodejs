@@ -12,9 +12,9 @@ class Host
 
     private const string 
         STATUS_MESSAGE = "\"status\"",
-        SENT_MESSAGE = "\"sent\"",
         CONNECTED_MESSAGE    = "{\"status\": \"connected\", \"tag\": \"status\"}",
         DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"status\"}",
+        SENT_MESSAGE = "{\"status\": \"sent\", \"tag\": \"autostatus\"}",
         IMMEDIATE_CONNECTED_MESSAGE = "{\"status\": \"connected\", \"tag\": \"autostatus\"}",
         IMMEDIATE_DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"autostatus\"}";
 

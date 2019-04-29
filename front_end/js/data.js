@@ -5,119 +5,124 @@ this.AppConnector = (function(){
 		{
 			this._appName = appName;
 			this._timeout = timeout;
-			this._onDisconnectQueue = [];
+
+			this._appConnected = false;
+			this._port = null;
+			this._messageQueue = [];
 		}
 
-		async connect(cb)
+		get portConnected()
 		{
-			if (!this._port)
-			{
-				this._port = await U.bindWrap(this._getPort, this);
+			return Boolean(this._port);
+		}
 
-				if (!this._port)
-				{
-					cb(null);
-					return;
-				}
-				else
-				{
-					this._onConnect(this._port);
-				}
+		get appConnected()
+		{
+			return this._appConnected;
+		}
+
+		postMessage(message, tag, cb, onErr)
+		{
+			if (typeof tag !== "string" || tag === "status" || tag === "autostatus")
+			{
+				console.warn("tag is either invalid or reserved:", tag);
+				onErr();
 			}
-
-			let connected = await U.bindWrap(this.getStatus, this);
-			if (connected)
+			else if (this._appConnected)
 			{
-				// console.log("app status: connected");
-				this._port.onDisconnect.addListener(() => {
-					if (chrome.runtime.lastError)
-					{
-						console.warn(chrome.runtime.lastError.message);
-					}
-					this._port = null;
-				});
-				cb(this._port);
+				this._messageQueue.push(arguments);
+				this._updateMessageQueue();
 			}
 			else
 			{
-				// console.log("app status: disconnected");
-				cb(null);
+				console.warn("cannot call postMessage when app is not connected.");
+				onErr();
 			}
 		}
 
-		async getStatus(cb)
+		_updateMessageQueue()
 		{
-			if (!this._port)
-			{
-				cb(false);
-				return;
-			}
-
-			this._port.postMessage("status");
-			this._port.onMessage.addListener(listener);
-
-			function listener(response, port)
-			{
-				if (response.tag === "status")
+			if (!this._waiting)
+			{			
+				let args = this._messageQueue[0];
+				if (args)
 				{
-					port.onMessage.removeListener(listener);
-					if (response.status === "connected")
-					{
-						cb(true);
-					}
-					else if (response.status === "disconnected")
-					{
-						cb(false);
-					}
-					else
-					{
-						console.warn("unknown response:", response);
-						cb(false);
-					}
+					this._waiting = true;
+					this._postMessage.apply(this, args);
 				}
 			}
 		}
 
-		// callback returns false if nm process disconnects, true if app disconnects.
-		onDisconnect(callback)
+		_postMessage(message, tag, cb, onErr)
+		{
+			let returned = false;
+
+			let onFinished = (message) => {
+				if (returned) return;
+
+				if (message.tag === "autostatus")
+				{
+					if (message.status === "sent")
+					{
+						this._port.onMessage.addListener(onResponse);
+					}
+				}
+			};
+			let onResponse = (message) => {
+				if (returned) return;
+
+				if (message.tag === tag)
+				{
+					cleanUp();
+					cb(message.message);
+				}
+			};
+			let onDisconnect = () => {
+				if (chrome.runtime.lastError) { /*ignore*/ }
+				if (returned) return;
+
+				cleanUp();
+				onErr();
+			};
+			let onAppDisconnect = (message) => {
+				if (returned) return;
+
+				if (message.tag === "autostatus" && message.status === "disconnected")
+				{
+					cleanUp();
+					onErr();
+				}
+			};
+
+			let cleanUp = () => {
+				returned = true;
+				this._port.onDisconnect.removeListener(onDisconnect);
+				this._port.onMessage.removeListener(onFinished);
+				this._port.onMessage.removeListener(onResponse);
+				
+				this._waiting = false;
+				this._messageQueue.splice(0, 1);
+				this._updateMessageQueue();
+			};
+
+			this._port.onDisconnect.addListener(onDisconnect);
+			this._port.onMessage.addListener(onFinished);
+			this._port.postMessage(message);
+		}
+
+		connect(cb)
 		{
 			if (this._port)
 			{
-				this._attachOnDisconnect(this._port, callback);
-				return true;
+				cb(true);
 			}
 			else
 			{
-				this._onDisconnectQueue.push(callback);
-				return false;
+				this._connect(cb);
 			}
 		}
 
-		_onConnect(port)
-		{
-			for (let i = 0, l = this._onDisconnectQueue.length; i < l; i+=1)
-			{
-				this._attachOnDisconnect(port, this._onDisconnectQueue[i]);
-			}
-		}
-
-		_attachOnDisconnect(port, callback)
-		{
-			port.onDisconnect.addListener(() => {
-				callback(false);
-			});
-			port.onMessage.addListener((message) => {
-				if (message.tag === "autostatus")
-				{
-					if (message.status === "disconnected")
-					{
-						callback(true);
-					}
-				}
-			});
-		}
-
-		async _getPort(cb)
+		async _connect(cb)
 		{
 			let listener;
 			let port = chrome.runtime.connectNative(this._appName);
@@ -141,17 +146,42 @@ this.AppConnector = (function(){
 			let usePort = await Promise.race([timeout, disconnect]);
 			if (usePort)
 			{
-				port.onMessage.addListener((message) => {
-					console.log("message:", message);
-				});
 				port.onDisconnect.removeListener(listener);
-				cb(port);
+				this._port = port;
+				this._initPort();
 			}
 			else
 			{
-				port.disconnect();
-				cb(null);
+				this._port = null;
 			}
+			cb(usePort);
+		}
+
+		_initPort()
+		{
+			this._port.onDisconnect.addListener(() => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+				}
+				this._appConnected = false;
+				this._port = null;
+			});
+			this._port.onMessage.addListener((message) => {
+				console.log("message:", message);
+				if (message.tag === "status" || message.tag === "autostatus")
+				{
+					if (message.status === "connected")
+					{
+						this._appConnected = true;
+					}
+					else if (message.status === "disconnected")
+					{
+						this._appConnected = false;
+					}
+				}
+			});
+			this._port.postMessage("status");
 		}
 	};
 })();
@@ -408,17 +438,11 @@ this.RequestManager = (function(){
 		{
 			let message = { content: content,
 							download: cache };
-			let response = await U.bindWrap(this._requestApp, this, "add-content", message).catch(U.noop);
-			if (response)
-			{
-				cb(response);
-			}
-			else
-			{
+			this._requestApp("add-content", message, cb, () => {
 				DataManager.instance.then((dm) => {
 					dm.addContent(content, cb, onErr);
 				}, onErr);
-			}
+			});
 		}
 
 		findContent(contentId, cb, onErr)
@@ -453,24 +477,26 @@ this.RequestManager = (function(){
 
 		async _requestApp(type, message, cb, onErr)
 		{
-			let tag = U.makeTag(type, this._appCount);
-			this._appCount += 1;
-
-			let request = { type: type,
-							tag: tag,
-							message: message };
-
-			let port = await U.bindWrap(this._connector.connect, this._connector).catch(U.noop);
-			if (port)
+			if (!this._connector.portConnected)
 			{
-				port.postMessage(request);
-				port.onMessage.addListener( function listener(response) {
-					if (response.tag === request.tag)
-					{
-						port.onMessage.removeListener(listener);
-						cb(response.message);
-					}
-				});
+				let connected = await U.bindWrap(this._connector.connect, this._connector);
+				if (!connected)
+				{
+					onErr();
+					return;
+				}
+			}
+
+			if (this._connector.appConnected)
+			{
+				let tag = U.makeTag(type, this._appCount);
+				this._appCount += 1;
+
+				let request = { type: type,
+								tag: tag,
+								message: message };
+
+				this._connector.postMessage(request, tag, cb, onErr);
 			}
 			else
 			{

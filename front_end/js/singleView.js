@@ -90,8 +90,7 @@ this.formatDate = (function(){
 		if (U.isUdf(content)) return;
 
 		createContent(content);
-		el_deleteBtn.addEventListener("click", requestDelete, {once: true});
-		el_deleteBtn.disabled = false;
+		attachDelete();
 		el_updateBtn.addEventListener("click", requestUpdate, {once: false});
 		el_updateBtn.disabled = false;
 
@@ -131,13 +130,14 @@ this.formatDate = (function(){
 		}, alertNoLoad);
 	}
 
+	function attachDelete()
+	{
+		el_deleteBtn.addEventListener("click", requestDelete, {once: true});
+		el_deleteBtn.disabled = false;
+	}
+
 	function requestDelete()
 	{
-		function onError()
-		{
-			g_alerter.alert(NO_DELETE_MESSAGE, NO_DELETE_DELAY);
-		}
-
 		let message = {request: "delete-meta", id: CONTENT_ID};
 		ApiUtility.makeRequest(message, (response) => {
 			if (response.success)
@@ -147,13 +147,16 @@ this.formatDate = (function(){
 			else if (response.connectionRequired)
 			{
 				g_alerter.alert(CR_DELETE_MESSAGE, CR_DELETE_DELAY);
+				attachDelete();
 			}
 			else
 			{
 				console.log("could not handle response:", response);
-				onError();
 			}
-		}, onError);
+		}, () => {
+			g_alerter.alert(NO_DELETE_MESSAGE, NO_DELETE_DELAY);
+			attachDelete();
+		});
 	}
 
 	function requestUpdate()
