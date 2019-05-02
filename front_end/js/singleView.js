@@ -50,7 +50,16 @@ this.formatDate = (function(){
 
 (function(){
 
+	const NO_LOAD_MESSAGE      = "Could not load.",
+		  NO_DELETE_MESSAGE    = "Could not delete.",
+		  NO_UPDATE_MESSAGE    = "Could not update.",
+		  CANT_HANDLE_MESSAGE  = "Something went wrong.",
+		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.";
+
+	const ALERT_DELAY = 5;
+
 	const CONTENT_ID = getIdFromHref();
+	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
 	const cl_hide = "noshow";
 
 	const el_contentBlock = document.getElementById("content-block");
@@ -65,19 +74,10 @@ this.formatDate = (function(){
 	const el_titleInput = document.getElementById("title-input");
 	const el_tagContainer = document.getElementById("tag-container");
 
-	const NO_LOAD_MESSAGE   = "Could not load. Something went wrong.",
-		  NO_DELETE_MESSAGE = "Could not delete. Something went wrong.",
-		  CR_LOAD_MESSAGE   = "Could not load. This content is on the desktop app. Must connect to app first.",
-		  CR_DELETE_MESSAGE = "Could not delete. This content is on the desktop app. Must connect to app first.";
-
-	const NO_LOAD_DELAY   = 5,
-		  NO_DELETE_DELAY = 5,
-		  CR_LOAD_DELAY   = 5,
-		  CR_DELETE_DELAY = 5;
-
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {});
 	const g_alerter = new Widgets.AwesomeAlerter(document.body, {BEMBlock: "alerts"});
 
+	let g_settings;
 
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "single-view"], "light");
@@ -86,7 +86,7 @@ this.formatDate = (function(){
 
 	async function load()
 	{
-		let content = await U.wrap(requestContent).catch(U.noop);
+		let content = await requestContent().catch(onNoLoad);
 		if (U.isUdf(content)) return;
 
 		createContent(content);
@@ -94,40 +94,44 @@ this.formatDate = (function(){
 		el_updateBtn.addEventListener("click", requestUpdate, {once: false});
 		el_updateBtn.disabled = false;
 
-		let tags;
-		try {
-			tags = await U.wrap(ApiUtility.makeRequest, {request: "get-tags"});
-		} catch (e) {
-			g_taggle.setOptions({submitKeys: [MyTaggle.COMMA_CODE, MyTaggle.ENTER_CODE]});
-		}
+		let tags = await ApiUtility.makeRequest({request: "get-tags"})
+		.catch((err) => {
+			console.warn("error loading tags:", err);
+		});
+		if (!tags) return;
 
 		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
 	}
 
-	function requestContent(successCallback, errorCallback)
+	function onNoLoad()
 	{
-		function alertNoLoad()
-		{
-			g_alerter.alert(NO_LOAD_MESSAGE, NO_LOAD_DELAY);
-			errorCallback();
-		}
+		alert("problem loading");
+	}
 
-		ApiUtility.makeRequest({request: "find-meta", id: CONTENT_ID}, (response) => {
+	function requestContent()
+	{
+		return ApiUtility.makeRequest({request: "find-content", id: CONTENT_ID})
+		.then((response) => {
 			if (response.content)
 			{
-				successCallback(response.content);
+				return response.content;
 			}
 			else if (response.connectionRequired)
 			{
-				g_alerter.alert(CR_LOAD_MESSAGE, CR_LOAD_DELAY);
-				errorCallback();
+				g_alerter.alert(NO_LOAD_MESSAGE + " " + MUST_CONNECT_MESSAGE, ALERT_DELAY);
+				throw new Error();
 			}
 			else
 			{
-				console.warn("Could not handle response:", response);
-				alertNoLoad();
+				console.warn("could not handle response:", response);
+				g_alerter.alert(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE, ALERT_DELAY);
+				throw new Error();
 			}
-		}, alertNoLoad);
+		}).catch((err) => {
+			console.warn("error loading content:", err);
+			g_alerter.alert(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE, ALERT_DELAY);
+			throw new Error();
+		});
 	}
 
 	function attachDelete()
@@ -138,46 +142,63 @@ this.formatDate = (function(){
 
 	function requestDelete()
 	{
-		let message = {request: "delete-meta", id: CONTENT_ID};
-		ApiUtility.makeRequest(message, (response) => {
+		function alertWrapper(message)
+		{
+			g_alerter.alert(message, ALERT_DELAY);
+			attachDelete();
+		}
+
+		ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID})
+		.then((response) => {
 			if (response.success)
 			{
-				window.close();
+				window.history.back();
 			}
 			else if (response.connectionRequired)
 			{
-				g_alerter.alert(CR_DELETE_MESSAGE, CR_DELETE_DELAY);
-				attachDelete();
+				alertWrapper(NO_DELETE_MESSAGE + " " + MUST_CONNECT_MESSAGE);
 			}
 			else
 			{
-				console.log("could not handle response:", response);
+				console.warn("could not handle response:", response);
+				alertWrapper(NO_DELETE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 			}
-		}, () => {
-			g_alerter.alert(NO_DELETE_MESSAGE, NO_DELETE_DELAY);
-			attachDelete();
+		}).catch((err) => {
+			console.warn("error deleting content:", err);
+			alertWrapper(NO_DELETE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 		});
 	}
 
 	function requestUpdate()
 	{
+		function alertWrapper(message)
+		{
+			g_alerter.alert(message, ALERT_DELAY);
+		}
+
 		let info = { title: el_titleInput.value,
 					 tags: g_taggle.getTags().values };
-		ApiUtility.makeRequest({request: "update-meta", id: CONTENT_ID, info: info}, (response) => {
+
+		let message = { request: "update-content", 
+						id: CONTENT_ID, info: info };
+
+		ApiUtility.makeRequest(message).then((response) => {
 			if (response.success)
 			{
-				g_alerter.alert("Successfully updated", 5);
+				alertWrapper("Successfully updated.");
 			}
 			else if (response.connectionRequired)
 			{
-				g_alerter.alert("Could not update. This content is on the desktop app. Must connect to app first.", 5);
+				alertWrapper(NO_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE);
 			}
 			else
 			{
-				console.log("could not handle response:", response);
+				console.warn("could not handle response:", response);
+				alertWrapper(NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 			}
-		}, () => {
-			g_alerter.alert("Could not update. Something went wrong.", 5);
+		}).catch((err) => {
+			console.warn("error updating content:", err);
+			alertWrapper(NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 		});
 	}
 
@@ -242,7 +263,7 @@ this.formatDate = (function(){
 
 	function formatCategory(category)
 	{
-		return category.charAt(0).toUpperCase() + category.substring(1);
+		return category.substring(0, 1).toUpperCase() + category.substring(1);
 	}
 
 	function getIdFromHref()

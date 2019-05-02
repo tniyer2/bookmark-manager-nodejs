@@ -1,23 +1,23 @@
 
 this.ApiUtility = new (function(){
 	
-	this.makeRequest = function(request, successCallback, errorCallback) {
-		chrome.runtime.sendMessage(request, (response) => {
-
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				errorCallback();
-			}
-			else if (response && typeof response === "object" && "error" in response)
-			{
-				console.log("error in request:", response.error);
-				errorCallback();
-			}
-			else
-			{
-				successCallback(response);
-			}
+	this.makeRequest = function(request) {
+		return new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(request, (response) => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+					reject();
+				}
+				else if (response && typeof response === "object" && "error" in response)
+				{
+					reject();
+				}
+				else
+				{
+					resolve(response);
+				}
+			});
 		});
 	};
 })();

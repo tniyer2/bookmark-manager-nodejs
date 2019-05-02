@@ -49,22 +49,22 @@
 		{
 			g_requester.getContent(sendResponse, onErr);
 		}
-		else if (msg.request === "add-meta")
+		else if (msg.request === "add-content")
 		{
 			let info = g_allPopupInfo[msg.popupId];
 			fillInSource(msg.meta, info);
 
 			g_requester.addContent(msg.meta, canCache(msg.meta), sendResponse, onErr);
 		}
-		else if (msg.request === "find-meta")
+		else if (msg.request === "find-content")
 		{
 			g_requester.findContent(msg.id, sendResponse, onErr);
 		}
-		else if (msg.request === "delete-meta")
+		else if (msg.request === "delete-content")
 		{
 			g_requester.deleteContent(msg.id, sendResponse, onErr);
 		}
-		else if (msg.request === "update-meta")
+		else if (msg.request === "update-content")
 		{
 			g_requester.updateContent(msg.id, msg.info, sendResponse, onErr);
 		}

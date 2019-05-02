@@ -69,16 +69,19 @@ this.Toggle = (function(){
 // FeedBox
 this.FeedBox = (function(){
 
-	const CONTENT_LINK  = "singleView.html";
-	const DEFAULT_TITLE = "untitled";
 	const cl_hover = "hover";
+	const cl_favicon = "favicon";
 	const stopBubble = (evt) => {
 		evt.stopPropagation();
 	};
 
 	const DEFAULTS = { bufferSize: 20,
 					   bufferOnScroll: { offset: 0,
-					   					 delay: 0 }};
+					   					 delay: 0 },
+					   contentLink: "",
+					   contentLinkTarget: "",
+					   defaultTitle: "untitled",
+					   onNoResults: U.noop };
 	return class {
 		constructor(meta, el_parent, options)
 		{
@@ -101,9 +104,14 @@ this.FeedBox = (function(){
 		buffer()
 		{
 			let len = this._meta.length;
+			if (!len)
+			{
+				this._options.onNoResults();
+				return;
+			}
+
 			let initial = this._queue.count;
 			let max = initial + this._options.bufferSize;
-
 			while ( this._queue.count < len && 
 				    this._queue.count < max )
 			{
@@ -132,7 +140,7 @@ this.FeedBox = (function(){
 			let el_title = document.createElement("p");
 			el_title.classList.add("content__title");
 
-			let titleText = info.title ? info.title : DEFAULT_TITLE;
+			let titleText = info.title ? info.title : this._options.defaultTitle;
 			let titleTextNode = document.createTextNode(titleText);
 			el_title.appendChild(titleTextNode);
 			el_infoBlock.appendChild(el_title);
@@ -141,8 +149,8 @@ this.FeedBox = (function(){
 			if (U.isUdf(el_content)) return;
 
 			el_contentBlock.addEventListener("click", () => {
-				let url = CONTENT_LINK + "?" + info.id;
-				window.open(url, "_blank");
+				let url = this._options.contentLink + "?" + info.id;
+				window.open(url, this._options.contentLinkTarget);
 			});
 
 			let addHover = () => {
@@ -156,6 +164,7 @@ this.FeedBox = (function(){
 
 			if (info.category === "bookmark")
 			{
+				el_sourceBlock.classList.add(cl_favicon);
 				el_content.addEventListener("click", stopBubble);
 				el_content.addEventListener("mouseenter", removeHover);
 				el_content.addEventListener("mouseleave", addHover);
@@ -240,8 +249,12 @@ this.FeedBox = (function(){
 (function(){
 	const DEFAULT_QUERY = "sort=!date",
 		  SEARCH_BY_TAG = true,
-		  cl_hide = "noshow",
-		  cl_searchBoxFocused = "focus";
+		  NO_RESULTS_MESSAGE = "No search results.",
+		  NO_LOAD_MESSAGE = "Something went wrong :(";
+
+	const cl_hide = "noshow",
+		  cl_searchBoxFocused = "focus",
+		  cl_noLoad = "message";
 
 	const el_form = document.getElementById("search"),
 		  el_searchBox = el_form.querySelector("#search-box"),
@@ -255,12 +268,18 @@ this.FeedBox = (function(){
 		  el_sortBy = el_form.querySelector("#sortby"),
 		  el_submit = el_form.querySelector("#submit");
 
-	const el_feed = document.getElementById("feed");
+	const el_feed = document.getElementById("feed"),
+		  el_feedMessage = el_feed.querySelector("#feed-message");
 
 	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."}),
 		  g_searchBoxToggle = new Toggle();
 
-	let g_feedBox;
+	let g_feedBox, 
+		g_feedBoxOptions = {contentLink: "singleView.html", contentLinkTarget: "_self", onNoResults: () => {
+			showMessage(NO_RESULTS_MESSAGE);
+		}};
+
+	let g_settings;
 
 	let submitSearch = (function(){
 		let g_submitted = false;
@@ -284,7 +303,6 @@ this.FeedBox = (function(){
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "gallery", "feed"], "light");
 
-		listenReloadRequest();
 		attachSubmit();
 		g_searchBoxToggle.onToggleOn(switchToTags);
 		g_searchBoxToggle.onToggleOff(switchToTitle);
@@ -346,48 +364,58 @@ this.FeedBox = (function(){
 		}
 	}
 
-	// empty
-	function listenReloadRequest()
-	{
-		// stuff
-	}
-
 	async function loadContent(query)
 	{
-		let meta = await U.wrap(requestMeta).catch(U.noop);
+		let meta = await requestMeta().catch(() => {
+			showMessage(NO_LOAD_MESSAGE);
+		});
 		if (U.isUdf(meta)) return;
 
 		meta = Searcher.query(meta, query);
-		g_feedBox = new FeedBox(meta, el_feed);
+		g_feedBox = new FeedBox(meta, el_feed, g_feedBoxOptions);
 		g_feedBox.buffer();
 
-		let tags = await U.wrap(ApiUtility.makeRequest, {request: "get-tags"}).catch(U.noop);
+		let tags = await ApiUtility.makeRequest({request: "get-tags"})
+		.catch((err) => {
+			console.log("error loading tags:", err);
+		});
+		if (!tags) return;
+
 		MyTaggle.createAutoComplete(g_taggle, el_searchBox, tags);
 	}
 
-	async function requestMeta(successCallback, errorCallback)
+	function showMessage(message)
 	{
-		let response = await U.wrap(ApiUtility.makeRequest, {request: "get-meta"}).catch(errorCallback);
-		if (U.isUdf(response)) return;
+		let textNode = document.createTextNode(message);
+		el_feedMessage.appendChild(textNode);
+		U.removeClass(el_feedMessage, cl_hide);
+		el_feed.classList.add(cl_noLoad);
+	}
 
-		if (response.local && response.app)
-		{
-			let m = response.local.meta.concat(response.app.meta);
-			successCallback(m);
-		}
-		else if (response.local)
-		{
-			successCallback(response.local.meta);
-		}
-		else if (response.app)
-		{
-			successCallback(response.app.meta);
-		}
-		else
-		{
-			console.warn("Could not handle response:", response);
-			errorCallback(null);
-		}
+	function requestMeta()
+	{
+		return ApiUtility.makeRequest({request: "get-meta"}).then((response) => {
+			if (response.local && response.app)
+			{
+				return response.local.meta.concat(response.app.meta);
+			}
+			else if (response.local)
+			{
+				return response.local.meta;
+			}
+			else if (response.app)
+			{
+				return response.app.meta;
+			}
+			else
+			{
+				console.warn("could not handle response:", response);
+				throw new Error();
+			}
+		}).catch((err) => {
+			console.warn("error loading content:", err);
+			throw new Error();
+		});
 	}
 
 	function makeQueryString()

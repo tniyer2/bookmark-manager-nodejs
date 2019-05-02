@@ -616,7 +616,7 @@ this.Widgets = new (function(){
 
 	this.AutoComplete = function(){
 
-		const g_evaluate = (b, s) => { return shortestMatch(b, s, true); };
+		const g_evaluate = (b, s) => shortestMatch(b, s, true);
 
 		const cl_hide = "noshow";
 		const cl_activeLi = "active";
@@ -633,6 +633,10 @@ this.Widgets = new (function(){
 			{
 				this._options = U.extend(DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
+				if (!this._options.values)
+				{
+					this._options.values = [];
+				}
 
 				this._el_input = input;
 				this._el_list = document.createElement("ul");

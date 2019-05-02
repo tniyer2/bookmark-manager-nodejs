@@ -33,6 +33,8 @@ this.getTaggleInputFormatter = (function(){
 
 	const NO_SOURCE_MESSAGE = "Pick a source first.",
 		  NO_SOURCE_ALERT_DELAY = 5,
+		  MEMORY_ERROR_MESSAGE = "No more data left in chrome storage. Download the desktop app for extra storage.",
+		  MEMORY_ERROR_DELAY = 5;
 		  g_taggleOptions = { placeholder: "enter tags...",
 							  tabIndex: 0 };
     const cl_hide = "noshow",
@@ -71,25 +73,20 @@ this.getTaggleInputFormatter = (function(){
 
 	async function load()
 	{
-		let response = await U.wrap(ApiUtility.makeRequest, {request: "get-popup-info"}).catch(U.noop);
-		if (U.isUdf(response)) return;
+		ApiUtility.makeRequest({request: "get-popup-info"})
+		.then((response) => {
+			g_tabId = response.tabId;
+			g_popupId = response.popupId;
+			g_docUrl = response.docUrl;
 
-		g_tabId = response.tabId;
-		g_popupId = response.popupId;
-		g_docUrl = response.docUrl;
-
-		U.removeClass(el_bookmarkBtn, cl_hide);
-		U.removeClass(el_saveMenu, cl_hide);
-		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
-		createSourceList(response.srcUrl, g_docUrl,
-						 response.scanInfo, response.mediaType === "image");
-	}
-
-	function getRandomDate(days)
-	{
-		let rand = Math.random() * days;
-		let offset = rand * 24 * 60 * 60 * 1000;
-		return Date.now() - offset;
+			U.removeClass(el_bookmarkBtn, cl_hide);
+			U.removeClass(el_saveMenu, cl_hide);
+			MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
+			createSourceList(response.srcUrl, g_docUrl,
+							 response.scanInfo, response.mediaType === "image");
+		}).catch((err) => {
+			console.log("error loading popup:", err);
+		});
 	}
 
 	function saveMeta(srcUrl, category, cache)
@@ -97,7 +94,7 @@ this.getTaggleInputFormatter = (function(){
 		let meta = { title: el_title.value.trim(),
 					 tags: g_taggle.getTags().values,
 					 category: category,
-					 date: Date.now()/*getRandomDate(35)*/,
+					 date: Date.now(),
 					 srcUrl: srcUrl };
 
 		if (g_source)
@@ -105,24 +102,27 @@ this.getTaggleInputFormatter = (function(){
 			meta.duration = g_source.duration;
 		}
 
-		let message = { request: "add-meta",
+		let message = { request: "add-content",
 						meta: meta,
 						popupId: g_popupId };
 
-		ApiUtility.makeRequest(message, (response) => {
+		ApiUtility.makeRequest(message).then((response) => {
 			if (response.success)
 			{
 				closePopup();
 			}
 			else if (response.memoryError)
 			{
-				closePopup();
+				g_alerter.alert(MEMORY_ERROR_MESSAGE, MEMORY_ERROR_DELAY);
 			}
 			else
 			{
-				console.warn("Could not handle response:", response);
+				console.warn("could not handle response:", response);
 				closePopup();
 			}
+		}).catch((err) => {
+			console.warn("error saving content:", err);
+			closePopup();
 		});
 	}
 
@@ -204,7 +204,6 @@ this.getTaggleInputFormatter = (function(){
 									title: video.title
 								}};
 				manager.addSource(video.url, options);
-				// manager.addSource(video.url, options);
 			});
 		}
 		else if (scanInfo.single)
@@ -261,12 +260,8 @@ this.getTaggleInputFormatter = (function(){
 			}
 		};
 		let bookmark = () => {
-			IconGrabber.getUrl(g_docUrl, (url) => {
-				saveMeta(url, "bookmark");
-			}, () => {
-				let url = IconGrabber.getFaviconUrl(g_docUrl);
-				saveMeta(url, "bookmark");
-			});
+			let url = IconGrabber.getFaviconUrl(g_docUrl);
+			saveMeta(url, "bookmark");
 		};
 
 		attachSave();

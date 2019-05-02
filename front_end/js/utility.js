@@ -58,6 +58,12 @@ this.U = new (function(){
 		return arr;
 	};
 
+	this.getRandomDate = function(days) {
+		let rand = Math.random() * days;
+		let offset = rand * 24 * 60 * 60 * 1000;
+		return Date.now() - offset;
+	};
+
     // parses a filename from a url.
 	// @return the filename or [name, .extension] if split is true.
 	this.parseFileName = (function(){

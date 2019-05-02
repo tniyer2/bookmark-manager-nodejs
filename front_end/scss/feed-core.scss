@@ -11,15 +11,25 @@ $br: 8px;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: flex-start;
-	align-items: center;
+	align-items: stretch;
 	padding-left: 25px;
 	padding-right: 25px;
 	padding-top: $row-vertical-margin;
 	padding-bottom: $row-vertical-margin - $row-spacing;
 	border-radius: $br; }
+.feed.message {
+	justify-content: center;
+	padding: 5px; }
+.feed-message {
+	display: inline-block;
+	font: $regular-font;
+	font-size: 20px; }
 
 
 .content {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	padding: $content-padding;
 	padding-bottom: 0;
 	margin-right: 20px;
@@ -30,6 +40,8 @@ $br: 8px;
 	justify-content: center;
 	min-width: 100px;
 	height: 300px; }
+.content__source-block.favicon {
+	height: auto; }
 .content__info-block {
 	display: flex;
 	padding: ($content-padding / 2) 0; }

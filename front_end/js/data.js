@@ -224,23 +224,20 @@ this.DataManager = new (function(){
 	const TAG_KEY = "tags";
 	const ID_LENGTH = 40;
 
-	let INNER_INSTANCE;
+	let instance;
 
 	Object.defineProperty(this, "instance", { get: () => {
 		return new Promise((resolve, reject) => {
-			if (INNER_INSTANCE)
+			if (instance)
 			{
-				resolve(INNER_INSTANCE);
+				resolve(instance);
 			}
 			else
 			{
-				(async () => {
-					let meta = await U.wrap(load).catch(reject);
-					if (U.isUdf(meta)) return;
-
-					INNER_INSTANCE = new Inner(meta);
-					resolve(INNER_INSTANCE);
-				})();
+				U.wrap(load).then((meta) => {
+					instance = new Inner(meta);
+					resolve(instance);
+				}).catch(reject);
 			}
 		});
 	}});
@@ -266,42 +263,52 @@ this.DataManager = new (function(){
 			return this._meta;
 		}
 
-		async addContent(content, cb, onErr)
+		get _successResponse()
+		{
+			return {success: true};
+		}
+
+		get _notFoundError()
+		{
+			return {notFound: true};
+		}
+
+		addContent(content, cb, onErr)
 		{
 			content.id = MetaUtility.getRandomString(ID_LENGTH);
 			this._meta.push(content);
 
-			let success = await U.wrap(save, this._meta).catch(onErr);
-			if (U.isUdf(success))
-			{
+			U.wrap(save, this._meta).then(() => {
+				this._tagTracker.increment(content[TAG_KEY]);
+				cb(this._successResponse);
+			}).catch((err) => {
 				this._meta.pop();
-				return;
-			}
-
-			this._tagTracker.increment(content[TAG_KEY]);
-
-			cb({success: true});
+				onErr(err);
+			});
 		}
 
-		async deleteContent(contentId, params, cb, onErr)
+		deleteContent(contentId, params, cb, onErr)
 		{
 			let {content, index} = MetaUtility.searchId(this._meta, contentId);
 			if (content)
 			{
 				this._meta.splice(index, 1);
-				this._tagTracker.decrement(content[TAG_KEY]);
 
-				save(this._meta, () => {
-					cb({success: true});
-				}, onErr);
+				U.wrap(save, this._meta).then(() => {
+					this._tagTracker.decrement(content[TAG_KEY]);
+					cb(this._successResponse);
+				}).catch((err) => {
+					this._meta.splice(index, 0, content);
+					onErr(err);
+				});
 			}
 			else
 			{
-				onErr({notFound: true});
+				onErr(this._notFoundError);
 			}
 		}
 
-		async findContent(contentId, params, cb, onErr)
+		findContent(contentId, params, cb, onErr)
 		{
 			let {content} = MetaUtility.searchId(this._meta, contentId);
 			if (content)
@@ -310,31 +317,32 @@ this.DataManager = new (function(){
 			}
 			else
 			{
-				onErr({notFound: true});
+				onErr(this._notFoundError);
 			}
 		}
 
-		async updateContent(contentId, params, cb, onErr)
+		// @todo find a way to undo update if save fails.
+		updateContent(contentId, params, cb, onErr)
 		{
 			let {content, index} = MetaUtility.searchId(this._meta, contentId);
 			if (content)
 			{
+				delete params.info.id;
+
 				if (params.info[TAG_KEY])
 				{
 					this._tagTracker.decrement(content[TAG_KEY]);
 					this._tagTracker.increment(params.info[TAG_KEY]);
 				}
-
-				delete params.info.id;
 				this._meta[index] = U.extend(content, params.info);
 
-				save(this._meta, () => {
-					cb({success: true});
-				}, onErr);
+				U.wrap(save, this._meta).then(() => {
+					cb(this._successResponse);
+				}).catch(onErr);
 			}
 			else
 			{
-				onErr({notFound: true});
+				onErr(this._notFoundError);
 			}
 		}
 	}
@@ -344,69 +352,61 @@ this.DataManager = new (function(){
 		let data = await getKeyWrapper("meta").catch(onErr);
 		if (U.isUdf(data)) return;
 
-		let serialized = data.meta;
-		if (!serialized)
+		let json = data.meta;
+		if (!json)
 		{
 			cb([]);
 			return;
 		}
 
-		let meta = [];
-		let list = serialized.split("\n").filter(o => o);
-		for (let i = 0, l = list.length; i < l; i+=1)
-		{
-			let s = list[i];
-			try
-			{
-				let content = JSON.parse(s);
-				meta.push(content);
-			}
-			catch (e)
-			{
-				console.warn(e);
-				onErr(null);
-				return;
-			}
+		let meta;
+		try {
+			meta = json.split("\n").filter(Boolean).map(s => JSON.parse(s));
+		} catch (e) {
+			console.warn(e);
+			onErr();
+			return;
 		}
-
 		cb(meta);
 	}
 
-	// throws {memmoryError}
-	async function save(meta, cb, onErr)
+	function save(meta, cb, onErr)
 	{
-		let serialized = "";
-		for (let i = 0, l = meta.length; i < l; i+=1)
-		{
-			let content = meta[i];
-			serialized += JSON.stringify(content) + "\n";
-		}
-
-		chrome.storage.local.set({meta: serialized}, (response) => {
-			if (chrome.runtime.lastError)
-			{
-				console.warn(chrome.runtime.lastError.message);
-				onErr({memoryError: true});
-			}
-			else
-			{
-				cb(true);
-			}
-		});
+		let serialized = meta.map(content => JSON.stringify(content)).join("\n");
+		setKeyWrapper({meta: serialized}).then(cb, onErr);
 	}
 
+	// resolves data, rejects undefined
 	function getKeyWrapper(keys)
 	{
 		return new Promise((resolve, reject) => {
-			chrome.storage.local.get(keys, (response) => {
+			chrome.storage.local.get(keys, (data) => {
 				if (chrome.runtime.lastError)
 				{
 					console.warn(chrome.runtime.lastError.message);
-					reject(null);
+					reject();
 				}
 				else
 				{
-					resolve(response);
+					resolve(data);
+				}
+			});
+		});
+	}
+
+	// resolves undefined, rejects {memoryError: true}
+	function setKeyWrapper(data)
+	{
+		return new Promise((resolve, reject) => {
+			chrome.storage.local.set(data, () => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+					reject({memoryError: true});
+				}
+				else
+				{
+					 resolve();
 				}
 			});
 		});
@@ -426,56 +426,50 @@ this.RequestManager = (function(){
 			return {connectionRequired: true};
 		}
 
-		async getContent(cb, onErr)
+		getContent(cb, onErr)
 		{
-			let appPromise = U.bindWrap(this._requestApp, this, "get-meta", null).catch(U.noop);
-			let all = Promise.all([DataManager.instance, appPromise]);
+			this._collectData("get-meta", null).then((results) => {
+				let [dm, app] = results;
 
-			let result;
-			try {
-				result = await all;
-			} catch (e) {
-				onErr();
-				return;
-			}
-
-			let final = { local: {meta: result[0].meta}, app: result[1]};
-			cb(final);
+				let final = { local: { meta: dm.meta }, app: app };
+				cb(final);
+			}).catch(onErr);
 		}
 
-		async getTags(cb, onErr)
+		getTags(cb, onErr)
 		{
-			let result = await this._collectData("get-tags", null).catch(onErr);
-			if (U.isUdf(result)) return;
+			this._collectData("get-tags", null).then((results) => {
+				let [dm, app] = results;
 
-			let localTags = result[0].tags;
-			if (result[1])
-			{
-				let concat = localTags.concat(result[1].tags);
-				let combinedTags = U.removeDuplicates(concat);
-				cb(combinedTags);
-			}
-			else
-			{
-				cb(localTags);
-			}
+				if (app)
+				{
+					let concat = dm.tags.concat(app.tags);
+					let combined = U.removeDuplicates(concat);
+					cb(combined);
+				}
+				else
+				{
+					cb(dm.tags);
+				}
+			}).catch(onErr);
 		}
 
 		_collectData(type, message)
 		{
 			let appPromise = U.bindWrap(this._requestApp, this, type, message).catch(U.noop);
-			let all = Promise.all([DataManager.instance, appPromise]);
-			return all;
+			return Promise.all([DataManager.instance, appPromise]);
 		}
 
-		async addContent(content, cache, cb, onErr)
+		addContent(content, cache, cb, onErr)
 		{
 			let message = { content: content,
 							download: cache };
-			this._requestApp("add-content", message, cb, () => {
+			U.bindWrap(this._requestApp, this, "add-content", message)
+			.then(cb)
+			.catch(() => {
 				DataManager.instance.then((dm) => {
 					dm.addContent(content, cb, onErr);
-				}, onErr);
+				}).catch(onErr);
 			});
 		}
 
@@ -498,42 +492,37 @@ this.RequestManager = (function(){
 		{
 			if (fromApp(contentId))
 			{
-				this._requestApp(type, {id: contentId, params: params}, cb, 
-								 onErr.bind(null, this.crError));
+				U.bindWrap(this._requestApp, this, type, {id: contentId, params: params})
+				.then(cb)
+				.catch(() => {
+					onErr(this.crError);
+				});
 			}
 			else
 			{
 				DataManager.instance.then((dm) => {
 					dm[localFunction](contentId, params, cb, onErr);
-				}, onErr);
+				}).catch(onErr);
 			}
 		}
 
 		async _requestApp(type, message, cb, onErr)
 		{
 			let connected = await U.bindWrap(this._connector.connect, this._connector);
-			if (!connected)
+			if (!connected || !this._connector.appConnected)
 			{
 				onErr();
 				return;
 			}
 
-			console.log("connector:", this._connector);
-			if (this._connector.appConnected)
-			{
-				let tag = U.makeTag(type, this._appCount);
-				this._appCount += 1;
+			let tag = U.makeTag(type, this._appCount);
+			this._appCount += 1;
 
-				let request = { type: type,
-								tag: tag,
-								message: message };
+			let request = { type: type,
+							tag: tag,
+							message: message };
 
-				this._connector.postMessage(request, tag, cb, onErr);
-			}
-			else
-			{
-				onErr();
-			}
+			this._connector.postMessage(request, tag, cb, onErr);
 		}
 	};
 
