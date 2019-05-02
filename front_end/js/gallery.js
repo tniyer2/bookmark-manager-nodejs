@@ -375,7 +375,7 @@ this.FeedBox = (function(){
 		g_feedBox = new FeedBox(meta, el_feed, g_feedBoxOptions);
 		g_feedBox.buffer();
 
-		let tags = await ApiUtility.makeRequest({request: "get-tags"})
+		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
 			console.log("error loading tags:", err);
 		});
@@ -394,7 +394,7 @@ this.FeedBox = (function(){
 
 	function requestMeta()
 	{
-		return ApiUtility.makeRequest({request: "get-meta"}).then((response) => {
+		return ApiUtility.makeRequest({request: "get-meta", to: "background.js"}).then((response) => {
 			if (response.local && response.app)
 			{
 				return response.local.meta.concat(response.app.meta);

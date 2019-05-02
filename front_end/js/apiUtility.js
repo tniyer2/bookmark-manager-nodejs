@@ -9,7 +9,7 @@ this.ApiUtility = new (function(){
 					console.warn(chrome.runtime.lastError.message);
 					reject();
 				}
-				else if (response && typeof response === "object" && "error" in response)
+				else if (!response)
 				{
 					reject();
 				}

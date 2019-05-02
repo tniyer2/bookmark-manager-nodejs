@@ -28,6 +28,13 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center; }
+
+
+.error-message {
+  font: $regular-font;
+  font-size: 32px; }
+
+
 .sizer {
   display: inline-block;
   flex: 0.7 0 auto; }

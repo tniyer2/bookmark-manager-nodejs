@@ -27,17 +27,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 	else if (msg.open === true)
 	{
-		openPopup();
+		openPopup(msg.tabId, msg.popupId);
 	}
-	else if(msg.close === true)
+	else if (msg.close === true)
 	{
 		closePopup();
 	}
+	else
+	{
+		console.warn("could not handle request:", msg);
+		sendResponse({error: true});
+	}
 });
 
-function openPopup()
+function openPopup(tabId, popupId)
 {
-	el_iframe.src = chrome.runtime.getURL("html/popup.html");
+	el_iframe.src = chrome.runtime.getURL("html/popup.html") + "?" + "tabId=" + tabId + "&popupId=" + popupId;
 	el_iframe.addEventListener("load", () => {
 		el_iframe.style.display = "block";
 	});

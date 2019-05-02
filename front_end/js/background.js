@@ -15,8 +15,7 @@
 				 							  		 "file://*" ] };
 	let g_connector, 
 		g_requester,
-		g_recentPopupInfo,
-		g_allPopupInfo = {};
+		g_popupInfo = {};
 
 	return function() {
 		g_connector = new AppConnector(APP_NAME, APP_TIMEOUT);
@@ -32,14 +31,16 @@
 
 	function handleRequest(msg, sender, sendResponse)
 	{
-		let onErr = (e) => {
-			let response = e ? e : {error: true};
-			sendResponse(response);
-		};
+		if (msg.to !== "background.js")
+		{
+			return;
+		}
+
+		let onErr = sendResponse;
 
 		if (msg.request === "get-popup-info")
 		{
-			collectPopupInfo(sender, sendResponse, onErr);
+			collectPopupInfo(msg.popupId, sender, sendResponse, onErr);
 		}
 		else if (msg.request === "get-tags")
 		{
@@ -51,7 +52,7 @@
 		}
 		else if (msg.request === "add-content")
 		{
-			let info = g_allPopupInfo[msg.popupId];
+			let info = g_popupInfo[msg.popupId];
 			fillInSource(msg.meta, info);
 
 			g_requester.addContent(msg.meta, canCache(msg.meta), sendResponse, onErr);
@@ -76,32 +77,21 @@
 		return true;
 	}
 
-	async function collectPopupInfo(sender, successCallback, errorCallback)
+	async function collectPopupInfo(popupId, sender, cb, onErr)
 	{
-		let info = {};
-
-		info.srcUrl = g_recentPopupInfo.srcUrl;
+		let info = g_popupInfo[popupId];
 		info.docUrl = sender.tab.url;
-		info.mediaType = g_recentPopupInfo.mediaType;
-		info.tabId = sender.tab.id;
 
-		try
-		{
-			info.scanInfo = await U.wrap(requestScanInfo, sender.tab.id);
-			info.tags = await U.bindWrap(g_requester.getTags, g_requester);
-		}
-		catch (e)
-		{
-			errorCallback(e);
-			return;
-		}
+		let scanInfoPromise = U.wrap(requestScanInfo, sender.tab.id);
+		let tagsPromise = U.bindWrap(g_requester.getTags, g_requester);
+		let all = Promise.all([scanInfoPromise, tagsPromise]);
+		let results = await all.catch(onErr);
+		if (U.isUdf(results)) return;
 
-		let popupId = U.makeTag(sender.tab.id, "get-popup-info");
+		info.scanInfo = results[0];
+		info.tags = results[1];
 
-		info.popupId = popupId;
-		g_allPopupInfo[popupId] = info;
-
-		successCallback(info);
+		cb(info);
 	}
 
 	function fillInSource(content, info)
@@ -125,17 +115,17 @@
 			   content.duration < MAX_CACHE_DURATION);
 	}
 
-	function requestScanInfo(tabId, successCallback, errorCallback)
+	function requestScanInfo(tabId, cb, onErr)
 	{
 		chrome.tabs.sendMessage(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
 			if (chrome.runtime.lastError)
 			{
 				console.warn(chrome.runtime.lastError.message);
-				errorCallback(null);
+				onErr();
 			}
 			else
 			{
-				successCallback(scanInfo);
+				cb(scanInfo);
 			}
 		});
 	}
@@ -157,28 +147,32 @@
 
 	function onContextClicked(info, tab)
 	{
-		g_recentPopupInfo = { srcUrl: info.srcUrl,
-							  mediaType: info.mediaType };
+		let popupId = U.makeTag(tab.id, "popupId");
+		g_popupInfo[popupId] = { srcUrl: info.srcUrl,
+							  	 mediaType: info.mediaType };
 
-		messageScript(tab.id, { to: "content.js",
-								script: "js/content.js",
-								open: true });
+		let message = { to: "content.js",
+				  		open: true,
+				  		tabId: tab.id,
+				  		popupId: popupId };
+		onScriptLoad(tab.id, "content.js", "js/content.js", message);
 	}
 
-	function messageScript(tabId, msg, callback)
+	function onScriptLoad(tabId, to, script, message, cb)
 	{
-		chrome.tabs.sendMessage(tabId, {to: msg.to, check: true}, (exists) => {
+		chrome.tabs.sendMessage(tabId, {to: to, check: true}, (exists) => {
 			if (chrome.runtime.lastError) { /*ignore*/ }
+			let send = () => {
+				chrome.tabs.sendMessage(tabId, message, cb); 
+			};
 
 			if (exists === true)
 			{
-				chrome.tabs.sendMessage(tabId, msg, callback);
+				send();
 			}
 			else
 			{
-				chrome.tabs.executeScript(tabId, {file: msg.script}, (result) => {
-					chrome.tabs.sendMessage(tabId, msg, callback);
-				});
+				chrome.tabs.executeScript(tabId, {file: script}, send);
 			}
 		});
 	}

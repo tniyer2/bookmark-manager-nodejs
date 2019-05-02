@@ -94,7 +94,7 @@ this.formatDate = (function(){
 		el_updateBtn.addEventListener("click", requestUpdate, {once: false});
 		el_updateBtn.disabled = false;
 
-		let tags = await ApiUtility.makeRequest({request: "get-tags"})
+		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
 			console.warn("error loading tags:", err);
 		});
@@ -110,7 +110,7 @@ this.formatDate = (function(){
 
 	function requestContent()
 	{
-		return ApiUtility.makeRequest({request: "find-content", id: CONTENT_ID})
+		return ApiUtility.makeRequest({request: "find-content", id: CONTENT_ID, to: "background.js"})
 		.then((response) => {
 			if (response.content)
 			{
@@ -148,7 +148,7 @@ this.formatDate = (function(){
 			attachDelete();
 		}
 
-		ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID})
+		ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID, to: "background.js"})
 		.then((response) => {
 			if (response.success)
 			{
@@ -180,7 +180,9 @@ this.formatDate = (function(){
 					 tags: g_taggle.getTags().values };
 
 		let message = { request: "update-content", 
-						id: CONTENT_ID, info: info };
+						id: CONTENT_ID, 
+						info: info,
+						to: "background.js" };
 
 		ApiUtility.makeRequest(message).then((response) => {
 			if (response.success)

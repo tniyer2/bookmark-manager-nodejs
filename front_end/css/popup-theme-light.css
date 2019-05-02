@@ -13,6 +13,10 @@ html {
   box-shadow: 0px 1px 3px 1.25px #b2b2b2;
 }
 
+.error-message {
+  color: #ccc;
+}
+
 /*the menu for saving content*/
 .save-menu {
   border: 2.5px solid #595959;

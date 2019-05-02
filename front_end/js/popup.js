@@ -31,14 +31,17 @@ this.getTaggleInputFormatter = (function(){
 
 (function(){
 
-	const NO_SOURCE_MESSAGE = "Pick a source first.",
+	const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
+		  NO_SOURCE_MESSAGE = "Pick a source first.",
 		  NO_SOURCE_ALERT_DELAY = 5,
 		  MEMORY_ERROR_MESSAGE = "No more data left in chrome storage. Download the desktop app for extra storage.",
-		  MEMORY_ERROR_DELAY = 5;
-		  g_taggleOptions = { placeholder: "enter tags...",
-							  tabIndex: 0 };
+		  MEMORY_ERROR_DELAY = 5,
+		  TAGGLE_OPTIONS = { placeholder: "enter tags...",
+							 tabIndex: 0 };
     const cl_hide = "noshow",
     	  cl_scrollbar = "customScrollbar1";
+
+	const el_errorMessage = document.getElementById("error-message");
 
 	const el_sizer = document.getElementById("sizer");
 
@@ -62,21 +65,28 @@ this.getTaggleInputFormatter = (function(){
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
 
 		g_alerter = createAlerter();
-		g_taggleOptions.inputFormatter = getTaggleInputFormatter(g_alerter);
-		g_taggle = MyTaggle.createTaggle(el_tagContainer, g_taggleOptions);
+		TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(g_alerter);
+		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 
 		attachMaskEvents();
 		attachButtonEvents();
 		attachStyleEvents();
+
+		parseQueryString();
 		load();
 	};
 
+	function parseQueryString()
+	{
+		let params = new URLSearchParams(document.location.search.substring(1));
+		g_tabId = Number(params.get("tabId"));
+		g_popupId = params.get("popupId");
+	}
+
 	async function load()
 	{
-		ApiUtility.makeRequest({request: "get-popup-info"})
+		ApiUtility.makeRequest({request: "get-popup-info", popupId: g_popupId, to: "background.js"})
 		.then((response) => {
-			g_tabId = response.tabId;
-			g_popupId = response.popupId;
 			g_docUrl = response.docUrl;
 
 			U.removeClass(el_bookmarkBtn, cl_hide);
@@ -86,6 +96,7 @@ this.getTaggleInputFormatter = (function(){
 							 response.scanInfo, response.mediaType === "image");
 		}).catch((err) => {
 			console.log("error loading popup:", err);
+			onNoLoad();
 		});
 	}
 
@@ -104,7 +115,8 @@ this.getTaggleInputFormatter = (function(){
 
 		let message = { request: "add-content",
 						meta: meta,
-						popupId: g_popupId };
+						popupId: g_popupId,
+						to: "background.js" };
 
 		ApiUtility.makeRequest(message).then((response) => {
 			if (response.success)
@@ -124,6 +136,13 @@ this.getTaggleInputFormatter = (function(){
 			console.warn("error saving content:", err);
 			closePopup();
 		});
+	}
+
+	function onNoLoad()
+	{
+		let textNode = document.createTextNode(NO_LOAD_MESSAGE);
+		el_errorMessage.appendChild(textNode);
+		U.removeClass(el_errorMessage, cl_hide);
 	}
 
 	function closePopup()
