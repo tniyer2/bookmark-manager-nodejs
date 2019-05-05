@@ -27,21 +27,29 @@ this.MyTaggle = new (function(){
 			container.dispatchEvent(new Event("blur"));
 		});
 
-		taggle.setOptions({tagFormatter: (li) => {
+		let tagFormatter = U.joinCallbacks(options.tagFormatter, (li) => {
+			li.addEventListener("mousedown", (evt) => {
+				evt.preventDefault();
+			});
 			li.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 
 				let text = li.querySelector("span").innerText;
 				taggle.remove(text);
 
-				if (!taggle.getTags().values.length)
-				{
-					taggleInput.focus();
-				}
+				taggleInput.focus();
 			});
-		}, onTagAdd: (evt, text) => {
+		});
+		let onTagAdd = U.joinCallbacks(options.onTagAdd, (evt, text) => {
 			container.scrollTop = container.scrollHeight;
-		}});
+
+			/*temporary*/
+			if (options.alerter)
+			{
+				options.alerter.alert(text, 5);
+			}
+		});
+		taggle.setOptions({tagFormatter: tagFormatter, onTagAdd: onTagAdd});
 
 		return taggle;
 	};

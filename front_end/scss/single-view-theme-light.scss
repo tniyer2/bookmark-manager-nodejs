@@ -3,8 +3,12 @@
 
 
 .main {
-	background: $lt-gray; 
+	background: #c6c6c6;
 	border: 3px solid $lt-strong-gray; }
+
+
+.error-message {
+	color: $lt-strong-gray; }
 
 
 .content-block__favicon {
@@ -21,9 +25,7 @@
 	border-style: solid; }
 .info-block__tag {
 	background: $yellow;
-	border-color: $dark-yellow; }
-.info-block__tag::selection {
-	background: $chrome-selected-color;
+	border-color: $dark-yellow;
 	color: $lt-font-color; }
 .info-block__source-link {
 	background: $blue;
@@ -45,5 +47,26 @@
 	background: $dark-red; }
 
 
-.tag-container-wrapper {
+$input-border: 0px solid $lt-strong-gray;
+.title-input {
+	background: none;
+	color: $lt-font-color;
+	border: $input-border; }
+.title-input:focus {
 	background: white; }
+.title-input::placeholder {
+	color: $lt-strong-gray; }
+.title-input:focus::placeholder {
+	opacity: 0; }
+
+.tag-container {
+	background: none;
+	border: $input-border; }
+%tag-container-active {
+	background: white; }
+.tag-container.active {
+	@extend %tag-container-active; }
+.tag-container.empty {
+	@extend %tag-container-active; }
+.taggle_placeholder {
+	color: $lt-strong-gray; }

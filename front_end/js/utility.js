@@ -44,6 +44,17 @@ this.U = new (function(){
         return master;
     };
 
+    // only use this for functions that don't return.
+    this.joinCallbacks = function(...cbs) {
+    	cbs = cbs.filter(Boolean);
+
+    	return (...args) => {
+    		cbs.forEach((f) => {
+    			f(...args);
+    		});
+    	};
+    };
+
 	this.removeDuplicates = function(arr, sorter) {
 		arr.sort(sorter);
 		for (let i = arr.length - 1; i >= 0; i-=1)
@@ -92,6 +103,29 @@ this.U = new (function(){
 			}
 		};
 	})();
+
+	this.preventBubble = function(elm, eventnames) {
+		this._eventUtility(elm, eventnames, (evt) => {
+			evt.stopPropagation();
+		})
+	};
+
+	this.preventDefault = function(elm, eventnames) {
+		this._eventUtility(elm, eventnames, (evt) => {
+			evt.preventDefault();
+		})
+	};
+
+	this._eventUtility = function(elm, eventnames, cb) {
+		if (eventnames.constructor !== Array)
+		{
+			eventnames = [eventnames];
+		}
+
+		eventnames.forEach((n) => {
+			elm.addEventListener(n, cb);
+		});
+	};
 
 	this.addClass = function(elm, classname) {
 		if (!elm.classList.contains(classname))

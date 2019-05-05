@@ -69,18 +69,9 @@ this.Toggle = (function(){
 // FeedBox
 this.FeedBox = (function(){
 
-	const cl_hover = "hover";
-	const cl_favicon = "favicon";
-	const stopBubble = (evt) => {
-		evt.stopPropagation();
-	};
-
 	const DEFAULTS = { bufferSize: 20,
 					   bufferOnScroll: { offset: 0,
 					   					 delay: 0 },
-					   contentLink: "",
-					   contentLinkTarget: "",
-					   defaultTitle: "untitled",
 					   onNoResults: U.noop };
 	return class {
 		constructor(meta, el_parent, options)
@@ -101,7 +92,7 @@ this.FeedBox = (function(){
 			}
 		}
 
-		buffer()
+		buffer(createContent)
 		{
 			let len = this._meta.length;
 			if (!len)
@@ -118,106 +109,17 @@ this.FeedBox = (function(){
 				let content = this._meta[this._queue.count];
 				let insert = this._queue.next();
 
-				this._createContent(content, (elm) => {
+				createContent(content)
+				.then((elm) => {
 					insert(elm);
+				}).catch((err) => {
+					if (err)
+					{
+						console.warn(err);
+					}
+					console.warn("could not load content:", content);
 				});
 			}
-		}
-
-		async _createContent(info, successCallback, errorCallback)
-		{
-			let el_contentBlock = document.createElement("div");
-			el_contentBlock.classList.add("content");
-
-			let el_sourceBlock = document.createElement("div");
-			el_sourceBlock.classList.add("content__source-block");
-			el_contentBlock.appendChild(el_sourceBlock);
-
-			let el_infoBlock = document.createElement("div");
-			el_infoBlock.classList.add("content__info-block");
-			el_contentBlock.appendChild(el_infoBlock);
-
-			let el_title = document.createElement("p");
-			el_title.classList.add("content__title");
-
-			let titleText = info.title ? info.title : this._options.defaultTitle;
-			let titleTextNode = document.createTextNode(titleText);
-			el_title.appendChild(titleTextNode);
-			el_infoBlock.appendChild(el_title);
-
-			let el_content = await U.bindWrap(this._loadContent, this, info).catch(errorCallback);
-			if (U.isUdf(el_content)) return;
-
-			el_contentBlock.addEventListener("click", () => {
-				let url = this._options.contentLink + "?" + info.id;
-				window.open(url, this._options.contentLinkTarget);
-			});
-
-			let addHover = () => {
-				U.addClass(el_contentBlock, cl_hover);
-			};
-			let removeHover = () => {
-				U.removeClass(el_contentBlock, cl_hover);
-			};
-			el_contentBlock.addEventListener("mouseenter", addHover);
-			el_contentBlock.addEventListener("mouseleave", removeHover);
-
-			if (info.category === "bookmark")
-			{
-				el_sourceBlock.classList.add(cl_favicon);
-				el_content.addEventListener("click", stopBubble);
-				el_content.addEventListener("mouseenter", removeHover);
-				el_content.addEventListener("mouseleave", addHover);
-			}
-
-			el_infoBlock.addEventListener("click", stopBubble);
-
-			el_content.classList.add("content__source");
-			el_sourceBlock.appendChild(el_content);
-
-			successCallback(el_contentBlock);
-		}
-
-		async _loadContent(info, successCallback, errorCallback)
-		{
-			let content;
-			let source = info.path ? info.path : info.srcUrl;
-			let eventName;
-			if (info.category === "image")
-			{
-				content = ContentCreator.createImage(source);
-				content.classList.add("content__image");
-				eventName = "load";
-			}
-			else if (info.category === "video")
-			{
-				content = ContentCreator.createVideo(source);
-				content.classList.add("content__video");
-				eventName = "loadeddata";
-			}
-			else if (info.category === "youtube")
-			{
-				content = ContentCreator.createIframe(source);
-				content.classList.add("content__youtube");
-				successCallback(content);
-				return;
-			}
-			else if (info.category === "bookmark")
-			{
-				content = ContentCreator.createBookmark(source, info.docUrl);
-				successCallback(content);
-				return;
-			}
-			else
-			{
-				console.warn("invalid category:", info.category);
-				errorCallback(null);
-				return;
-			}
-
-			content.addEventListener(eventName, () => {
-				successCallback(content);
-			}, {once: true});
 		}
 
 		_attachOnScroll()
@@ -250,11 +152,16 @@ this.FeedBox = (function(){
 	const DEFAULT_QUERY = "sort=!date",
 		  SEARCH_BY_TAG = true,
 		  NO_RESULTS_MESSAGE = "No search results.",
-		  NO_LOAD_MESSAGE = "Something went wrong :(";
+		  NO_LOAD_MESSAGE = "Something went wrong :(",
+		  CONTENT_LINK = "singleView.html",
+		  CONTENT_LINK_TARGET = "_self",
+		  DEFAULT_TITLE = "untitled";
 
 	const cl_hide = "noshow",
 		  cl_searchBoxFocused = "focus",
-		  cl_noLoad = "message";
+		  cl_noLoad = "message",
+		  cl_hover = "hover",
+		  cl_favicon = "favicon";
 
 	const el_form = document.getElementById("search"),
 		  el_searchBox = el_form.querySelector("#search-box"),
@@ -271,13 +178,16 @@ this.FeedBox = (function(){
 	const el_feed = document.getElementById("feed"),
 		  el_feedMessage = el_feed.querySelector("#feed-message");
 
-	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {placeholder: "enter tags..."}),
-		  g_searchBoxToggle = new Toggle();
+	const TAGGLE_OPTIONS = { placeholder: "enter tags..." },
+		  FEEDBOX_OPTIONS = { onNoResults: () => {
+		      showMessage(NO_RESULTS_MESSAGE);
+		  } },
+		  CONTENT_CREATOR_OPTIONS = {BEMBlock: "content"};
 
-	let g_feedBox, 
-		g_feedBoxOptions = {contentLink: "singleView.html", contentLinkTarget: "_self", onNoResults: () => {
-			showMessage(NO_RESULTS_MESSAGE);
-		}};
+	let g_taggle,
+		g_searchBoxToggle,
+		g_contentCreator,
+		g_feedBox;
 
 	let g_settings;
 
@@ -302,6 +212,10 @@ this.FeedBox = (function(){
 
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "gallery", "feed"], "light");
+
+		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
+		g_searchBoxToggle = new Toggle();
+		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
 
 		attachSubmit();
 		g_searchBoxToggle.onToggleOn(switchToTags);
@@ -372,8 +286,8 @@ this.FeedBox = (function(){
 		if (U.isUdf(meta)) return;
 
 		meta = Searcher.query(meta, query);
-		g_feedBox = new FeedBox(meta, el_feed, g_feedBoxOptions);
-		g_feedBox.buffer();
+		g_feedBox = new FeedBox(meta, el_feed, FEEDBOX_OPTIONS);
+		g_feedBox.buffer((info) => U.wrap(createContent, info));
 
 		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
@@ -416,6 +330,60 @@ this.FeedBox = (function(){
 			console.warn("error loading content:", err);
 			throw new Error();
 		});
+	}
+
+	async function createContent(info, cb, onErr)
+	{
+		let el_contentBlock = document.createElement("div");
+		el_contentBlock.classList.add("content");
+
+		let el_sourceBlock = document.createElement("div");
+		el_sourceBlock.classList.add("content__source-block");
+		el_contentBlock.appendChild(el_sourceBlock);
+
+		let el_infoBlock = document.createElement("div");
+		el_infoBlock.classList.add("content__info-block");
+		el_contentBlock.appendChild(el_infoBlock);
+
+		let el_title = document.createElement("p");
+		el_title.classList.add("content__title");
+
+		let titleText = info.title ? info.title : DEFAULT_TITLE;
+		let titleTextNode = document.createTextNode(titleText);
+		el_title.appendChild(titleTextNode);
+		el_infoBlock.appendChild(el_title);
+
+		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info).catch(onErr);
+		if (U.isUdf(el_content)) return;
+
+		el_contentBlock.addEventListener("click", () => {
+			let url = CONTENT_LINK + "?" + info.id;
+			window.open(url, CONTENT_LINK_TARGET);
+		});
+
+		let addHover = () => {
+			U.addClass(el_contentBlock, cl_hover);
+		};
+		let removeHover = () => {
+			U.removeClass(el_contentBlock, cl_hover);
+		};
+		el_contentBlock.addEventListener("mouseenter", addHover);
+		el_contentBlock.addEventListener("mouseleave", removeHover);
+
+		if (info.category === "bookmark")
+		{
+			el_sourceBlock.classList.add(cl_favicon);
+			U.preventBubble(el_content, "click");
+			el_content.addEventListener("mouseenter", removeHover);
+			el_content.addEventListener("mouseleave", addHover);
+		}
+
+		U.preventBubble(el_infoBlock, "click");
+
+		el_content.classList.add("content__source");
+		el_sourceBlock.appendChild(el_content);
+
+		cb(el_contentBlock);
 	}
 
 	function makeQueryString()

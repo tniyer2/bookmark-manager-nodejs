@@ -54,39 +54,58 @@ this.formatDate = (function(){
 		  NO_DELETE_MESSAGE    = "Could not delete.",
 		  NO_UPDATE_MESSAGE    = "Could not update.",
 		  CANT_HANDLE_MESSAGE  = "Something went wrong.",
-		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.";
+		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.",
+		  ALERT_DELAY = 5;
 
-	const ALERT_DELAY = 5;
+	const cl_hide   = "noshow", 
+		  cl_active = "active", 
+		  cl_noTags = "empty";
 
-	const CONTENT_ID = getIdFromHref();
-	const GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
-	const cl_hide = "noshow";
+	const CONTENT_ID  = getIdFromHref(),
+		  GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
+
+	const el_errorMessage = document.getElementById("error-message");
 
 	const el_contentBlock = document.getElementById("content-block");
 
-	const el_infoBlock = document.getElementById("info-block");
-	const el_category = el_infoBlock.querySelector("#category");
-	const el_date = el_infoBlock.querySelector("#date");
-	const el_sourceLink = el_infoBlock.querySelector("#source-link");
-	const el_deleteBtn = el_infoBlock.querySelector("#delete-btn");
-	const el_updateBtn = el_infoBlock.querySelector("#update-btn");
+	const el_infoBlock = document.getElementById("info-block"),
+		  el_category = el_infoBlock.querySelector("#category"),
+		  el_date = el_infoBlock.querySelector("#date"),
+		  el_sourceLink = el_infoBlock.querySelector("#source-link"),
+		  el_deleteBtn = el_infoBlock.querySelector("#delete-btn"),
+		  el_updateBtn = el_infoBlock.querySelector("#update-btn");
 
 	const el_titleInput = document.getElementById("title-input");
 	const el_tagContainer = document.getElementById("tag-container");
 
-	const g_taggle = MyTaggle.createTaggle(el_tagContainer, {});
-	const g_alerter = new Widgets.AwesomeAlerter(document.body, {BEMBlock: "alerts"});
+	const TAGGLE_OPTIONS = { placeholder: "add tags..." },
+		  ALERTER_OPTIONS = { BEMBlock: "alerts" },
+		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "content-block" };
+
+	let g_taggle,
+		g_contentCreator,
+		g_alerter;
 
 	let g_settings;
 
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "single-view"], "light");
+
+		g_alerter = new Widgets.AwesomeAlerter(ALERTER_OPTIONS);
+
+		TAGGLE_OPTIONS.alerter = g_alerter;
+		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
+		styleOnEmptyTaggle(g_taggle);
+
+		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
+
+		document.body.appendChild(g_alerter.alertList);
 		load();
 	};
 
 	async function load()
 	{
-		let content = await requestContent().catch(onNoLoad);
+		let content = await requestContent().catch(U.noop);
 		if (U.isUdf(content)) return;
 
 		createContent(content);
@@ -103,14 +122,21 @@ this.formatDate = (function(){
 		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
 	}
 
-	function onNoLoad()
+	function setErrorMessage(message)
 	{
-		alert("problem loading");
+		let textNode = document.createTextNode(message);
+		el_errorMessage.appendChild(textNode);
+		U.removeClass(el_errorMessage, cl_hide);
 	}
 
 	function requestContent()
 	{
 		return ApiUtility.makeRequest({request: "find-content", id: CONTENT_ID, to: "background.js"})
+		.catch((err) => {
+			console.warn("error loading content:", err);
+			setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+			throw new Error();
+		})
 		.then((response) => {
 			if (response.content)
 			{
@@ -118,19 +144,15 @@ this.formatDate = (function(){
 			}
 			else if (response.connectionRequired)
 			{
-				g_alerter.alert(NO_LOAD_MESSAGE + " " + MUST_CONNECT_MESSAGE, ALERT_DELAY);
+				setErrorMessage(NO_LOAD_MESSAGE + " " + MUST_CONNECT_MESSAGE);
 				throw new Error();
 			}
 			else
 			{
 				console.warn("could not handle response:", response);
-				g_alerter.alert(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE, ALERT_DELAY);
+				setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 				throw new Error();
 			}
-		}).catch((err) => {
-			console.warn("error loading content:", err);
-			g_alerter.alert(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE, ALERT_DELAY);
-			throw new Error();
 		});
 	}
 
@@ -204,61 +226,41 @@ this.formatDate = (function(){
 		});
 	}
 
-	function createContent(content)
+	async function createContent(info)
 	{
-		console.log("content:", content);
+		console.log("info:", info);
 
-		let source = content.path ? content.path : content.srcUrl;
-		let el_content;
-		if (content.category === "image")
-		{
-			el_content = ContentCreator.createImage(source);
-			el_content.classList.add("content-block__image");
-		}
-		else if (content.category === "video")
-		{
-			el_content = ContentCreator.createVideo(source);
-			el_content.classList.add("content-block__video");
-		}
-		else if (content.category === "bookmark")
-		{
-			el_content = ContentCreator.createBookmark(source, content.docUrl);
-			el_content.classList.add("content-block__favicon");
-			el_sourceLink.parentElement.classList.add("noshow");
-		}
-		else if (content.category === "youtube")
-		{
-			el_content = ContentCreator.createIframe(source);
-			el_content.classList.add("content-block__youtube");
-		}
-		else
-		{
-			console.log("can not handle content category:", content);
-			return;
-		}
-
+		let source = info.path ? info.path : info.srcUrl;
+		
+		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info);
 		el_content.classList.add("content-block__content");
 		el_contentBlock.appendChild(el_content);
 
-		el_titleInput.value = content.title;
+		if (info.category === "bookmark")
+		{
+			U.addClass(el_sourceLink.parentElement, cl_hide);
+		}
+
+		el_titleInput.value = info.title;
 		U.removeClass(el_titleInput, cl_hide);
 
-		for (let i = 0, l = content.tags.length; i < l; i+=1)
+		for (let i = 0, l = info.tags.length; i < l; i+=1)
 		{
-			g_taggle.add(content.tags[i]);
+			g_taggle.add(info.tags[i]);
 		}
+		U.removeClass(el_tagContainer, cl_active);
 		U.removeClass(el_tagContainer, cl_hide);
 
-		let formattedCategory = formatCategory(content.category);
+		let formattedCategory = formatCategory(info.category);
 		let categoryTextNode = document.createTextNode(formattedCategory);
 		el_category.appendChild(categoryTextNode);
 
-		let ms = Number(content.date);
+		let ms = Number(info.date);
 		let formattedDate = formatDate(ms);
 		let dateTextNode = document.createTextNode(formattedDate);
 		el_date.appendChild(dateTextNode);
 
-		el_sourceLink.href = content.docUrl;
+		el_sourceLink.href = info.docUrl;
 
 		U.removeClass(el_infoBlock, cl_hide);
 	}
@@ -284,5 +286,26 @@ this.formatDate = (function(){
 		}
 
 		return id;
+	}
+
+	function styleOnEmptyTaggle(taggle)
+	{
+		function inner()
+		{
+			let container = taggle.getContainer();
+			if (taggle.getTags().values.length)
+			{
+				U.removeClass(container, cl_noTags);
+			}
+			else
+			{
+				U.addClass(container, cl_noTags);
+			}
+		}
+
+		inner();
+		let add = U.joinCallbacks(taggle.settings.onTagAdd, inner);
+		let remove = U.joinCallbacks(taggle.settings.onTagRemove, inner);
+		taggle.setOptions({onTagAdd: add, onTagRemove: remove});
 	}
 })()();

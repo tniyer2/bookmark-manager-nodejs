@@ -167,14 +167,109 @@ this.Widgets = new (function(){
 		}
 	};
 
+	this.ContentCreator = function(){
+		const DEFAULTS = { BEMBlock: "" };
+
+		const CLASSES = { image: "image", 
+						  video: "video", 
+						  youtube: "youtube",
+						  bookmark: "favicon" };
+		return class {
+			constructor(options)
+			{
+				this._options = U.extend(DEFAULTS, options);
+				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
+			}
+
+			load(info, cb, onErr)
+			{
+				let source = info.path ? info.path : info.srcUrl;
+				if (info.category === "image")
+				{
+					let image = this._createImage(source);
+					image.addEventListener("load", () => {
+						cb(image);
+					}, {once: true});
+					image.addEventListener("error", () => {
+						onErr();
+					}, {once: true});
+				}
+				else if (info.category === "video")
+				{
+					video = this._createVideo(source);
+					video.addEventListener("loadeddata", () => {
+						cb(video);
+					}, {once: true});
+					video.addEventListener("error", () => {
+						onErr();
+					}, {once: true});
+				}
+				else if (info.category === "youtube")
+				{
+					cb(this._createYoutube(source));
+				}
+				else if (info.category === "bookmark")
+				{
+					cb(this._createBookmark(source, info.docUrl));
+				}
+				else
+				{
+					console.warn("invalid category:", info.category);
+					onErr();
+				}
+			}
+
+			_createImage(source)
+			{
+				let image = document.createElement("img");
+				image.src = source;
+				image.classList.add(CLASSES.image);
+				return image;
+			}
+
+			_createVideo(source)
+			{
+				let video = document.createElement("video");
+				video.controls = true;
+				video.loop = true;
+				video.src = source;
+				video.classList.add(CLASSES.video);
+				return video;
+			}
+
+			_createYoutube(source)
+			{
+				let iframe = document.createElement("iframe");
+				iframe.src = source;
+				iframe.classList.add(CLASSES.youtube);
+				return iframe;
+			}
+
+			_createBookmark(source, link)
+			{
+				let bookmark = document.createElement("a");
+				bookmark.classList.add(CLASSES.bookmark);
+				bookmark.href = link;
+				bookmark.target = "_blank";
+
+				let favicon = document.createElement("img");
+				favicon.src = source;
+				bookmark.appendChild(favicon);
+				return bookmark;
+			}
+		};
+	}();
+
 	this.AwesomeAlerter = function(){
 
-		const cl_hide = "noshow";
-		const cl_fadeIn = "fade-in";
-		const cl_fadeOut = "fade-out";
+		const cl_hide = "noshow",
+			  cl_fadeIn = "fade-in",
+			  cl_fadeOut = "fade-out";
+
 		const listStyle = `position: absolute;
 						   display: flex;
 						   justify-content: space-between;`;
+
 		const CLASSES = { list: "list",
 						  li: "alert",
 						  text: "text",
@@ -204,7 +299,7 @@ this.Widgets = new (function(){
 		};
 
 		return class {
-			constructor(parentElement, options)
+			constructor(options)
 			{
 				this._options = U.extend(DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
@@ -212,10 +307,9 @@ this.Widgets = new (function(){
 				this._height = 0;
 
 				this._list = this._createList();
-				parentElement.appendChild(this._list);
 			}
 
-			get list() 
+			get alertList()
 			{
 				return this._list;
 			}

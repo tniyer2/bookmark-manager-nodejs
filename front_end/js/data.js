@@ -329,16 +329,19 @@ this.DataManager = new (function(){
 			{
 				delete params.info.id;
 
-				if (params.info[TAG_KEY])
-				{
-					this._tagTracker.decrement(content[TAG_KEY]);
-					this._tagTracker.increment(params.info[TAG_KEY]);
-				}
 				this._meta[index] = U.extend(content, params.info);
 
 				U.wrap(save, this._meta).then(() => {
+					if (params.info[TAG_KEY])
+					{
+						this._tagTracker.decrement(content[TAG_KEY]);
+						this._tagTracker.increment(params.info[TAG_KEY]);
+					}
 					cb(this._successResponse);
-				}).catch(onErr);
+				}).catch((err) => {
+					this._meta[index] = content;
+					onErr(err);
+				});
 			}
 			else
 			{

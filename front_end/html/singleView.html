@@ -8,6 +8,7 @@
   </head>
   <body>
     <div class="main">
+      <p id="error-message" class="noshow error-message"></p>
       <div id="content-block" class="content-block"></div>
       <ul id="info-block" class="noshow info-block">
         <li id="category" class="info-block__tag"></li>
@@ -22,7 +23,7 @@
           <button id="delete-btn" disabled>delete</button>
         </li>
       </ul>
-      <input id="title-input" class="noshow title-input" type="text">
+      <input id="title-input" class="noshow title-input" type="text" placeholder="untitled">
       <div class="tag-container-wrapper">
         <div id="tag-container" class="noshow tag-container"></div>
       </div>
@@ -32,7 +33,6 @@
     <script src="../js/apiUtility.js"></script>
     <script src="../js/myTaggle.js"></script>
     <script src="../js/widgets.js"></script>
-    <script src="../js/contentCreator.js"></script>
     <script src="../js/singleView.js"></script>
   </body>
 </html>

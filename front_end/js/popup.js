@@ -65,6 +65,9 @@ this.getTaggleInputFormatter = (function(){
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
 
 		g_alerter = createAlerter();
+		document.body.appendChild(g_alerter.alertList);
+
+		TAGGLE_OPTIONS.alerter = g_alerter;
 		TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(g_alerter);
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 
@@ -238,12 +241,9 @@ this.getTaggleInputFormatter = (function(){
 
 	function createAlerter()
 	{
-		let a =  new Widgets.AwesomeAlerter(document.body,
-				{ BEMBlock: "alerts",
-	  	  		  insertAtTop: false });
-		a.list.addEventListener("click", (evt) => {
-			evt.stopPropagation();
-		});
+		let a =  new Widgets.AwesomeAlerter({ BEMBlock: "alerts",
+											  insertAtTop: false });
+		U.preventBubble(a.alertList, ["click", "mousedown", "mouseup"]);
 		return a;
 	}
 
