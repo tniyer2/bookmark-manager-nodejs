@@ -886,11 +886,7 @@
 
             self.settings.onTagRemove(e, text);
 
-            // self._focusInput();
-            if (!self.tag.values.length)
-            {
-                self._showPlaceholder();
-            }
+            self._focusInput();
         }
 
         var ret = this.settings.onBeforeTagRemove(e, text, done);

@@ -8,6 +8,16 @@ this.U = new (function(){
 		return typeof arg === "undefined";
 	};
 
+	this.min = function(a, b) {
+		let q = typeof a === "number";
+		let p = typeof b === "number";
+		let final = q && p ? Math.min(a, b):
+					q ? a:
+					p ? b:
+					null;
+		return final;
+	};
+
 	// @return concatenation of arguments and current date.
 	this.makeTag = function() {
 		let arr = Array.from(arguments);

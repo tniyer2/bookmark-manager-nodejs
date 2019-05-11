@@ -3,8 +3,14 @@
 
 .feed {
 	background: $lt-light-gray; }
+
+
 .feed-message {
 	color: $lt-strong-gray; }
+.feed-message svg {
+	fill: $lt-black;
+	stroke: $lt-black; }
+
 
 .content {
 	background: $lt-dark-gray;
@@ -13,9 +19,3 @@
 	border-color: $blue; }
 .content__title {
 	color: $lt-font-color; }
-
-.content__favicon {
-	background: white;
-	border: 2px solid $lt-strong-gray; }
-.content__favicon:hover {
-	border-color: $red; }

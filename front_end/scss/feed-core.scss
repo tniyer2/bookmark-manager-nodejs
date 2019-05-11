@@ -20,10 +20,20 @@ $br: 8px;
 .feed.message {
 	justify-content: center;
 	padding: 5px; }
+
+
+$feed-message-font-size: 32px;
 .feed-message {
 	display: inline-block;
+	padding: 0 30px;
 	font: $regular-font;
-	font-size: 32px; }
+	font-size: $feed-message-font-size; 
+	text-align: center; }
+.feed-message svg {
+	display: inline;
+	vertical-align: baseline;
+	width: $feed-message-font-size;
+	height: $feed-message-font-size; }
 
 
 .content {
@@ -38,10 +48,9 @@ $br: 8px;
 .content__source-block {
 	display: flex;
 	justify-content: center;
+	align-items: center;
 	min-width: 100px;
 	height: 300px; }
-.content__source-block.favicon {
-	height: auto; }
 .content__info-block {
 	display: flex;
 	padding: ($content-padding / 2) 0; }
@@ -52,20 +61,3 @@ $br: 8px;
 	font: $regular-font;
 	text-align: center;
 	word-wrap: break-word; }
-
-.content__source {
-	max-height: 100%; }
-.content__image {
-	border-radius: 5px; }
-.content__favicon {
-	width: $favicon-resolution;
-	height: $favicon-resolution;
-	padding: 5px;
-	border-radius: $br; }
-.content__favicon img {
-	width: 100%;
-	height: 100%;
-	border-radius: inherit; }
-.content__video {}
-.content__youtube {
-	border: none; }

@@ -45,10 +45,13 @@
         <div id="sizer" class="sizer noshow"></div>
         <div id="save-menu" class="save-menu noshow">
           <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
-          <div class="save-menu__title-box awesomeShadow">
-            <input tabindex="0" id="title" class="save-menu__title" type="text" maxlength="100" placeholder="enter title...">
+          <div class="noshow save-menu__input-box awesomeShadow">
+            <input tabindex="0" id="url-input" class="save-menu__input" type="text" maxlength="2000" placeholder="url...">
           </div>
-          <div style="position:relative; margin-top: 20px; margin-bottom: auto;">
+          <div class="save-menu__input-box awesomeShadow">
+            <input tabindex="0" id="title-input" class="save-menu__input" type="text" maxlength="100" placeholder="title...">
+          </div>
+          <div id="tag-container-wrapper" class="save-menu__tag-container-wrapper">
             <div id="tag-container" class="save-menu__tag-container awesomeShadow"></div>
           </div>
           <div class="save-menu__button-area">

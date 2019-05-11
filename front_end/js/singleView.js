@@ -50,12 +50,14 @@ this.formatDate = (function(){
 
 (function(){
 
-	const NO_LOAD_MESSAGE      = "Could not load.",
-		  NO_DELETE_MESSAGE    = "Could not delete.",
-		  NO_UPDATE_MESSAGE    = "Could not update.",
-		  CANT_HANDLE_MESSAGE  = "Something went wrong.",
-		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.",
-		  ALERT_DELAY = 5;
+	const UPDATE_MESSAGE = "Successfully updated.",
+		  IMAGE_UPDATE_MESSAGE = "Successfully updated image.",
+		  NO_LOAD_MESSAGE = "Could not load.",
+		  NO_DELETE_MESSAGE = "Could not delete.",
+		  NO_UPDATE_MESSAGE = "Could not update.",
+		  NO_IMAGE_UPDATE_MESSAGE = "Could not update image.",
+		  CANT_HANDLE_MESSAGE = "Something went wrong.",
+		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.";
 
 	const cl_hide   = "noshow", 
 		  cl_active = "active", 
@@ -66,7 +68,9 @@ this.formatDate = (function(){
 
 	const el_errorMessage = document.getElementById("error-message");
 
-	const el_contentBlock = document.getElementById("content-block");
+	const el_contentBlock = document.getElementById("content-block"),
+		  el_fileUpload = el_contentBlock.querySelector("#file-upload"),
+		  el_chooseImage = el_contentBlock.querySelector("#choose-image");
 
 	const el_infoBlock = document.getElementById("info-block"),
 		  el_category = el_infoBlock.querySelector("#category"),
@@ -75,12 +79,11 @@ this.formatDate = (function(){
 		  el_deleteBtn = el_infoBlock.querySelector("#delete-btn"),
 		  el_updateBtn = el_infoBlock.querySelector("#update-btn");
 
-	const el_titleInput = document.getElementById("title-input");
-	const el_tagContainer = document.getElementById("tag-container");
+	const el_titleInput = document.getElementById("title-input"),
+		  el_tagContainer = document.getElementById("tag-container");
 
 	const TAGGLE_OPTIONS = { placeholder: "add tags..." },
-		  ALERTER_OPTIONS = { BEMBlock: "alerts" },
-		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "content-block" };
+		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 400 };
 
 	let g_taggle,
 		g_contentCreator,
@@ -89,11 +92,10 @@ this.formatDate = (function(){
 	let g_settings;
 
 	return function() {
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "single-view"], "light");
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], "light");
 
-		g_alerter = new Widgets.AwesomeAlerter(ALERTER_OPTIONS);
+		g_alerter = new Widgets.AwesomeAlerter();
 
-		TAGGLE_OPTIONS.alerter = g_alerter;
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		styleOnEmptyTaggle(g_taggle);
 
@@ -110,8 +112,7 @@ this.formatDate = (function(){
 
 		createContent(content);
 		attachDelete();
-		el_updateBtn.addEventListener("click", requestUpdate, {once: false});
-		el_updateBtn.disabled = false;
+		attachUpdate();
 
 		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
@@ -166,11 +167,11 @@ this.formatDate = (function(){
 	{
 		function alertWrapper(message)
 		{
-			g_alerter.alert(message, ALERT_DELAY);
+			g_alerter.alert(message);
 			attachDelete();
 		}
 
-		ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID, to: "background.js"})
+		return ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID, to: "background.js"})
 		.then((response) => {
 			if (response.success)
 			{
@@ -191,38 +192,42 @@ this.formatDate = (function(){
 		});
 	}
 
-	function requestUpdate()
+	function attachUpdate()
 	{
-		function alertWrapper(message)
-		{
-			g_alerter.alert(message, ALERT_DELAY);
-		}
+		el_updateBtn.addEventListener("click", () => {
+			requestUpdate({ title: el_titleInput.value,
+					 		tags: g_taggle.getTags().values },
+					 		UPDATE_MESSAGE,
+					 		NO_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE,
+					 		NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+		});
+		el_updateBtn.disabled = false;
+	}
 
-		let info = { title: el_titleInput.value,
-					 tags: g_taggle.getTags().values };
-
+	function requestUpdate(info, successMessage, crMessage, errMessage)
+	{
 		let message = { request: "update-content", 
 						id: CONTENT_ID, 
 						info: info,
 						to: "background.js" };
 
-		ApiUtility.makeRequest(message).then((response) => {
+		return ApiUtility.makeRequest(message).then((response) => {
 			if (response.success)
 			{
-				alertWrapper("Successfully updated.");
+				g_alerter.alert(successMessage);
 			}
 			else if (response.connectionRequired)
 			{
-				alertWrapper(NO_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE);
+				g_alerter.alert(crMessage);
 			}
 			else
 			{
 				console.warn("could not handle response:", response);
-				alertWrapper(NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+				g_alerter.alert(errMessage);
 			}
 		}).catch((err) => {
 			console.warn("error updating content:", err);
-			alertWrapper(NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+			g_alerter.alert(errMessage);
 		});
 	}
 
@@ -233,12 +238,12 @@ this.formatDate = (function(){
 		let source = info.path ? info.path : info.srcUrl;
 		
 		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info);
-		el_content.classList.add("content-block__content");
-		el_contentBlock.appendChild(el_content);
+		el_contentBlock.prepend(el_content);
 
 		if (info.category === "bookmark")
 		{
 			U.addClass(el_sourceLink.parentElement, cl_hide);
+			enableImageSelect(info);
 		}
 
 		el_titleInput.value = info.title;
@@ -260,9 +265,63 @@ this.formatDate = (function(){
 		let dateTextNode = document.createTextNode(formattedDate);
 		el_date.appendChild(dateTextNode);
 
-		el_sourceLink.href = info.docUrl;
+		if (info.docUrl)
+		{
+			el_sourceLink.href = info.docUrl;
+			U.removeClass(el_sourceLink.parentElement, cl_hide);
+		}
 
 		U.removeClass(el_infoBlock, cl_hide);
+	}
+
+	function enableImageSelect(info)
+	{
+		let action1 = "Choose Image",
+			action2 = "Change Image";
+
+		let p = el_chooseImage.querySelector("p"); 
+		p.innerText = info.srcUrl ? action2 : action1;
+		U.removeClass(el_chooseImage, cl_hide);
+
+		el_fileUpload.addEventListener("change", () => {
+			let imageUrl = URL.createObjectURL(el_fileUpload.files[0]);
+
+			U.wrap(getDataUri, imageUrl).then((uri) => {
+				p.innerText = action2;
+				el_contentBlock.querySelector("img").src = uri;
+				requestUpdate({srcUrl: uri}, 
+							  IMAGE_UPDATE_MESSAGE,
+							  NO_IMAGE_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE,
+							  NO_IMAGE_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+			}).catch(() => {
+				g_alerter.alert(NO_IMAGE_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+			});
+		});
+
+		el_chooseImage.addEventListener("click", () => {
+			el_fileUpload.click();
+		});
+	}
+
+	function getDataUri(url, cb, onErr) {
+	    let image = new Image();
+
+	    image.addEventListener("load", function() {
+	        let canvas = document.createElement('canvas');
+	        canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
+	        canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
+
+	        canvas.getContext('2d').drawImage(this, 0, 0);
+
+	        cb(canvas.toDataURL('image/png'));
+	    });
+
+	    image.addEventListener("error", (err) => {
+	    	console.warn(err);
+	    	onErr();
+	    })
+
+	    image.src = url;
 	}
 
 	function formatCategory(category)

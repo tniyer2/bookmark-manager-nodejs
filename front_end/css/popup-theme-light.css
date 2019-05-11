@@ -1,9 +1,7 @@
-/*top-level elements*/
 html {
   background-color: rgba(0, 0, 0, 0.65);
 }
 
-/*modifiers*/
 .awesomeShadow {
   border: 0.5px solid #b2b2b2;
   box-shadow: 0px 1px 3px 0px #b2b2b2;
@@ -17,31 +15,27 @@ html {
   color: #ccc;
 }
 
-/*the menu for saving content*/
 .save-menu {
   border: 2.5px solid #595959;
   background-color: white;
 }
 
-/*css relating to the title*/
-.save-menu__title-box {
+.save-menu__input-box {
   background: white;
 }
 
-.save-menu__title {
+.save-menu__input {
   color: black;
 }
 
-.save-menu__title::placeholder {
+.save-menu__input::placeholder {
   color: #9b9b9b;
 }
 
-/*css relating to the tags*/
 .save-menu__tag-container {
   background: white;
 }
 
-/*css relating to the svg buttons*/
 .save-menu__save-svg {
   fill: #b2b2b2;
 }
@@ -58,7 +52,6 @@ html {
   fill: #4286F4;
 }
 
-/*the menu where the sources are listed*/
 .source-menu__list {
   border: 2.5px solid #595959;
   background: white;

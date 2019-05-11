@@ -11,11 +11,10 @@
 	color: $lt-strong-gray; }
 
 
-.content-block__favicon {
-	background: white;
-	border: 2px solid $lt-strong-gray; }
-.content-block__favicon:hover {
-	border-color: $red; }
+.content-block__choose-image p {
+	color: $green; }
+.content-block__choose-image:hover p {
+	color: $dark-green; }
 
 
 .info-block {

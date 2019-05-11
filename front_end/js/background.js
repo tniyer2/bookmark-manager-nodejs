@@ -53,9 +53,13 @@
 		else if (msg.request === "add-content")
 		{
 			let info = g_popupInfo[msg.popupId];
-			fillInSource(msg.meta, info);
+			fillInSource(msg.info, info);
 
-			g_requester.addContent(msg.meta, canCache(msg.meta), sendResponse, onErr);
+			g_requester.addContent(msg.info, canCache(msg.info), sendResponse, onErr);
+		}
+		else if (msg.request === "add-content-manually")
+		{
+			g_requester.addContent(msg.info, canCache(msg.info), sendResponse, onErr);	
 		}
 		else if (msg.request === "find-content")
 		{

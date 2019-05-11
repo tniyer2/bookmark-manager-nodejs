@@ -71,14 +71,14 @@ this.FeedBox = (function(){
 
 	const DEFAULTS = { bufferSize: 20,
 					   bufferOnScroll: { offset: 0,
-					   					 delay: 0 },
-					   onNoResults: U.noop };
+					   					 delay: 0 } };
 	return class {
-		constructor(meta, el_parent, options)
+		constructor(meta, el_parent, createContent, options)
 		{
 			this._meta = meta;
 			this._queue = new Widgets.DOMQueue(el_parent);
 			this._el_test = document.createElement("canvas");
+			this._createContent = createContent;
 
 			this._options = U.extend(DEFAULTS, options);
 
@@ -92,24 +92,19 @@ this.FeedBox = (function(){
 			}
 		}
 
-		buffer(createContent)
+		buffer()
 		{
 			let len = this._meta.length;
-			if (!len)
-			{
-				this._options.onNoResults();
-				return;
-			}
-
 			let initial = this._queue.count;
 			let max = initial + this._options.bufferSize;
+
 			while ( this._queue.count < len && 
 				    this._queue.count < max )
 			{
 				let content = this._meta[this._queue.count];
 				let insert = this._queue.next();
 
-				createContent(content)
+				this._createContent(content)
 				.then((elm) => {
 					insert(elm);
 				}).catch((err) => {
@@ -148,10 +143,40 @@ this.FeedBox = (function(){
 	};
 })();
 
+this.PopupManager = (function(){
+	const POPUP_LINK = chrome.runtime.getURL("html/popup.html") + "?manual=true"
+	const el_popup = document.getElementById("popup");
+	const cl_hide = "noshow";
+	
+	let instance;
+
+	const Inner = class {
+		open()
+		{
+			el_popup.addEventListener("load", () => {
+				U.removeClass(el_popup, cl_hide);
+			}, {once: true});
+			el_popup.src = POPUP_LINK;
+		}
+
+		close()
+		{
+			U.addClass(el_popup, cl_hide);
+		}
+	};
+
+	if (!instance)
+	{
+		instance = new Inner();
+	}
+	return instance;
+})();
+
 (function(){
 	const DEFAULT_QUERY = "sort=!date",
 		  SEARCH_BY_TAG = true,
 		  NO_RESULTS_MESSAGE = "No search results.",
+		  TUTORIAL_MESSAGE = "You can add content by opening the context menu on media, and bookmarks by opening it anywhere on a page. You can add by url by clicking the <svg><use href='#icon-save'/></svg> above.",
 		  NO_LOAD_MESSAGE = "Something went wrong :(",
 		  CONTENT_LINK = "singleView.html",
 		  CONTENT_LINK_TARGET = "_self",
@@ -160,8 +185,10 @@ this.FeedBox = (function(){
 	const cl_hide = "noshow",
 		  cl_searchBoxFocused = "focus",
 		  cl_noLoad = "message",
-		  cl_hover = "hover",
-		  cl_favicon = "favicon";
+		  cl_hover = "hover";
+
+	const el_feed = document.getElementById("feed"),
+		  el_feedMessage = el_feed.querySelector("#feed-message");
 
 	const el_form = document.getElementById("search"),
 		  el_searchBox = el_form.querySelector("#search-box"),
@@ -175,14 +202,11 @@ this.FeedBox = (function(){
 		  el_sortBy = el_form.querySelector("#sortby"),
 		  el_submit = el_form.querySelector("#submit");
 
-	const el_feed = document.getElementById("feed"),
-		  el_feedMessage = el_feed.querySelector("#feed-message");
+	const el_saveBtn = document.getElementById("save-btn");
 
-	const TAGGLE_OPTIONS = { placeholder: "enter tags..." },
-		  FEEDBOX_OPTIONS = { onNoResults: () => {
-		      showMessage(NO_RESULTS_MESSAGE);
-		  } },
-		  CONTENT_CREATOR_OPTIONS = {BEMBlock: "content"};
+	const TAGGLE_OPTIONS = { placeholder: "search tags..." },
+		  FEEDBOX_OPTIONS = {},
+		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 300 };
 
 	let g_taggle,
 		g_searchBoxToggle,
@@ -211,13 +235,14 @@ this.FeedBox = (function(){
 	})();
 
 	return function() {
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "gallery", "feed"], "light");
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light");
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		g_searchBoxToggle = new Toggle();
 		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
 
 		attachSubmit();
+		attachSave();
 		g_searchBoxToggle.onToggleOn(switchToTags);
 		g_searchBoxToggle.onToggleOff(switchToTitle);
 		el_searchByBtn.addEventListener("click", () => {
@@ -285,9 +310,17 @@ this.FeedBox = (function(){
 		});
 		if (U.isUdf(meta)) return;
 
-		meta = Searcher.query(meta, query);
-		g_feedBox = new FeedBox(meta, el_feed, FEEDBOX_OPTIONS);
-		g_feedBox.buffer((info) => U.wrap(createContent, info));
+		let results = Searcher.query(meta, query);
+		g_feedBox = new FeedBox(results, el_feed, (info) => U.wrap(createContent, info), FEEDBOX_OPTIONS);
+		if (!results.length)
+		{
+			let m = meta.length ? NO_RESULTS_MESSAGE : TUTORIAL_MESSAGE;
+			showMessage(m);
+		}
+		else
+		{
+			g_feedBox.buffer();
+		}
 
 		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
@@ -300,8 +333,7 @@ this.FeedBox = (function(){
 
 	function showMessage(message)
 	{
-		let textNode = document.createTextNode(message);
-		el_feedMessage.appendChild(textNode);
+		el_feedMessage.innerHTML = message;
 		U.removeClass(el_feedMessage, cl_hide);
 		el_feed.classList.add(cl_noLoad);
 	}
@@ -372,7 +404,6 @@ this.FeedBox = (function(){
 
 		if (info.category === "bookmark")
 		{
-			el_sourceBlock.classList.add(cl_favicon);
 			U.preventBubble(el_content, "click");
 			el_content.addEventListener("mouseenter", removeHover);
 			el_content.addEventListener("mouseleave", addHover);
@@ -380,7 +411,6 @@ this.FeedBox = (function(){
 
 		U.preventBubble(el_infoBlock, "click");
 
-		el_content.classList.add("content__source");
 		el_sourceBlock.appendChild(el_content);
 
 		cb(el_contentBlock);
@@ -391,7 +421,7 @@ this.FeedBox = (function(){
 		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
 		let q = "";
 
-		let title = el_titleInput.value;
+		let title = el_titleInput.value.trim();
 		let tags = g_taggle.getTags().values;
 		if (title)
 		{
@@ -457,6 +487,13 @@ this.FeedBox = (function(){
 		let taggleInput = g_taggle.getInput();
 		onEnter(taggleInput, submitSearch, () => {
 			return !taggleInput.value && g_taggle.getTags().values.length > 0;
+		});
+	}
+
+	function attachSave()
+	{
+		el_saveBtn.addEventListener("click", () => {
+			window.PopupManager.open();
 		});
 	}
 

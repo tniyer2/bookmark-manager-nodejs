@@ -24,6 +24,9 @@ $dark-blue: #1c59bc;
 $yellow: #ffbe3a;
 $dark-yellow: #cc9424;
 
+$green: #00b563;
+$dark-green: #006637;
+
 // Text
 $regular-font-weight: 300;
 $regular-font-size: 16px;
@@ -42,3 +45,10 @@ $search-box-border-width: 2px;
 
 // feed and singleView
 $favicon-resolution: 128px;
+
+%revert-button {
+	padding: 0;
+	margin: 0; 
+	background: none;
+	border: none;
+	outline: none; }

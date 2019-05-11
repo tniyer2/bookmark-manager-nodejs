@@ -4,23 +4,29 @@
     <link rel="stylesheet" type="text/css" href="../css/scrollbar-core.css">
     <link rel="stylesheet" type="text/css" href="../css/alerts-core.css">
     <link rel="stylesheet" type="text/css" href="../css/taggle-core.css">
+    <link rel="stylesheet" type="text/css" href="../css/cc-core.css">
     <link rel="stylesheet" type="text/css" href="../css/single-view-core.css">
   </head>
   <body>
     <div class="main">
       <p id="error-message" class="noshow error-message"></p>
-      <div id="content-block" class="content-block"></div>
+      <div id="content-block" class="content-block">
+        <input id="file-upload" class="noshow" type="file" accept="image/png, image/jpeg">
+        <button id="choose-image" class="noshow content-block__choose-image">
+          <p></p>
+        </button>
+      </div>
       <ul id="info-block" class="noshow info-block">
         <li id="category" class="info-block__tag"></li>
         <li id="date" class="info-block__tag"></li>
-        <li class="info-block__source-link">
-          <a id="source-link" target="_blank">source</a>
+        <li class="noshow info-block__source-link">
+          <a id="source-link" target="_blank">Source</a>
         </li>
         <li class="info-block__update-btn">
-          <button id="update-btn" disabled>update</button>
+          <button id="update-btn" disabled>Update</button>
         </li>
         <li class="info-block__delete-btn">
-          <button id="delete-btn" disabled>delete</button>
+          <button id="delete-btn" disabled>Delete</button>
         </li>
       </ul>
       <input id="title-input" class="noshow title-input" type="text" placeholder="untitled">

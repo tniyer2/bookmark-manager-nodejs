@@ -26,6 +26,18 @@ body {
 	margin: 0; }
 
 
+.popup {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	z-index: 1000;
+	width: 100%;
+	height: 100%;
+	outline: none;
+	background: none;
+	border: none; }
+
+
 .menubar {
 	display: flex;
 	flex-wrap: nowrap;
@@ -78,6 +90,8 @@ body {
 	font-size: $input-placeholder-font-size; }
 .search__title-input::placeholder {
 	font-size: $input-placeholder-font-size; }
+.search__title-input:focus::placeholder {
+  opacity: 0; }
 
 .search__tag-container {
 	@extend %search__input;
@@ -158,13 +172,20 @@ $search-br-minus2: $search-br;
 .search__sortby {}
 
 
-.menubar-right {}
+.menubar-right {
+	display: flex;
+	align-items: flex-start; }
 
-.settings-link {
-	float: right;
-	display: inline-block; }
-.settings-link svg {
+%menubar-right__svg {
 	width: $input-min-height;
 	height: $input-min-height;
 	box-sizing: border-box;
 	padding: $svg-padding; }
+.menubar-right__save-btn {
+	@extend %revert-button; }
+.menubar-right__save-btn svg {
+	@extend %menubar-right__svg;
+	margin-right: 20px; }
+.settings-link {}
+.settings-link svg {
+	@extend %menubar-right__svg; }

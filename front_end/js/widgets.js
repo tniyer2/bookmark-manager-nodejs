@@ -168,12 +168,13 @@ this.Widgets = new (function(){
 	};
 
 	this.ContentCreator = function(){
-		const DEFAULTS = { BEMBlock: "" };
+		const DEFAULTS = { BEMBlock: "", maxHeight: null };
 
-		const CLASSES = { image: "image", 
+		const CLASSES = { source: "source",
+						  image: "image", 
 						  video: "video", 
 						  youtube: "youtube",
-						  bookmark: "favicon" };
+						  bookmark: "bookmark" };
 		return class {
 			constructor(options)
 			{
@@ -183,12 +184,22 @@ this.Widgets = new (function(){
 
 			load(info, cb, onErr)
 			{
+				let done = (elm, maxHeight) => {
+					elm.classList.add(CLASSES.source);
+					let finalMaxHeight = U.min(maxHeight, this._options.maxHeight);
+					if (finalMaxHeight)
+					{
+						elm.style.maxHeight = finalMaxHeight + "px";	
+					}
+					cb(elm);
+				};
+
 				let source = info.path ? info.path : info.srcUrl;
 				if (info.category === "image")
 				{
 					let image = this._createImage(source);
 					image.addEventListener("load", () => {
-						cb(image);
+						done(image, image.naturalHeight);
 					}, {once: true});
 					image.addEventListener("error", () => {
 						onErr();
@@ -196,9 +207,9 @@ this.Widgets = new (function(){
 				}
 				else if (info.category === "video")
 				{
-					video = this._createVideo(source);
+					let video = this._createVideo(source);
 					video.addEventListener("loadeddata", () => {
-						cb(video);
+						done(video);
 					}, {once: true});
 					video.addEventListener("error", () => {
 						onErr();
@@ -206,11 +217,11 @@ this.Widgets = new (function(){
 				}
 				else if (info.category === "youtube")
 				{
-					cb(this._createYoutube(source));
+					done(this._createYoutube(source));
 				}
 				else if (info.category === "bookmark")
 				{
-					cb(this._createBookmark(source, info.docUrl));
+					done(this._createBookmark(source, info.docUrl));
 				}
 				else
 				{
@@ -266,20 +277,21 @@ this.Widgets = new (function(){
 			  cl_fadeIn = "fade-in",
 			  cl_fadeOut = "fade-out";
 
-		const listStyle = `position: absolute;
-						   display: flex;
-						   justify-content: space-between;`;
+		let cl_firstLi = "first",
+			cl_lastLi = "last",
+			cl_singleLi = "single";
 
 		const CLASSES = { list: "list",
 						  li: "alert",
 						  text: "text",
 						  closeButton: "close" };
 
-		const DEFAULTS = { BEMBlock: "",
+		const DEFAULTS = { BEMBlock: "alerts",
+						   duration: 5,
 						   spacing: 10,
 						   stack: true,
 						   limit: 10, 
-						   insertAtTop: false };
+						   insertAtTop: true };
 
 		const AlertController = class {
 			constructor()
@@ -303,8 +315,12 @@ this.Widgets = new (function(){
 			{
 				this._options = U.extend(DEFAULTS, options);
 				self.prependBEMBlock(CLASSES, this._options.BEMBlock);
-
-				this._height = 0;
+				if (this._options.insertAtTop)
+				{
+					let temp = cl_firstLi;
+					cl_firstLi = cl_lastLi;
+					cl_lastLi = temp;
+				}
 
 				this._list = this._createList();
 			}
@@ -318,15 +334,36 @@ this.Widgets = new (function(){
 			{
 				let li = this._createLi(text);
 
-				let overLimit = this._list.childNodes.length === this._options.limit;
+				let overLimit = this._list.childNodes.length >= this._options.limit;
 				if (!this._options.stack || overLimit)
 				{
-					this._removeOnTransition(this._list.firstChild);
+					this._remove(this._list.firstChild);
 				}
 
 				this._add(li);
 
-				if (duration)
+				if (!this._setRemove(li, duration))
+				{
+					this._setRemove(li, this._options.duration)
+				}
+
+				return new AlertController(
+					this._removeOnTransition.bind(this, li), 
+					this._remove.bind(this, li));
+			}
+
+			_setRemove(li, duration)
+			{
+				if (U.isUdf(duration))
+				{
+					return false;
+				}
+				else if (typeof duration !== "number")
+				{
+					console.warn("duration is not a number:", duration);
+					return false;
+				}
+				else
 				{
 					if (duration <= 0)
 					{
@@ -338,24 +375,18 @@ this.Widgets = new (function(){
 							this._removeOnTransition(li);
 						}, duration * 1000);
 					}
+					return true;
 				}
-				return new AlertController(
-					this._removeOnTransition.bind(this, li), 
-					this._remove.bind(this, li));
 			}
 
 			_createList()
 			{
 				let list = document.createElement("ul");
 				list.classList.add(CLASSES.list);
-				list.classList.add(cl_hide);
-				list.style = listStyle;
+				U.addClass(list, cl_hide);
 
-				let dir = this._options.insertAtTop ? "column-reverse": "column";
-				let translateY = this._options.insertAtTop ? "0": "-100%";
-
-				list.style.flexDirection = dir;
-				list.style.transform = "translate(-50%, " + translateY + ")";
+				list.style.flexDirection = this._options.insertAtTop ? "column-reverse": "column";
+				list.style.display = "flex";
 
 				return list;
 			}
@@ -385,9 +416,9 @@ this.Widgets = new (function(){
 			_add(li)
 			{
 				U.removeClass(this._list, cl_hide);
-				this._list.append(li);
-				this._updateHeight(li.clientHeight);
 				li.classList.add(cl_fadeIn);
+				this._list.append(li);
+				this._updateCss(true);
 			}
 
 			_removeOnTransition(li)
@@ -407,28 +438,32 @@ this.Widgets = new (function(){
 				{
 					let height = li.clientHeight;
 					this._list.removeChild(li);
-					this._updateHeight(-1 * height);
-
-					if (this._list.childNodes.length === 0)
-					{
-						U.addClass(this._list, cl_hide);
-					}
+					this._updateCss(false);
 				}
 			}
 
-			_updateHeight(itemHeight)
+			_updateCss(adding)
 			{
-				this._height += itemHeight;
-				let numOfItems = this._list.childNodes.length;
-				let spacing = Math.max(numOfItems - 1, 0) * this._options.spacing;
-				let final = Math.max(this._height + spacing, 0);
-				if (numOfItems === 1)
+				let nodes = this._list.childNodes;
+				let len = this._list.childNodes.length;
+				if (!len)
 				{
-					// An extra pixel stops annoying flexbox behavior
-					final += 1;
+					U.addClass(this._list, cl_hide);
 				}
-
-				this._list.style.height = final + "px";
+				else if (len === 1)
+				{
+					U.addClass(nodes[0], cl_singleLi);
+				}
+				else
+				{
+					if (adding === true && len > 1)
+					{
+						U.removeClass(nodes[len-2], cl_lastLi);
+						U.removeClass(nodes[len-2], cl_singleLi);
+					}
+					U.addClass(nodes[0], cl_firstLi);
+					U.addClass(nodes[len-1], cl_lastLi);
+				}
 			}
 		};
 	}();

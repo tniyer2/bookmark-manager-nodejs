@@ -1,12 +1,10 @@
 
 @import "master";
 
-/*top-level elements*/
 html {
   background-color: hsla(0, 0%, 0%, 0.65); }
 
 
-/*modifiers*/
 .awesomeShadow {
   border: 0.5px solid $lt-gray;
   box-shadow: 0px 1px 3px 0px $lt-gray; }
@@ -18,27 +16,21 @@ html {
  color: $lt-medium-gray; }
 
 
-/*the menu for saving content*/
 .save-menu {
   border: 2.5px solid $lt-strong-gray;
   background-color: white; }
 
-
-/*css relating to the title*/
-.save-menu__title-box {
+.save-menu__input-box {
   background: white; }
-.save-menu__title {
+.save-menu__input {
   color: $lt-font-color; }
-.save-menu__title::placeholder {
+.save-menu__input::placeholder {
   color: $lt-dark-gray; }
 
-
-/*css relating to the tags*/
 .save-menu__tag-container {
   background: white; }
 
 
-/*css relating to the svg buttons*/
 .save-menu__save-svg {
   fill: $lt-gray; }
 .save-menu__save-svg:hover {
@@ -49,7 +41,6 @@ html {
   fill: $blue; }
 
 
-/*the menu where the sources are listed*/
 .source-menu {}
 .source-menu__list {
   border: 2.5px solid $lt-strong-gray;
@@ -57,8 +48,7 @@ html {
 .source-menu__source {
   background: inherit; }
 .source-menu__source:hover {
-  background: $lt-medium-gray;
-}
+  background: $lt-medium-gray; }
 .source-menu__source.active {
   background: $lt-gray; }
 .source-menu__tag {

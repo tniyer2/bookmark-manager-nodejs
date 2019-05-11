@@ -42,12 +42,6 @@ this.MyTaggle = new (function(){
 		});
 		let onTagAdd = U.joinCallbacks(options.onTagAdd, (evt, text) => {
 			container.scrollTop = container.scrollHeight;
-
-			/*temporary*/
-			if (options.alerter)
-			{
-				options.alerter.alert(text, 5);
-			}
 		});
 		taggle.setOptions({tagFormatter: tagFormatter, onTagAdd: onTagAdd});
 
