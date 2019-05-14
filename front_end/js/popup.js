@@ -36,8 +36,9 @@ this.getTaggleInputFormatter = (function(){
 		  INVALID_URL_MESSAGE = "Url entered is not a valid url.",
 		  MEMORY_ERROR_MESSAGE = "No more data left in chrome storage. Download the desktop app for extra storage.";
 
-    const cl_hide = "noshow",
-    	  cl_scrollbar = "customScrollbar1";
+    const cl_scrollbar = "customScrollbar1",
+    	  show = (e) => U.removeClass(e, "noshow"),
+    	  hide = (e) => U.addClass(e, "noshow");
 
 	const el_errorMessage = document.getElementById("error-message");
 
@@ -45,6 +46,7 @@ this.getTaggleInputFormatter = (function(){
 
 	const el_saveMenu = document.getElementById("save-menu"),
 		  el_url = el_saveMenu.querySelector("#url-input"),
+		  el_radioBox = el_saveMenu.querySelector("#radio-box"),
 		  el_title = el_saveMenu.querySelector("#title-input"),
 		  el_tagContainer = el_saveMenu.querySelector("#tag-container"),
 		  el_saveBtn = el_saveMenu.querySelector("#save-btn"),
@@ -56,94 +58,88 @@ this.getTaggleInputFormatter = (function(){
 
 	const TAGGLE_OPTIONS = { placeholder: "tags...",
 						 tabIndex: 0 },
-		  ALERTER_OPTIONS = { duration: 5 };
+		  ALERTER_OPTIONS = { duration: 5, insertAtTop: false };
 
-	let g_alerter,
-		g_noSourceAlert,
+	let g_radioManager,
+		g_alerter,
+		g_taggle,
+		closePopup;
+
+	let g_noSourceAlert,
 		g_noUrlAlert,
-		g_invalidUrlAlert,
-		g_taggle;
+		g_invalidUrlAlert;
 
 	let g_source,
 		g_docUrl,
 		g_popupId,
-		g_tabId,
-		g_manual;
+		g_tabId;
 
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
 
-		g_alerter = createAlerter(ALERTER_OPTIONS);
+		g_alerter = createAlerter();
 		document.body.appendChild(g_alerter.alertList);
 
 		TAGGLE_OPTIONS.alerter = g_alerter;
 		TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(g_alerter);
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 
+		let queryInfo = parseQueryString();
+		g_tabId = queryInfo.tabId;
+		g_popupId = queryInfo.popupId;
+		closePopup = queryInfo.manual ? closePopup2 : closePopup1;
+
 		attachMaskEvents();
 
-		parseQueryString();
-		if (g_manual)
-		{
-			U.removeClass(el_url.parentElement, cl_hide);
-			load2();
-			attachClick(el_saveBtn, getManualSave((url) => {
-				requestSaveManual({ srcUrl: url, 
-									category: "image" });
-			}));
-			attachClick(el_bookmarkBtn, getManualSave((url) => {
-				requestSaveManual({ docUrl: url, 
-									category: "bookmark" });
-			}));
-		}
-		else
-		{
-			load();
-			attachClick(el_saveBtn, save);
-			attachClick(el_bookmarkBtn, () => {
-				requestSave({category: "bookmark"});
-			});
-		}
+		if (queryInfo.manual) load2();
+		else load();
 		attachStyleEvents();
 	};
 
 	function parseQueryString()
 	{
 		let params = new URLSearchParams(document.location.search.substring(1));
-		g_tabId = Number(params.get("tabId"));
-		g_popupId = params.get("popupId");
-		g_manual = params.has("manual");
+		return { tabId: Number(params.get("tabId")), 
+				 popupId: params.get("popupId"),
+				 manual: params.has("manual") };
 	}
 
-	async function load()
+	function load()
 	{
 		ApiUtility.makeRequest({request: "get-popup-info", popupId: g_popupId, to: "background.js"})
 		.then((response) => {
 			g_docUrl = response.docUrl;
-
-			U.removeClass(el_bookmarkBtn, cl_hide);
-			U.removeClass(el_saveMenu, cl_hide);
-			MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
-			createSourceList(response.srcUrl, g_docUrl,
-							 response.scanInfo, response.mediaType === "image");
-		}).catch((err) => {
-			console.log("error loading popup:", err);
-			onNoLoad();
-		});
+			show(el_bookmarkBtn);
+			show(el_saveMenu);
+			createAutoComplete(response.tags);
+			createSourceList(response.srcUrl, 
+							 g_docUrl, 
+							 response.scanInfo, 
+							 response.mediaType === "image");
+			attachSave();
+		}).catch(onNoLoad);
 	}
 
-	async function load2()
+	function load2()
 	{
 		ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.then((tags) => {
-			U.removeClass(el_saveBtn, cl_hide);
-			U.removeClass(el_bookmarkBtn, cl_hide);
-			U.removeClass(el_saveMenu, cl_hide);
-			MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
-		}).catch((err) => {
-			console.log("error loading popup:", err);
-			onNoLoad();
-		});
+			show(el_url.parentElement);
+			show(el_radioBox);
+			let radioInputs = el_radioBox.querySelectorAll("label input");
+			g_radioManager = new Widgets.RadioManager(radioInputs);
+
+			show(el_saveBtn);
+			show(el_bookmarkBtn);
+			show(el_saveMenu);
+			createAutoComplete(tags);
+			attachManualSave();
+		}).catch(onNoLoad);
+	}
+
+	function createAutoComplete(tags)
+	{
+		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
 	}
 
 	function genContentInfo()
@@ -151,6 +147,26 @@ this.getTaggleInputFormatter = (function(){
 		return { title: el_title.value.trim(),
 				 tags: g_taggle.getTags().values,
 				 date: Date.now() };
+	}
+
+	function attachSave()
+	{
+		attachClick(el_saveBtn, save);
+		attachClick(el_bookmarkBtn, () => {
+			requestSave({category: "bookmark"});
+		});
+	}
+
+	function attachManualSave()
+	{
+		attachClick(el_saveBtn, getManualSave((url) => {
+			requestSaveManual({ srcUrl: url, 
+								category: g_radioManager.selected.value });
+		}));
+		attachClick(el_bookmarkBtn, getManualSave((url) => {
+			requestSaveManual({ docUrl: url, 
+								category: "bookmark" });
+		}));
 	}
 
 	function requestSave(source)
@@ -203,27 +219,26 @@ this.getTaggleInputFormatter = (function(){
 		});
 	}
 
-	function onNoLoad()
+	function onNoLoad(err)
 	{
+		console.log("error loading popup:", err);
 		let textNode = document.createTextNode(NO_LOAD_MESSAGE);
 		el_errorMessage.appendChild(textNode);
-		U.removeClass(el_errorMessage, cl_hide);
+		show(el_errorMessage);
 	}
 
-	function closePopup()
+	function closePopup1()
 	{
-		if (g_manual)
+		if (g_tabId)
 		{
-			window.parent.PopupManager.close();
+			let message = {to: "content.js", close: true};
+			chrome.tabs.sendMessage(g_tabId, message);
 		}
-		else
-		{
-			if (g_tabId)
-			{
-				let message = {to: "content.js", close: true};
-				chrome.tabs.sendMessage(g_tabId, message);
-			}
-		}
+	}
+
+	function closePopup2()
+	{
+		window.parent.PopupManager.close();
 	}
 
 	function createSourceList(srcUrl, docUrl, scanInfo, isImage)
@@ -259,8 +274,8 @@ this.getTaggleInputFormatter = (function(){
 
 		if (isImage)
 		{
-			U.removeClass(el_saveBtn, cl_hide);
-			// U.removeClass(el_sourceMenu, cl_hide);
+			show(el_saveBtn);
+			// show(el_sourceMenu);
 
 			let options = { title: "source clicked on",
 							type: "image",
@@ -281,8 +296,8 @@ this.getTaggleInputFormatter = (function(){
 
 		if (scanInfo.list && scanInfo.list.length)
 		{
-			U.removeClass(el_saveBtn, cl_hide);
-			U.removeClass(el_sourceMenu, cl_hide);
+			show(el_saveBtn);
+			show(el_sourceMenu);
 			attachResizeEvents();
 
 			scanInfo.list.forEach((video) => {
@@ -299,7 +314,7 @@ this.getTaggleInputFormatter = (function(){
 		}
 		else if (scanInfo.single)
 		{
-			U.removeClass(el_saveBtn, cl_hide);
+			show(el_saveBtn);
 
 			let video = scanInfo.single;
 			setMeta(null, { srcUrl: video.url,
@@ -310,7 +325,7 @@ this.getTaggleInputFormatter = (function(){
 
 	function createAlerter()
 	{
-		let a = new Widgets.AwesomeAlerter();
+		let a = new Widgets.AwesomeAlerter(ALERTER_OPTIONS);
 		U.preventBubble(a.alertList, ["click", "mousedown", "mouseup"]);
 		return a;
 	}
@@ -393,11 +408,11 @@ this.getTaggleInputFormatter = (function(){
 
 			if (hdiff === tdiff)
 			{
-				U.removeClass(el_sizer, cl_hide);
+				show(el_sizer);
 			}
 			else
 			{
-				U.removeClass(el_sizer, cl_hide);
+				show(el_sizer);
 			}
 		};
 		onResize();

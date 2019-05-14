@@ -32,6 +32,50 @@ html {
   color: #9b9b9b;
 }
 
+.save-menu__category-image .shape {
+  background: #ff7f00;
+}
+
+.save-menu__category-image:hover .shape {
+  background: #d66a00;
+}
+
+.save-menu__category-video .shape {
+  background: #9700dd;
+}
+
+.save-menu__category-video:hover .shape {
+  background: #6f00a3;
+}
+
+.save-menu__category-youtube .shape {
+  background: #E71717;
+}
+
+.save-menu__category-youtube:hover .shape {
+  background: #d10000;
+}
+
+.save-menu__category-bookmark .shape {
+  background: #ffbe3a;
+}
+
+.save-menu__category-bookmark:hover .shape {
+  background: #cc9424;
+}
+
+.save-menu__category input:checked ~ .shape {
+  background: #4286F4;
+}
+
+.save-menu__category .shape:after {
+  background: white;
+}
+
+.save-menu__category .text {
+  color: black;
+}
+
 .save-menu__tag-container {
   background: white;
 }

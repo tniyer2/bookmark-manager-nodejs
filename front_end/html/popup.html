@@ -46,7 +46,29 @@
         <div id="save-menu" class="save-menu noshow">
           <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
           <div class="noshow save-menu__input-box awesomeShadow">
-            <input tabindex="0" id="url-input" class="save-menu__input" type="text" maxlength="2000" placeholder="url...">
+            <input tabindex="0" id="url-input" class="save-menu__input" type="text" placeholder="url...">
+          </div>
+          <div id="radio-box" class="noshow save-menu__category">
+            <label id="category-image" class="save-menu__category-image">
+              <input type="radio" name="category" value="image" checked/>
+              <span class="shape"></span>
+              <span class="text">Image</span>
+            </label>
+            <label id="category-video" class="save-menu__category-video">
+              <input type="radio" name="category" value="video"/>
+              <span class="shape"></span>
+              <span class="text">Video</span>
+            </label>
+            <label id="category-youtube" class="noshow save-menu__category-youtube">
+              <input type="radio" name="category" value="youtube"/>
+              <span class="shape"></span>
+              <span class="text">Youtube</span>
+            </label>
+            <label id="category-bookmark" class="noshow save-menu__category-bookmark">
+              <input type="radio" name="category" value="bookmark"/>
+              <span class="shape"></span>
+              <span class="text">Bookmark</span>
+            </label>
           </div>
           <div class="save-menu__input-box awesomeShadow">
             <input tabindex="0" id="title-input" class="save-menu__input" type="text" maxlength="100" placeholder="title...">

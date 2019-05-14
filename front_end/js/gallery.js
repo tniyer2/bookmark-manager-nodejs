@@ -1,72 +1,4 @@
- 
-// Toggle
-this.Toggle = (function(){
-	const pushArgs = (arr, args) => {
-		arr.push.apply(arr, args);
-	};
-	const callEach = (arr) => { 
-		arr.forEach((cb) => { cb(); });
-	};
 
-	return class {
-		constructor()
-		{
-			this._toggleOnQueue = [];
-			this._toggleOffQueue = [];
-			this._toggled = false;
-		}
-
-		get toggled()
-		{
-			return this._toggled;
-		}
-
-		onToggleOn()
-		{
-			pushArgs(this._toggleOnQueue, arguments);
-		}
-
-		onToggleOff()
-		{
-			pushArgs(this._toggleOffQueue, arguments);
-		}
-
-		dispatchToggleOn()
-		{
-			callEach(this._toggleOnQueue);
-		}
-
-		dispatchToggleOff()
-		{
-			callEach(this._toggleOffQueue);
-		}
-
-		toggle(optionalToggled)
-		{
-			if (!U.isUdf(optionalToggled))
-			{
-				this._toggled = optionalToggled;
-			}
-
-			this._toggle();
-			this._toggled = !this._toggled;
-		}
-
-		_toggle()
-		{
-			if (this._toggled)
-			{
-				this.dispatchToggleOn();
-			}
-			else
-			{
-				this.dispatchToggleOff();
-			}
-		}
-	};
-})();
-
-// FeedBox
 this.FeedBox = (function(){
 
 	const DEFAULTS = { bufferSize: 20,
@@ -238,7 +170,7 @@ this.PopupManager = (function(){
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light");
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
-		g_searchBoxToggle = new Toggle();
+		g_searchBoxToggle = new Widgets.Toggle();
 		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
 
 		attachSubmit();

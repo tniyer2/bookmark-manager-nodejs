@@ -27,6 +27,33 @@ html {
 .save-menu__input::placeholder {
   color: $lt-dark-gray; }
 
+
+.save-menu__category-image .shape {
+  background: $orange; }
+.save-menu__category-image:hover .shape {
+  background: $dark-orange; }
+.save-menu__category-video .shape {
+  background: $purple; }
+.save-menu__category-video:hover .shape {
+  background: $dark-purple; }
+.save-menu__category-youtube .shape {
+  background: $red; }
+.save-menu__category-youtube:hover .shape {
+  background: $dark-red; }
+.save-menu__category-bookmark .shape {
+  background: $yellow; }
+.save-menu__category-bookmark:hover .shape {
+  background: $dark-yellow; }
+
+.save-menu__category input:checked ~ .shape {
+  background: $blue; }
+.save-menu__category .shape:after {
+  background: white; }
+
+
+.save-menu__category .text {
+color: $lt-font-color; }
+
 .save-menu__tag-container {
   background: white; }
 

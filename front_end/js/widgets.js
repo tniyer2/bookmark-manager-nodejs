@@ -118,6 +118,111 @@ this.Widgets = new (function(){
 		return svg;
 	};
 
+	function pushArgs(arr, args)
+	{
+		arr.push.apply(arr, args);
+	}
+	function callEach(arr, ...params)
+	{ 
+		arr.forEach((cb) => {
+			cb(...params);
+		});
+	}
+
+	this.RadioManager = class {
+		constructor(inputs)
+		{
+			inputs = Array.from(inputs);
+			this._queue = [];
+
+			this._selected = inputs.find(elm => elm.checked);
+			console.log("initial: ", this._selected);
+			this._attachEvents(inputs);
+			this.onSelect((elm) => {
+				this._selected = elm;
+			});
+		}
+
+		get selected()
+		{
+			return this._selected;
+		}
+
+		_attachEvents(inputs)
+		{
+			inputs.forEach((input) => {
+				input.addEventListener("change", () => {
+					if (input.checked)
+					{
+						callEach(this._queue, input);
+					}
+				});
+			});
+		}
+
+		onSelect()
+		{
+			pushArgs(this._queue, arguments);
+		}
+	}
+
+	this.Toggle = class {
+		constructor()
+		{
+			this._toggleOnQueue = [];
+			this._toggleOffQueue = [];
+			this._toggled = false;
+		}
+
+		get toggled()
+		{
+			return this._toggled;
+		}
+
+		onToggleOn()
+		{
+			pushArgs(this._toggleOnQueue, arguments);
+		}
+
+		onToggleOff()
+		{
+			pushArgs(this._toggleOffQueue, arguments);
+		}
+
+		dispatchToggleOn()
+		{
+			callEach(this._toggleOnQueue);
+		}
+
+		dispatchToggleOff()
+		{
+			callEach(this._toggleOffQueue);
+		}
+
+		toggle(optionalToggled)
+		{
+			if (!U.isUdf(optionalToggled))
+			{
+				this._toggled = optionalToggled;
+			}
+
+			this._toggle();
+			this._toggled = !this._toggled;
+		}
+
+		_toggle()
+		{
+			if (this._toggled)
+			{
+				this.dispatchToggleOn();
+			}
+			else
+			{
+				this.dispatchToggleOff();
+			}
+		}
+	};
+
 	this.DOMQueue = class {
 		constructor(el_parent)
 		{
