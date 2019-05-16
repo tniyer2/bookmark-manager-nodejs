@@ -1,5 +1,8 @@
 
-// Light Theme
+.noshow {
+	display: none !important; }
+
+/* Light Theme */
 $lt-light-gray: #e2e2e2;
 $lt-medium-gray: #ccc;
 $lt-gray: #b2b2b2;
@@ -7,10 +10,7 @@ $lt-dark-gray: #9b9b9b;
 $lt-strong-gray: #595959;
 $lt-black: #333333;
 
-// Dark Theme
-$dt-black: #201F20;
-
-// Tints
+/* Colors */
 $light-red: #e53232;
 $red: #E71717;
 $dark-red: #d10000;
@@ -33,7 +33,8 @@ $dark-orange: #d66a00;
 $purple: #9700dd;
 $dark-purple: #6f00a3;
 
-// Text
+
+/* Text */
 $regular-font-weight: 300;
 $regular-font-size: 16px;
 $regular-font-family: arial, sans-serif;
@@ -42,14 +43,10 @@ $regular-font: $regular-font-weight $regular-font-size $regular-font-family;
 $lt-font-color: black;
 $chrome-selected-color: #3297FD;
 
-// taggle
+/* Misc */
 $taggle-vertical-padding: 5px;
 $auto-complete-max-height: 100px;
-
-// gallery
 $search-box-border-width: 2px;
-
-// feed and singleView
 $favicon-resolution: 128px;
 
 %revert-button {
@@ -57,4 +54,5 @@ $favicon-resolution: 128px;
 	margin: 0; 
 	background: none;
 	border: none;
-	outline: none; }
+	outline: none;
+	cursor: pointer; }

@@ -1,0 +1,79 @@
+
+@import "master";
+
+$body-vertical-padding: 10px;
+body {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: $body-vertical-padding 10px;
+	margin: 0; }
+.root {
+	width: 100%;
+	height: 100%;
+	min-height: calc(100vh - 2 * #{$body-vertical-padding});
+	box-sizing: border-box;
+	padding: 20px;
+	border-radius: 8px; }
+.root > * {
+	margin: 0;
+	margin-bottom: 40px; }
+.root > * > * {
+	margin: 0;
+	margin-bottom: 5px; }
+
+
+$large-font-size: 24px;
+.button {
+	@extend %revert-button;
+	padding: 3px 8px;
+	border-radius: 3px;
+	font: $regular-font;
+	font-size: $large-font-size; }
+
+
+.download {}
+.download__text {
+	font: $regular-font;
+	font-size: $large-font-size; }
+
+
+.toggle {
+	user-select: none; }
+.toggle label {
+	display: inline-block;
+	vertical-align: bottom;
+	cursor: pointer; }
+.toggle input {
+	position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0; }
+$toggle-height: 20px;
+$toggle-padding: 3px;
+$before-height: $toggle-height - 2 * $toggle-padding;
+.toggle__slider {
+	position: relative;
+	display: block;
+	width: 2 * $toggle-height;
+	height: $toggle-height;
+	border-radius: 10px; }
+.toggle__slider:before {
+	position: absolute;
+	top: 50%;
+	left: $toggle-padding;
+	transform: translate(0, -50%);
+	width: $before-height;
+	height: $before-height;
+	content: "";
+	border-radius: 50%;
+	transition: transform 0.2s; }
+.toggle .noanim ~ .toggle__slider:before {
+	transition: none; }
+.toggle input:checked ~ .toggle__slider:before {
+	transform: translate($toggle-height - $toggle-padding / 2, -50%); }
+.toggle__text {
+	font: $regular-font; }
+
+
+.app-settings {}

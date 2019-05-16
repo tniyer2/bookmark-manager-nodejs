@@ -1,3 +1,11 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Colors */
+/* Text */
+/* Misc */
 html {
   background-color: rgba(0, 0, 0, 0.65);
 }
@@ -48,28 +56,20 @@ html {
   background: #6f00a3;
 }
 
-.save-menu__category-youtube .shape {
-  background: #E71717;
-}
-
-.save-menu__category-youtube:hover .shape {
-  background: #d10000;
-}
-
-.save-menu__category-bookmark .shape {
-  background: #ffbe3a;
-}
-
-.save-menu__category-bookmark:hover .shape {
-  background: #cc9424;
-}
-
 .save-menu__category input:checked ~ .shape {
-  background: #4286F4;
+  background: #5d9afc;
 }
 
 .save-menu__category .shape:after {
-  background: white;
+  background: #1c59bc;
+}
+
+.save-menu__category input:disabled ~ .shape {
+  background: #e2e2e2;
+}
+
+.save-menu__category input:disabled ~ .shape:after {
+  background: #9b9b9b;
 }
 
 .save-menu__category .text {

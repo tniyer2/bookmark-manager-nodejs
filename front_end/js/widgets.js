@@ -122,8 +122,9 @@ this.Widgets = new (function(){
 	{
 		arr.push.apply(arr, args);
 	}
+
 	function callEach(arr, ...params)
-	{ 
+	{
 		arr.forEach((cb) => {
 			cb(...params);
 		});
@@ -132,14 +133,15 @@ this.Widgets = new (function(){
 	this.RadioManager = class {
 		constructor(inputs)
 		{
-			inputs = Array.from(inputs);
 			this._queue = [];
+			this._lock = null;
+			this._enabled = true;
 
-			this._selected = inputs.find(elm => elm.checked);
-			console.log("initial: ", this._selected);
-			this._attachEvents(inputs);
-			this.onSelect((elm) => {
-				this._selected = elm;
+			this._inputs = Array.from(inputs);
+			this._selected = this._inputs.find(e => e.checked);
+			this._attachEvents();
+			this.onSelect((e) => {
+				this._selected = e;
 			});
 		}
 
@@ -148,9 +150,14 @@ this.Widgets = new (function(){
 			return this._selected;
 		}
 
-		_attachEvents(inputs)
+		get enabled()
 		{
-			inputs.forEach((input) => {
+			return this._enabled;
+		}
+
+		_attachEvents()
+		{
+			this._inputs.forEach((input) => {
 				input.addEventListener("change", () => {
 					if (input.checked)
 					{
@@ -163,6 +170,45 @@ this.Widgets = new (function(){
 		onSelect()
 		{
 			pushArgs(this._queue, arguments);
+		}
+
+		enable(lock)
+		{
+			if (!this._enabled)
+			{
+				if (this._lock)
+				{
+					if (this._lock === lock)
+					{
+						this._lock = null;
+					}
+					else
+					{
+						return;
+					}
+				}
+
+				this._inputs.forEach((elm) => {
+					elm.removeAttribute("disabled");
+				});
+				this._enabled = true;
+			}
+		}
+
+		disable(lock)
+		{
+			if (this._enabled)
+			{
+				if (!this._lock && lock)
+				{
+					this._lock = lock;	
+				}
+
+				this._inputs.forEach((elm) => {
+					elm.setAttribute("disabled", "disabled");
+				});
+				this._enabled = false;
+			}
 		}
 	}
 
@@ -273,7 +319,7 @@ this.Widgets = new (function(){
 	};
 
 	this.ContentCreator = function(){
-		const DEFAULTS = { BEMBlock: "", maxHeight: null };
+		const DEFAULTS = { BEMBlock: "", maxHeight: null, ignoreError: false };
 
 		const CLASSES = { source: "source",
 						  image: "image", 
@@ -307,7 +353,14 @@ this.Widgets = new (function(){
 						done(image, image.naturalHeight);
 					}, {once: true});
 					image.addEventListener("error", () => {
-						onErr();
+						if (this._options.ignoreError)
+						{
+							done(image);
+						}
+						else
+						{
+							onErr();
+						}
 					}, {once: true});
 				}
 				else if (info.category === "video")
@@ -317,7 +370,14 @@ this.Widgets = new (function(){
 						done(video);
 					}, {once: true});
 					video.addEventListener("error", () => {
-						onErr();
+						if (this._options.ignoreError)
+						{
+							done(video);
+						}
+						else
+						{
+							onErr();
+						}
 					}, {once: true});
 				}
 				else if (info.category === "youtube")

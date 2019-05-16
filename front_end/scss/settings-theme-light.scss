@@ -1,0 +1,31 @@
+
+@import "master";
+
+
+body {
+	background: white; }
+.root {
+	background: $lt-light-gray; }
+
+
+.button {
+	background: $lt-dark-gray;
+	border: 1px solid $lt-strong-gray;
+	color: $lt-font-color; }
+.button:hover {
+	background: $blue;
+	border-color: $dark-blue; }
+
+
+.download__text {
+	color: $lt-font-color; }
+
+
+.toggle__slider {
+	background: $lt-dark-gray; }
+.toggle input:checked ~ .toggle__slider {
+	background: $blue; }
+.toggle__slider:before {
+	background: white; }
+.toggle__text {
+	color: $lt-font-color; }

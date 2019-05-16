@@ -138,14 +138,12 @@ this.PopupManager = (function(){
 
 	const TAGGLE_OPTIONS = { placeholder: "search tags..." },
 		  FEEDBOX_OPTIONS = {},
-		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 300 };
+		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 300, ignoreError: true };
 
 	let g_taggle,
 		g_searchBoxToggle,
 		g_contentCreator,
 		g_feedBox;
-
-	let g_settings;
 
 	let submitSearch = (function(){
 		let g_submitted = false;
@@ -166,7 +164,8 @@ this.PopupManager = (function(){
 		};
 	})();
 
-	return function() {
+	function main()
+	{
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light");
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
@@ -182,7 +181,7 @@ this.PopupManager = (function(){
 		});
 
 		load();
-	};
+	}
 
 	function load()
 	{
@@ -470,4 +469,6 @@ this.PopupManager = (function(){
 
 		g_taggle.removeAll();
 	}
-})()();
+
+	main();
+})();

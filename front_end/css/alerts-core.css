@@ -1,3 +1,11 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Colors */
+/* Text */
+/* Misc */
 .alerts__list {
   position: fixed;
   top: 100%;

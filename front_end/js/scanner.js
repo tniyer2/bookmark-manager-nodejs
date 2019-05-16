@@ -1,33 +1,48 @@
 
 (function(){
-	const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
-	const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
 	const FOCUSED_URL_PRIORITY = 5;
 
 	let g_lastClickedElement;
 
-	document.documentElement.addEventListener("mouseup", (e) => {
-		if (e.button === 2)
-		{
-			g_lastClickedElement = e.target;
-		}
-	});
+	let getYoutubeEmbed = (function(){
+		const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
+		const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
 
-	chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+		return function (url) {
+			let matches = url.match(YOUTUBE_REGEX);
+			if (!matches || !matches[1])
+			{
+				return null;
+			}
+			let source = YOUTUBE_EMBED_URL + matches[1];
+			return source;
+		};
+	})();
 
-		if (msg.to !== "scanner.js")
-		{
-			return;
-		}
+	function main()
+	{
+		document.documentElement.addEventListener("mouseup", (e) => {
+			if (e.button === 2)
+			{
+				g_lastClickedElement = e.target;
+			}
+		});
+		chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-		if (msg.scan)
-		{
-			let scanInfo = scanPage();
+			if (msg.to !== "scanner.js")
+			{
+				return;
+			}
 
-			console.log("Page was scanned for videos:", scanInfo);
-			sendResponse(scanInfo);
-		}
-	});
+			if (msg.scan)
+			{
+				let scanInfo = scanPage();
+
+				console.log("Page was scanned for videos:", scanInfo);
+				sendResponse(scanInfo);
+			}
+		});
+	}
 
 	function scanPage()
 	{
@@ -111,8 +126,7 @@
 
 		if (href.indexOf("://www.youtube.com") > 0)
 		{
-			let matches = href.match(YOUTUBE_REGEX);
-			let source = YOUTUBE_EMBED_URL + matches[1];
+			let source = getYoutubeEmbed(href);
 			let h1 = document.querySelector("h1").firstChild.innerText;
 
 			return {url: source, title: h1};
@@ -373,4 +387,6 @@
 		let trimmed = !txt ? "" : txt.replace(/^[\s_]+|[\s_]+$/gi, '').replace(/(_){2,}/g, "_");
 		return trimmed;
 	}
+
+	main();
 })();

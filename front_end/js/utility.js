@@ -114,6 +114,21 @@ this.U = new (function(){
 		};
 	})();
 
+	this.getYoutubeEmbed = (function(){
+		const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
+		const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+
+		return function (url) {
+			let matches = url.match(YOUTUBE_REGEX);
+			if (!matches || !matches[1])
+			{
+				return null;
+			}
+			let source = YOUTUBE_EMBED_URL + matches[1];
+			return source;
+		};
+	})();
+
 	this.preventBubble = function(elm, eventnames) {
 		this._eventUtility(elm, eventnames, (evt) => {
 			evt.stopPropagation();
@@ -149,6 +164,14 @@ this.U = new (function(){
 		{
 			elm.classList.remove(classname);
 		}
+	};
+
+	this.show = function(elm) {
+		self.removeClass(elm, "noshow");
+	};
+
+	this.hide = function(elm) {
+		self.addClass(elm, "noshow");
 	};
 
 	this.injectCss = function(elm, url) {

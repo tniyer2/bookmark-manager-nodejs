@@ -36,23 +36,20 @@ html {
   background: $purple; }
 .save-menu__category-video:hover .shape {
   background: $dark-purple; }
-.save-menu__category-youtube .shape {
-  background: $red; }
-.save-menu__category-youtube:hover .shape {
-  background: $dark-red; }
-.save-menu__category-bookmark .shape {
-  background: $yellow; }
-.save-menu__category-bookmark:hover .shape {
-  background: $dark-yellow; }
 
 .save-menu__category input:checked ~ .shape {
-  background: $blue; }
+  background: $light-blue; }
 .save-menu__category .shape:after {
-  background: white; }
+  background: $dark-blue; }
 
+.save-menu__category input:disabled ~ .shape {
+  background: $lt-light-gray; }
+.save-menu__category input:disabled ~ .shape:after {
+  background: $lt-dark-gray; }
 
 .save-menu__category .text {
 color: $lt-font-color; }
+
 
 .save-menu__tag-container {
   background: white; }

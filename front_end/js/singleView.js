@@ -52,6 +52,7 @@ this.formatDate = (function(){
 
 	const UPDATE_MESSAGE = "Successfully updated.",
 		  IMAGE_UPDATE_MESSAGE = "Successfully updated image.",
+		  NO_MEDIA_MESSAGE = "Could not load media.",
 		  NO_LOAD_MESSAGE = "Could not load.",
 		  NO_DELETE_MESSAGE = "Could not delete.",
 		  NO_UPDATE_MESSAGE = "Could not update.",
@@ -83,34 +84,33 @@ this.formatDate = (function(){
 		  el_tagContainer = document.getElementById("tag-container");
 
 	const TAGGLE_OPTIONS = { placeholder: "add tags..." },
-		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 400 };
+		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 400, ignoreError: false };
 
 	let g_taggle,
 		g_contentCreator,
 		g_alerter;
 
-	let g_settings;
-
 	return function() {
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], "light");
 
 		g_alerter = new Widgets.AwesomeAlerter();
+		document.body.appendChild(g_alerter.alertList);
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		styleOnEmptyTaggle(g_taggle);
 
 		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
 
-		document.body.appendChild(g_alerter.alertList);
 		load();
 	};
 
 	async function load()
 	{
-		let content = await requestContent().catch(U.noop);
-		if (U.isUdf(content)) return;
+		let info = await requestContent().catch(U.noop);
+		if (U.isUdf(info)) return;
 
-		createContent(content);
+		console.log("info:", info);
+		createContent(info);
 		attachDelete();
 		attachUpdate();
 
@@ -125,8 +125,7 @@ this.formatDate = (function(){
 
 	function setErrorMessage(message)
 	{
-		let textNode = document.createTextNode(message);
-		el_errorMessage.appendChild(textNode);
+		el_errorMessage.innerText = message;
 		U.removeClass(el_errorMessage, cl_hide);
 	}
 
@@ -233,12 +232,16 @@ this.formatDate = (function(){
 
 	async function createContent(info)
 	{
-		console.log("info:", info);
-
-		let source = info.path ? info.path : info.srcUrl;
-		
-		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info);
-		el_contentBlock.prepend(el_content);
+		U.bindWrap(g_contentCreator.load, g_contentCreator, info).then((elm) => {
+			el_contentBlock.prepend(elm);
+		}).catch((err) => {
+			if (err)
+			{
+				console.warn(err);
+			}
+			el_errorMessage.style.margin = 0;
+			setErrorMessage(NO_MEDIA_MESSAGE);
+		});
 
 		if (info.category === "bookmark")
 		{

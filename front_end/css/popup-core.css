@@ -2,6 +2,10 @@
   display: none !important;
 }
 
+/* Light Theme */
+/* Colors */
+/* Text */
+/* Misc */
 .focus-guard {
   display: block;
   width: 0;
@@ -78,13 +82,13 @@ body {
 
 .save-menu__category {
   display: flex;
-  justify-content: flex-start;
+  padding: 0 2px;
   margin-top: 10px;
 }
 
 .save-menu__category label {
   position: relative;
-  margin: 0 5px;
+  margin-right: 10px;
 }
 
 .save-menu__category input {

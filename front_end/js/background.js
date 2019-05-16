@@ -12,14 +12,21 @@
 				   	   		  documentUrlPatterns: [ "http://*/*",
 				 							  		 "https://*/*",
 				 							  		 "data:image/*",
-				 							  		 "file://*" ] };
-	let g_connector, 
+				 							  		 "file://*" ] },
+		  DEFAULT_SETTINGS = { enableNativeMessaging: false };
+
+	let	g_settings,
+		g_connector, 
 		g_requester,
 		g_popupInfo = {};
 
-	return function() {
+	return async function() {
+		g_settings = await DataManager.getKeyWrapper("settings")
+						  .then(d => d.settings ? d.settings : DEFAULT_SETTINGS)
+						  .catch(() => DEFAULT_SETTINGS);
+
 		g_connector = new AppConnector(APP_NAME, APP_TIMEOUT);
-		g_requester = new RequestManager(g_connector);
+		g_requester = new RequestManager(g_connector, { enableNativeMessaging: g_settings.enableNativeMessaging });
 
 		chrome.runtime.onMessage.addListener(handleRequest);
 		chrome.browserAction.onClicked.addListener(openGallery);
@@ -72,6 +79,19 @@
 		else if (msg.request === "update-content")
 		{
 			g_requester.updateContent(msg.id, msg.info, sendResponse, onErr);
+		}
+		else if (msg.request === "get-settings")
+		{
+			sendResponse(g_settings);
+			return false;
+		}
+		else if (msg.request === "update-settings")
+		{
+			let updated = U.extend(g_settings, msg.settings);
+			DataManager.setKeyWrapper({settings: updated}).then(() => {
+				onSettingsUpdate(updated);
+				sendResponse();
+			}, onErr);
 		}
 		else
 		{
@@ -132,6 +152,12 @@
 				cb(scanInfo);
 			}
 		});
+	}
+
+	function onSettingsUpdate(settings)
+	{
+		g_settings = settings;
+		g_requester.setOptions({ enableNativeMessaging: g_settings.enableNativeMessaging });
 	}
 
 	function openGallery(tab)

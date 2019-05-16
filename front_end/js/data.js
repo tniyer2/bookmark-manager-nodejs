@@ -225,6 +225,41 @@ this.DataManager = new (function(){
 	const ID_LENGTH = 40;
 
 	let instance;
+	let self = this;
+
+	// resolves data, rejects undefined
+	this.getKeyWrapper = function(keys) {
+		return new Promise((resolve, reject) => {
+			chrome.storage.local.get(keys, (data) => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+					reject();
+				}
+				else
+				{
+					resolve(data);
+				}
+			});
+		});
+	};
+
+	// resolves undefined, rejects {memoryError: true}
+	this.setKeyWrapper = function(data) {
+		return new Promise((resolve, reject) => {
+			chrome.storage.local.set(data, () => {
+				if (chrome.runtime.lastError)
+				{
+					console.warn(chrome.runtime.lastError.message);
+					reject({memoryError: true});
+				}
+				else
+				{
+					 resolve();
+				}
+			});
+		});
+	};
 
 	Object.defineProperty(this, "instance", { get: () => {
 		return new Promise((resolve, reject) => {
@@ -352,7 +387,7 @@ this.DataManager = new (function(){
 
 	async function load(cb, onErr)
 	{
-		let data = await getKeyWrapper("meta").catch(onErr);
+		let data = await self.getKeyWrapper("meta").catch(onErr);
 		if (U.isUdf(data)) return;
 
 		let json = data.meta;
@@ -376,50 +411,18 @@ this.DataManager = new (function(){
 	function save(meta, cb, onErr)
 	{
 		let serialized = meta.map(content => JSON.stringify(content)).join("\n");
-		setKeyWrapper({meta: serialized}).then(cb, onErr);
-	}
-
-	// resolves data, rejects undefined
-	function getKeyWrapper(keys)
-	{
-		return new Promise((resolve, reject) => {
-			chrome.storage.local.get(keys, (data) => {
-				if (chrome.runtime.lastError)
-				{
-					console.warn(chrome.runtime.lastError.message);
-					reject();
-				}
-				else
-				{
-					resolve(data);
-				}
-			});
-		});
-	}
-
-	// resolves undefined, rejects {memoryError: true}
-	function setKeyWrapper(data)
-	{
-		return new Promise((resolve, reject) => {
-			chrome.storage.local.set(data, () => {
-				if (chrome.runtime.lastError)
-				{
-					console.warn(chrome.runtime.lastError.message);
-					reject({memoryError: true});
-				}
-				else
-				{
-					 resolve();
-				}
-			});
-		});
+		self.setKeyWrapper({meta: serialized}).then(cb, onErr);
 	}
 })();
 
 this.RequestManager = (function(){
+	const DEFAULTS = { enableNativeMessaging: false };
+
 	return class {
-		constructor(connector)
+		constructor(connector, options)
 		{
+			this._options = U.extend(DEFAULTS, options);
+
 			this._connector = connector;
 			this._appCount = 0;
 		}
@@ -427,6 +430,16 @@ this.RequestManager = (function(){
 		get crError()
 		{
 			return {connectionRequired: true};
+		}
+
+		get prError()
+		{
+			return {permissionRequired: true};
+		}
+
+		setOptions(options)
+		{
+			this._options = U.extend(this._options, options);
 		}
 
 		getContent(cb, onErr)
@@ -465,15 +478,25 @@ this.RequestManager = (function(){
 
 		addContent(content, cache, cb, onErr)
 		{
-			let message = { content: content,
-							download: cache };
-			U.bindWrap(this._requestApp, this, "add-content", message)
-			.then(cb)
-			.catch(() => {
+			if (this._options.enableNativeMessaging)
+			{
+				let message = { content: content,
+								download: cache };
+				U.bindWrap(this._requestApp, this, "add-content", message)
+				.then(cb)
+				.catch(addLocal);
+			}
+			else
+			{
+				addLocal();
+			}
+
+			function addLocal()
+			{
 				DataManager.instance.then((dm) => {
 					dm.addContent(content, cb, onErr);
 				}).catch(onErr);
-			});
+			}
 		}
 
 		findContent(contentId, cb, onErr)
@@ -495,6 +518,12 @@ this.RequestManager = (function(){
 		{
 			if (fromApp(contentId))
 			{
+				if (!this._options.enableNativeMessaging)
+				{
+					onErr(this.prError);
+					return;
+				}
+
 				U.bindWrap(this._requestApp, this, type, {id: contentId, params: params})
 				.then(cb)
 				.catch(() => {
@@ -511,7 +540,13 @@ this.RequestManager = (function(){
 
 		async _requestApp(type, message, cb, onErr)
 		{
-			let connected = await U.bindWrap(this._connector.connect, this._connector);
+			if (!this._options.enableNativeMessaging)
+			{
+				onErr(this.prError);
+				return;
+			}
+			
+			let connected = await U.bindWrap(this._connector.connect, this._connector).catch(U.noop);
 			if (!connected || !this._connector.appConnected)
 			{
 				onErr();

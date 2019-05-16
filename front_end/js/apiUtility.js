@@ -9,10 +9,6 @@ this.ApiUtility = new (function(){
 					console.warn(chrome.runtime.lastError.message);
 					reject();
 				}
-				else if (!response)
-				{
-					reject();
-				}
 				else
 				{
 					resolve(response);

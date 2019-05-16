@@ -30,6 +30,8 @@ this.getTaggleInputFormatter = (function(){
 
 (function(){
 
+	const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
+
 	const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
 		  NO_SOURCE_MESSAGE = "Pick a source first.",
 		  NO_URL_MESSAGE = "Enter a url in the url field.",
@@ -74,7 +76,23 @@ this.getTaggleInputFormatter = (function(){
 		g_popupId,
 		g_tabId;
 
-	return function() {
+	let onUrlChange = (function(){
+		let lock = new Object();
+
+		return function(evt) {
+			if (isYoutube(evt.target.value))
+			{
+				g_radioManager.disable(lock);
+			}
+			else
+			{
+				g_radioManager.enable(lock);
+			}
+		};
+	})();
+
+	function main()
+	{
 		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
 
 		g_alerter = createAlerter();
@@ -94,7 +112,7 @@ this.getTaggleInputFormatter = (function(){
 		if (queryInfo.manual) load2();
 		else load();
 		attachStyleEvents();
-	};
+	}
 
 	function parseQueryString()
 	{
@@ -124,17 +142,30 @@ this.getTaggleInputFormatter = (function(){
 	{
 		ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
 		.then((tags) => {
-			show(el_url.parentElement);
 			show(el_radioBox);
 			let radioInputs = el_radioBox.querySelectorAll("label input");
 			g_radioManager = new Widgets.RadioManager(radioInputs);
+			show(el_url.parentElement);
+			el_url.addEventListener("change", onUrlChange);
 
 			show(el_saveBtn);
 			show(el_bookmarkBtn);
+			attachHideRadio();
+
 			show(el_saveMenu);
 			createAutoComplete(tags);
 			attachManualSave();
 		}).catch(onNoLoad);
+	}
+
+	function isYoutube(url)
+	{
+		try {
+			let urlObject = new URL(url);
+			return urlObject.hostname === "www.youtube.com";
+		} catch (e) {
+			return false;
+		}
 	}
 
 	function createAutoComplete(tags)
@@ -153,20 +184,42 @@ this.getTaggleInputFormatter = (function(){
 	{
 		attachClick(el_saveBtn, save);
 		attachClick(el_bookmarkBtn, () => {
-			requestSave({category: "bookmark"});
+			requestSave({ srcUrl: DEFAULT_BOOKMARK_ICON,
+						  category: "bookmark" });
 		});
 	}
 
 	function attachManualSave()
 	{
 		attachClick(el_saveBtn, getManualSave((url) => {
+			let category;
+			if (isYoutube(url))
+			{
+				category = "youtube";
+				url = U.getYoutubeEmbed(url);
+			}
+			else
+			{
+				category = g_radioManager.selected.value;
+			}
 			requestSaveManual({ srcUrl: url, 
-								category: g_radioManager.selected.value });
+								category: category });
 		}));
 		attachClick(el_bookmarkBtn, getManualSave((url) => {
-			requestSaveManual({ docUrl: url, 
+			requestSaveManual({ docUrl: url,
+								srcUrl: DEFAULT_BOOKMARK_ICON,
 								category: "bookmark" });
 		}));
+	}
+
+	function attachHideRadio()
+	{
+		el_bookmarkBtn.addEventListener("mouseenter", () => {
+			g_radioManager.disable();
+		});
+		el_bookmarkBtn.addEventListener("mouseleave", () => {
+			g_radioManager.enable();
+		});
 	}
 
 	function requestSave(source)
@@ -378,16 +431,15 @@ this.getTaggleInputFormatter = (function(){
 			if (g_noUrlAlert) g_noUrlAlert.removeImmediately();
 			if (g_invalidUrlAlert) g_invalidUrlAlert.removeImmediately();
 
-			let urlValue = el_url.value.trim();
-			if (!urlValue)
+			let url = el_url.value.trim();
+			if (!url)
 			{
 				g_noUrlAlert = g_alerter.alert(NO_URL_MESSAGE);
 				return true;
 			}
 
-			let url;
 			try {
-				url = new URL(urlValue);
+				new URL(url);
 			} catch (e) {
 				g_invalidUrlAlert = g_alerter.alert(INVALID_URL_MESSAGE);
 				return true;
@@ -425,4 +477,6 @@ this.getTaggleInputFormatter = (function(){
 		Widgets.styleOnFocus(el_title.parentElement, "focus", {target: el_title});
 		Widgets.styleOnFocus(el_tagContainer, "focus", {target: el_tagContainer});
 	}
-})()();
+
+	main();
+})();

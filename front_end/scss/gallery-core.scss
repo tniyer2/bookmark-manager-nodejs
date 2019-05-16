@@ -16,8 +16,6 @@ $search-br: 8px;
 
 $input-placeholder-font-size: 18px;
 
-.noshow {
-	display: none !important; }
 body {
 	width: 100%;
 	height: 100%;
@@ -129,9 +127,12 @@ $search-br-minus2: $search-br;
 	transform: translate(-50%, -50%);
 	width: $searchby-svg-width;
 	height: $searchby-svg-height; }
-.search__searchby-btn { @extend %searchby; }
+.search__searchby-btn {
+	@extend %revert-button; 
+	@extend %searchby; }
 
 .search__submit {
+	@extend %revert-button; 
 	width: $input-min-height;
 	height: $input-min-height;
 	margin: auto; }
@@ -186,6 +187,7 @@ $search-br-minus2: $search-br;
 .menubar-right__save-btn svg {
 	@extend %menubar-right__svg;
 	margin-right: 20px; }
-.settings-link {}
+.settings-link {
+	cursor: pointer; }
 .settings-link svg {
 	@extend %menubar-right__svg; }
