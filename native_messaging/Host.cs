@@ -2,205 +2,49 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Linq;
 using System.Text;
-using System.Threading;
 
 class Host
 {
     private const int APP_TIMEOUT = 100;
 
-    private const string 
-        STATUS_MESSAGE = "\"status\"",
-        CONNECTED_MESSAGE    = "{\"status\": \"connected\", \"tag\": \"status\"}",
-        DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"status\"}",
-        SENT_MESSAGE = "{\"status\": \"sent\", \"tag\": \"autostatus\"}",
-        IMMEDIATE_CONNECTED_MESSAGE = "{\"status\": \"connected\", \"tag\": \"autostatus\"}",
-        IMMEDIATE_DISCONNECTED_MESSAGE = "{\"status\": \"disconnected\", \"tag\": \"autostatus\"}";
-
-    private readonly byte[] 
-        B_STATUS_MESSAGE,
-        B_SENT_MESSAGE,
-        B_CONNECTED_MESSAGE,
-        B_DISCONNECTED_MESSAGE,
-        B_IMMEDIATE_CONNECTED_MESSAGE,
-        B_IMMEDIATE_DISCONNECTED_MESSAGE;
-
-    private Stream _appStream;
-    private Stream appStream {
-        get {
-            return _appStream;
-        }
-        set {
-            _appStream = value;
-            if (value != null)
-            {
-                _appStream.ReadTimeout = APP_TIMEOUT;
-            }
-        }
-    }
-    private Socket appSocket;
+    private const string DISCONNECTED_MESSAGE = "{\"tag\": \"disconnected\"}";
+    private readonly byte[] B_DISCONNECTED_MESSAGE;
 
     private Stream stdin, stdout;
-    private Connector connector;
-    private Object exitLock, appLock;
-    private bool endProgram = false;
 
     public Host()
     {
         var encoding = new UTF8Encoding();
-        B_STATUS_MESSAGE = encoding.GetBytes(STATUS_MESSAGE);
-        B_SENT_MESSAGE = encoding.GetBytes(SENT_MESSAGE);
-        B_CONNECTED_MESSAGE = encoding.GetBytes(CONNECTED_MESSAGE);
         B_DISCONNECTED_MESSAGE = encoding.GetBytes(DISCONNECTED_MESSAGE);
-        B_IMMEDIATE_CONNECTED_MESSAGE = encoding.GetBytes(IMMEDIATE_CONNECTED_MESSAGE);
-        B_IMMEDIATE_DISCONNECTED_MESSAGE = encoding.GetBytes(IMMEDIATE_DISCONNECTED_MESSAGE);
 
         stdin  = Console.OpenStandardInput();
         stdout = Console.OpenStandardOutput();
-        exitLock = new Object(); 
-        appLock  = new Object();
-        connector = new Connector();
-        connectApp(false);
     }
 
-    public void setAppStream(Socket socket, Stream stream)
+    public void start()
     {
-        lock (appLock)
+        byte[] b;
+
+        b = read(stdin);
+        if (b.Length != 0)
         {
-            appSocket = socket;
-            appStream = stream;
-        }
-        try {
-            write(stdout, B_IMMEDIATE_CONNECTED_MESSAGE);
-        } catch (IOException) {/*ignore*/}
-    }
-
-    private void connectApp(bool connectOnPortChange)
-    {
-        var t = new Thread(() => {
-            connector.connect((s1, s2) => {
-                setAppStream(s1, s2);
-            }, connectOnPortChange);
-        });
-
-        t.Start();
-    }
-
-    private void closeAppConnection()
-    {
-        if (appStream != null)
-        {
-            appStream.Close();
-            appStream = null;
-        }
-        appSocket = null;
-    }
-
-    public void toApp()
-    {
-    	while (true)
-    	{
-            byte[] b;
-            try {
-                b = read(stdin);
-                if (b.Length == 0) {
-                    throw new IOException();
-                }
-            } catch (IOException) {
-                lock (appLock) {
-                    closeAppConnection();
-                }
-                lock (exitLock) {   
-                    endProgram = true;
-                }
-                return;
-            }
-
-            bool connected;
-            bool reconnect = false;
-            lock (appLock)
+            Socket appSocket = (new Connector()).connect();
+            if (appSocket == null)
             {
-                if (appSocket == null)
-                {
-                    connected = false;
-                }
-                else if (!appSocket.Connected)
-                {
-                    connected = false;
-                    closeAppConnection();
-                    reconnect = true;
-                }
-                else
-                {
-                    connected = true;
-                }
+                write(stdout, B_DISCONNECTED_MESSAGE);
             }
-            if (reconnect)
+            else
             {
-                try {
-                    write(stdout, B_IMMEDIATE_DISCONNECTED_MESSAGE);
-                } catch (IOException) {/*ignore*/}
-                connectApp(true);
-            }
+                Stream appStream = new NetworkStream(appSocket, true);
+                appStream.ReadTimeout = APP_TIMEOUT;
+                write(appStream, b);
 
-            // extension is requesting status
-            if (Enumerable.SequenceEqual(b, B_STATUS_MESSAGE))
-            {
-                var message = connected ? B_CONNECTED_MESSAGE : B_DISCONNECTED_MESSAGE;
-                try {
-                    write(stdout, message);
-                } catch (IOException) {/*ignore*/}
-            }
-            else if (connected)
-            {
-                try {
-                    write(appStream, b);
-                } catch (IOException) {
-                    continue;
-                }
-                try {
-                    write(stdout, B_SENT_MESSAGE);
-                } catch (IOException) {
-                    continue;
-                }
-            }
-            else {/*not connected so no action to be taken*/}
-    	}
-    }
-
-	public void toChrome()
-    {
-    	while (true)
-    	{
-            byte[] b;
-            lock (exitLock)
-            {
-                if (endProgram)
-                {
-                    return;
-                }
-            }
-
-            lock (appLock)
-            {
-                if (appStream == null || appSocket == null || !appSocket.Connected)
-                {
-                    continue;
-                }
-            }
-
-            try {
                 b = read(appStream);
-            } catch (IOException) {
-                continue;                   
-            }
-            try {
                 write(stdout, b);
-            } catch (IOException) {
-                continue;
+                appSocket.Close();
             }
-    	}
+        }
     }
 
     public void test()

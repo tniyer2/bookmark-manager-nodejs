@@ -7,81 +7,24 @@ class Connector
 {
 	private const string PORT_PATH = "port";
 
-    public delegate void onConnect(Socket socket, Stream stream);
-    private onConnect currentCallback;
-
-	public void connect(onConnect callback, bool onPortChange)
+	public Socket connect()
 	{
-        currentCallback = callback;
-
-        try
-        {
-            if (onPortChange)
-            {
-                connectOnPortChange();
-            }
-            else
-            {
-                try
-                {
-                    // Logger.log("Connecting without waiting for port change");
-                    connect();
-                }
-                catch (SocketException)
-                {
-                    connectOnPortChange();
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Logger.logError(e);
-            throw;
-        }
-	}
-
-    private void connectOnPortChange()
-    {
-        // Logger.log("Connecting after port change");
-
-        string runningDir = Directory.GetCurrentDirectory();
-        var watcher = new FileSystemWatcher(runningDir);
-        watcher.Filter = "port";
-        watcher.Changed += onChanged;
-        watcher.EnableRaisingEvents = true;
-    }
-
-    private void connect()
-    {
         int port = getPort(PORT_PATH);
 
         var socket = new Socket( AddressFamily.InterNetwork, 
                                  SocketType.Stream, 
                                  ProtocolType.Tcp );
-        socket.Connect("localhost", port);
-        var stream = new NetworkStream(socket, true); 
-
-        currentCallback(socket, stream);
-    }
-
-    private void onChanged(object source, FileSystemEventArgs e)
-    {
         try
         {
-            // Logger.log("onChanged called");
-            // Logger.log("\tName: " + e.Name);
-            var watcher = (FileSystemWatcher) source;
-            watcher.Changed -= onChanged;
-
-            WaitForFile(PORT_PATH);
-            connect();
+            socket.Connect("localhost", port);
         }
-        catch (Exception ex)
+        catch (SocketException)
         {
-            Logger.logError(ex);
-            throw;
+            return null;
         }
-    }
+
+        return socket;
+	}
 
     private int getPort(string filePath)
     {

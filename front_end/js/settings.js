@@ -4,8 +4,7 @@
 	const cl_noTransition = "noanim";
 
 	const el_appCheckbox = document.getElementById("app-checkbox"),
-		  el_appSettings = document.getElementById("app-settings"),
-		  el_syncCheckbox = document.getElementById("sync-checkbox");
+		  el_appSettings = document.getElementById("app-settings");
 
 	const NM_PERMISSIONS = { permissions: ["nativeMessaging"] };
 
@@ -53,7 +52,6 @@
 			}
 		};
 		el_appCheckbox.addEventListener("change", requestPermission);
-		attachUpdateOnChange(el_syncCheckbox, "syncData");
 	}
 
 	function attachUpdateOnChange(input, settingName)
@@ -74,7 +72,6 @@
 		let settings = await ApiUtility.makeRequest({to: "background.js", request: "get-settings"}).catch(U.noop);
 
 		setChecked(settings.enableNativeMessaging, el_appCheckbox);
-		setChecked(settings.syncData, el_syncCheckbox);
 	}
 
 	function setChecked(checked, input)

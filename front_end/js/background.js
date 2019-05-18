@@ -4,7 +4,6 @@
 	const NEW_TAB = "chrome://newtab/",
 		  GALLERY_URL = chrome.runtime.getURL("html/gallery.html"),
 		  APP_NAME = "tagger_plus_desktop",
-		  APP_TIMEOUT = 1000,
 		  MAX_CACHE_DURATION = 120,
 		  CONTEXT_OPTIONS = { title: "Save",
 				   	   		  id: "Save",
@@ -13,7 +12,7 @@
 				 							  		 "https://*/*",
 				 							  		 "data:image/*",
 				 							  		 "file://*" ] },
-		  DEFAULT_SETTINGS = { enableNativeMessaging: false, syncData: true };
+		  DEFAULT_SETTINGS = { enableNativeMessaging: false };
 
 	let	g_settings,
 		g_connector, 
@@ -25,7 +24,7 @@
 						  .then(d => d.settings ? d.settings : DEFAULT_SETTINGS)
 						  .catch(() => DEFAULT_SETTINGS);
 
-		g_connector = new AppConnector(APP_NAME, APP_TIMEOUT);
+		g_connector = new AppConnector(APP_NAME);
 		g_requester = new RequestManager(g_connector, { enableNativeMessaging: g_settings.enableNativeMessaging });
 
 		chrome.runtime.onMessage.addListener(handleRequest);
