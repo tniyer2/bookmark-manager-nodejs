@@ -13,7 +13,7 @@
 				 							  		 "https://*/*",
 				 							  		 "data:image/*",
 				 							  		 "file://*" ] },
-		  DEFAULT_SETTINGS = { enableNativeMessaging: false };
+		  DEFAULT_SETTINGS = { enableNativeMessaging: false, syncData: true };
 
 	let	g_settings,
 		g_connector, 

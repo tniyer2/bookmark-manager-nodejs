@@ -58,7 +58,8 @@ this.formatDate = (function(){
 		  NO_UPDATE_MESSAGE = "Could not update.",
 		  NO_IMAGE_UPDATE_MESSAGE = "Could not update image.",
 		  CANT_HANDLE_MESSAGE = "Something went wrong.",
-		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.";
+		  MUST_CONNECT_MESSAGE = "This content is on the desktop app. Must connect to app first.",
+		  ENABLE_APP_MESSAGE = "Enable the app in the settings page.";
 
 	const cl_hide   = "noshow", 
 		  cl_active = "active", 
@@ -147,6 +148,11 @@ this.formatDate = (function(){
 				setErrorMessage(NO_LOAD_MESSAGE + " " + MUST_CONNECT_MESSAGE);
 				throw new Error();
 			}
+			else if (response.permissionRequired)
+			{
+				setErrorMessage(NO_LOAD_MESSAGE + " " + MUST_CONNECT_MESSAGE + " " + ENABLE_APP_MESSAGE);
+				throw new Error();
+			}
 			else
 			{
 				console.warn("could not handle response:", response);
@@ -180,6 +186,10 @@ this.formatDate = (function(){
 			{
 				alertWrapper(NO_DELETE_MESSAGE + " " + MUST_CONNECT_MESSAGE);
 			}
+			else if (response.permissionRequired)
+			{
+				alertWrapper(NO_DELETE_MESSAGE + " " + MUST_CONNECT_MESSAGE + " " + ENABLE_APP_MESSAGE);
+			}
 			else
 			{
 				console.warn("could not handle response:", response);
@@ -197,13 +207,14 @@ this.formatDate = (function(){
 			requestUpdate({ title: el_titleInput.value,
 					 		tags: g_taggle.getTags().values },
 					 		UPDATE_MESSAGE,
+					 		NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE,
 					 		NO_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE,
-					 		NO_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+					 		NO_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE + " " + ENABLE_APP_MESSAGE);
 		});
 		el_updateBtn.disabled = false;
 	}
 
-	function requestUpdate(info, successMessage, crMessage, errMessage)
+	function requestUpdate(info, successMessage, errMessage, crMessage, prMessage)
 	{
 		let message = { request: "update-content", 
 						id: CONTENT_ID, 
@@ -218,6 +229,10 @@ this.formatDate = (function(){
 			else if (response.connectionRequired)
 			{
 				g_alerter.alert(crMessage);
+			}
+			else if (response.permissionRequired)
+			{
+				g_alerter.alert(prMessage);
 			}
 			else
 			{
@@ -294,8 +309,9 @@ this.formatDate = (function(){
 				el_contentBlock.querySelector("img").src = uri;
 				requestUpdate({srcUrl: uri}, 
 							  IMAGE_UPDATE_MESSAGE,
+							  NO_IMAGE_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE,
 							  NO_IMAGE_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE,
-							  NO_IMAGE_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+							  NO_IMAGE_UPDATE_MESSAGE + " " + MUST_CONNECT_MESSAGE + " " + ENABLE_APP_MESSAGE);
 			}).catch(() => {
 				g_alerter.alert(NO_IMAGE_UPDATE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
 			});

@@ -14,8 +14,8 @@
 	"permissions": [ "activeTab", 
 					 "storage",
 					 "contextMenus",
-					 "nativeMessaging",
 					 "downloads" ],
+	"optional_permissions": ["nativeMessaging"],
 	"background": {
 		"scripts": [ "js/utility.js",
 					 "js/metaUtility.js",

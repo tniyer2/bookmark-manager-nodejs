@@ -36,6 +36,9 @@ $feed-message-font-size: 32px;
 	height: $feed-message-font-size; }
 
 
+.content-wrapper {
+	text-decoration: none;
+	cursor: default; }
 .content {
 	display: flex;
 	flex-direction: column;

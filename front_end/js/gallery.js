@@ -176,7 +176,7 @@ this.PopupManager = (function(){
 		attachSave();
 		g_searchBoxToggle.onToggleOn(switchToTags);
 		g_searchBoxToggle.onToggleOff(switchToTitle);
-		el_searchByBtn.addEventListener("click", () => {
+		el_searchByBtn.addEventListener("click", (evt) => {
 			g_searchBoxToggle.toggle();
 		});
 
@@ -319,11 +319,6 @@ this.PopupManager = (function(){
 		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info).catch(onErr);
 		if (U.isUdf(el_content)) return;
 
-		el_contentBlock.addEventListener("click", () => {
-			let url = CONTENT_LINK + "?" + info.id;
-			window.open(url, CONTENT_LINK_TARGET);
-		});
-
 		let addHover = () => {
 			U.addClass(el_contentBlock, cl_hover);
 		};
@@ -344,7 +339,12 @@ this.PopupManager = (function(){
 
 		el_sourceBlock.appendChild(el_content);
 
-		cb(el_contentBlock);
+		let el_link = document.createElement("a");
+		el_link.href = CONTENT_LINK + "?" + info.id;
+		el_link.target = CONTENT_LINK_TARGET;
+		el_link.classList.add("content-wrapper");
+		el_link.appendChild(el_contentBlock);
+		cb(el_link);
 	}
 
 	function makeQueryString()

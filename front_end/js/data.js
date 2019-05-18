@@ -217,6 +217,11 @@ this.AppConnector = (function(){
 		{
 			this._appConnected = false;
 		}
+
+		canAccessApi()
+		{
+			return Boolean(chrome.runtime.connectNative);
+		}
 	};
 })();
 
@@ -518,7 +523,7 @@ this.RequestManager = (function(){
 		{
 			if (fromApp(contentId))
 			{
-				if (!this._options.enableNativeMessaging)
+				if (!this._options.enableNativeMessaging || !this._connector.canAccessApi())
 				{
 					onErr(this.prError);
 					return;
@@ -540,7 +545,7 @@ this.RequestManager = (function(){
 
 		async _requestApp(type, message, cb, onErr)
 		{
-			if (!this._options.enableNativeMessaging)
+			if (!this._options.enableNativeMessaging || !this._connector.canAccessApi())
 			{
 				onErr(this.prError);
 				return;
