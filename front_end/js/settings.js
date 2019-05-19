@@ -10,7 +10,7 @@
 
 	async function main()
 	{
-		U.injectThemeCss(document.head, ["settings"], "light");
+		U.injectThemeCss(document.head, ["settings"], "light", ApiUtility.cssDir);
 
 		attachChangeEvents();
 		await load();

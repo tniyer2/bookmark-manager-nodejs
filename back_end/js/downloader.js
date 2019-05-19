@@ -6,7 +6,7 @@ const fs  	= require("fs"),
 const parseDataUri = require("parse-data-uri"),
 	  fileType = require("file-type");
 
-const {U} = require("../front_end/js/utility");
+const {U} = require("../../front_end/js/utility");
 
 // @param srcUrl a url object of the resource to be downloaded.
 // @param filePath path of the file without a file extension.

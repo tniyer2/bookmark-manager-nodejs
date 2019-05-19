@@ -30,7 +30,7 @@ this.getTaggleInputFormatter = (function(){
 
 (function(){
 
-	const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
+	const DEFAULT_BOOKMARK_ICON = ApiUtility.getURL("svgs/defaultIcon.svg");
 
 	const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
 		  NO_SOURCE_MESSAGE = "Pick a source first.",
@@ -93,7 +93,7 @@ this.getTaggleInputFormatter = (function(){
 
 	function main()
 	{
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light");
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light", ApiUtility.cssDir);
 
 		g_alerter = createAlerter();
 		document.body.appendChild(g_alerter.alertList);
@@ -285,7 +285,7 @@ this.getTaggleInputFormatter = (function(){
 		if (g_tabId)
 		{
 			let message = {to: "content.js", close: true};
-			chrome.tabs.sendMessage(g_tabId, message);
+			ApiUtility.sendMessageToTab(g_tabId, message);
 		}
 	}
 

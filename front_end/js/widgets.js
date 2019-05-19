@@ -903,7 +903,7 @@ this.Widgets = new (function(){
 
 			_download(url)
 			{
-				chrome.downloads.download({url: url});
+				ApiUtility.download({url: url});
 			}
 		};
 	}();

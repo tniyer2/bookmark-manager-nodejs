@@ -76,7 +76,7 @@ this.FeedBox = (function(){
 })();
 
 this.PopupManager = (function(){
-	const POPUP_LINK = chrome.runtime.getURL("html/popup.html") + "?manual=true"
+	const POPUP_LINK = ApiUtility.getURL("html/popup.html") + "?manual=true"
 	const el_popup = document.getElementById("popup");
 	const cl_hide = "noshow";
 	
@@ -166,7 +166,7 @@ this.PopupManager = (function(){
 
 	function main()
 	{
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light");
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light", ApiUtility.cssDir);
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		g_searchBoxToggle = new Widgets.Toggle();

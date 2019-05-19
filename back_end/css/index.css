@@ -1,0 +1,17 @@
+
+body {
+	background: #870215; }
+
+
+.root {}
+.text {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	max-width: 500px;
+	margin: 0;
+	text-align: center;
+	font-size: 26px;
+	font-family: arial black, sans-serif;
+	color: #e2e2e2; }

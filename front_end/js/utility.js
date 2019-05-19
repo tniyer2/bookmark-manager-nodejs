@@ -178,13 +178,13 @@ this.U = new (function(){
 		let link  = document.createElement("link");
 		link.rel  = "stylesheet";
 		link.type = "text/css";
-		link.href = chrome.runtime.getURL(url);
+		link.href = url;
 		elm.appendChild(link);
 	};
 
-	this.injectThemeCss = function(elm, cssList, theme) {
+	this.injectThemeCss = function(elm, cssList, theme, dir) {
 		cssList.forEach((css) => {
-			let url = "css/" + css + "-theme-" + theme + ".css";
+			let url = dir + "/" + css + "-theme-" + theme + ".css";
 			self.injectCss(elm, url);
 		});
 	};

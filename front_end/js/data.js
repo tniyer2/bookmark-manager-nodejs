@@ -52,10 +52,10 @@ this.DataManager = new (function(){
 	// resolves data, rejects undefined
 	this.getKeyWrapper = function(keys) {
 		return new Promise((resolve, reject) => {
-			chrome.storage.local.get(keys, (data) => {
-				if (chrome.runtime.lastError)
+			ApiUtility.getLocalData(keys, (data) => {
+				if (ApiUtility.lastError)
 				{
-					console.warn(chrome.runtime.lastError.message);
+					console.warn(ApiUtility.lastError.message);
 					reject();
 				}
 				else
@@ -69,10 +69,10 @@ this.DataManager = new (function(){
 	// resolves undefined, rejects {memoryError: true}
 	this.setKeyWrapper = function(data) {
 		return new Promise((resolve, reject) => {
-			chrome.storage.local.set(data, () => {
-				if (chrome.runtime.lastError)
+			ApiUtility.setLocalData(data, () => {
+				if (ApiUtility.lastError)
 				{
-					console.warn(chrome.runtime.lastError.message);
+					console.warn(ApiUtility.lastError.message);
 					reject({memoryError: true});
 				}
 				else

@@ -66,7 +66,7 @@ this.formatDate = (function(){
 		  cl_noTags = "empty";
 
 	const CONTENT_ID  = getIdFromHref(),
-		  GALLERY_URL = chrome.runtime.getURL("html/gallery.html");
+		  GALLERY_URL = ApiUtility.getURL("html/gallery.html");
 
 	const el_errorMessage = document.getElementById("error-message");
 
@@ -91,8 +91,9 @@ this.formatDate = (function(){
 		g_contentCreator,
 		g_alerter;
 
-	return function() {
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], "light");
+	function main()
+	{
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], "light", ApiUtility.cssDir);
 
 		g_alerter = new Widgets.AwesomeAlerter();
 		document.body.appendChild(g_alerter.alertList);
@@ -103,7 +104,7 @@ this.formatDate = (function(){
 		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
 
 		load();
-	};
+	}
 
 	async function load()
 	{
@@ -386,4 +387,6 @@ this.formatDate = (function(){
 		let remove = U.joinCallbacks(taggle.settings.onTagRemove, inner);
 		taggle.setOptions({onTagAdd: add, onTagRemove: remove});
 	}
-})()();
+
+	main();
+})();

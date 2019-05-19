@@ -1,8 +1,7 @@
 
 (function(){
 
-	const NEW_TAB = "chrome://newtab/",
-		  GALLERY_URL = chrome.runtime.getURL("html/gallery.html"),
+	const GALLERY_URL = ApiUtility.getURL("html/gallery.html"),
 		  APP_NAME = "tagger_plus_desktop",
 		  MAX_CACHE_DURATION = 120,
 		  CONTEXT_OPTIONS = { title: "Save",
@@ -27,11 +26,11 @@
 		g_connector = new AppConnector(APP_NAME);
 		g_requester = new RequestManager(g_connector, { enableNativeMessaging: g_settings.enableNativeMessaging });
 
-		chrome.runtime.onMessage.addListener(handleRequest);
-		chrome.browserAction.onClicked.addListener(openGallery);
-		chrome.contextMenus.removeAll(() => {
-			chrome.contextMenus.create(CONTEXT_OPTIONS);
-			chrome.contextMenus.onClicked.addListener(onContextClicked);
+		ApiUtility.onMessage(handleRequest);
+		ApiUtility.onBrowserAction(openGallery);
+		ApiUtility.resetContextMenu(() => {
+			ApiUtility.createContextMenu(CONTEXT_OPTIONS);
+			ApiUtility.onContextMenuClicked(onContextClicked);
 		});
 	};
 
@@ -140,10 +139,10 @@
 
 	function requestScanInfo(tabId, cb, onErr)
 	{
-		chrome.tabs.sendMessage(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
-			if (chrome.runtime.lastError)
+		ApiUtility.sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
+			if (ApiUtility.lastError)
 			{
-				console.warn(chrome.runtime.lastError.message);
+				console.warn(ApiUtility.lastError.message);
 				onErr();
 			}
 			else
@@ -164,13 +163,13 @@
 		tabUrl = new URL(tab.url);
 		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
 
-		if (tab.url === NEW_TAB || tabUrlWOQuery === GALLERY_URL)
+		if (tab.url === ApiUtility.NEW_TAB || tabUrlWOQuery === GALLERY_URL)
 		{
-			chrome.tabs.update(tab.id, {url: GALLERY_URL});
+			ApiUtility.updateTab(tab.id, {url: GALLERY_URL});
 		}
 		else
 		{
-			chrome.tabs.create({url: GALLERY_URL});
+			ApiUtility.createTab({url: GALLERY_URL});
 		}
 	}
 
@@ -189,10 +188,10 @@
 
 	function onScriptLoad(tabId, to, script, message, cb)
 	{
-		chrome.tabs.sendMessage(tabId, {to: to, check: true}, (exists) => {
-			if (chrome.runtime.lastError) { /*ignore*/ }
+		ApiUtility.sendMessageToTab(tabId, {to: to, check: true}, (exists) => {
+			if (ApiUtility.lastError) { /*ignore*/ }
 			let send = () => {
-				chrome.tabs.sendMessage(tabId, message, cb); 
+				ApiUtility.sendMessageToTab(tabId, message, cb); 
 			};
 
 			if (exists === true)
@@ -201,7 +200,7 @@
 			}
 			else
 			{
-				chrome.tabs.executeScript(tabId, {file: script}, send);
+				ApiUtility.injectScript(tabId, {file: script}, send);
 			}
 		});
 	}

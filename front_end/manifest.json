@@ -18,6 +18,7 @@
 	"optional_permissions": ["nativeMessaging"],
 	"background": {
 		"scripts": [ "js/utility.js",
+					 "js/apiUtility.js",
 					 "js/metaUtility.js",
 					 "js/data.js", 
 					 "js/background.js" ],

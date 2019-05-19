@@ -8,8 +8,8 @@ const net 	  = require("net"),
 
 const getDownloader = require("./downloader");
 
-const {U} = require("../front_end/js/utility");
-const {MetaUtility} = require("../front_end/js/metaUtility");
+const {U} = require("../../front_end/js/utility");
+const {MetaUtility} = require("../../front_end/js/metaUtility");
 
 const RESOURCES_PATH = "back_end/resources",
 	  APP_ID_PREFIX	= "app_",

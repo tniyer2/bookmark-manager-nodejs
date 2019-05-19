@@ -2,8 +2,8 @@
 const fs = require("fs");
 const console = require("console");
 
-const {U} = require("../front_end/js/utility");
-const {MetaUtility} = require("../front_end/js/metaUtility");
+const {U} = require("../../front_end/js/utility");
+const {MetaUtility} = require("../../front_end/js/metaUtility");
 
 const TAGS_KEY = "tags";
 
