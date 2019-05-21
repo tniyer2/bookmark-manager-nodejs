@@ -108,7 +108,7 @@ this.PopupManager = (function(){
 	const DEFAULT_QUERY = "sort=!date",
 		  SEARCH_BY_TAG = true,
 		  NO_RESULTS_MESSAGE = "No search results.",
-		  TUTORIAL_MESSAGE = "You can add content by opening the context menu on media, and bookmarks by opening it anywhere on a page. You can add by url by clicking the <svg><use href='#icon-save'/></svg> above.",
+		  TUTORIAL_MESSAGE = "You can add content by opening the context menu on a page, an image, or a video. You can add by url by clicking the <svg><use href='#icon-save'/></svg> above.",
 		  NO_LOAD_MESSAGE = "Something went wrong :(",
 		  CONTENT_LINK = "singleView.html",
 		  CONTENT_LINK_TARGET = "_self",
@@ -236,7 +236,8 @@ this.PopupManager = (function(){
 
 	async function loadContent(query)
 	{
-		let meta = await requestMeta().catch(() => {
+		let meta = await ApiUtility.makeRequest({request: "get-meta", to: "background.js"}).catch((err) => {
+			console.warn("error loading content:", err);
 			showMessage(NO_LOAD_MESSAGE);
 		});
 		if (U.isUdf(meta)) return;
@@ -267,32 +268,6 @@ this.PopupManager = (function(){
 		el_feedMessage.innerHTML = message;
 		U.removeClass(el_feedMessage, cl_hide);
 		el_feed.classList.add(cl_noLoad);
-	}
-
-	function requestMeta()
-	{
-		return ApiUtility.makeRequest({request: "get-meta", to: "background.js"}).then((response) => {
-			if (response.local && response.app)
-			{
-				return response.local.meta.concat(response.app.meta);
-			}
-			else if (response.local)
-			{
-				return response.local.meta;
-			}
-			else if (response.app)
-			{
-				return response.app.meta;
-			}
-			else
-			{
-				console.warn("could not handle response:", response);
-				throw new Error();
-			}
-		}).catch((err) => {
-			console.warn("error loading content:", err);
-			throw new Error();
-		});
 	}
 
 	async function createContent(info, cb, onErr)

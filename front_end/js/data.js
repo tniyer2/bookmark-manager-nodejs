@@ -1,47 +1,4 @@
 
-this.AppConnector = (function(){
-	return class {
-		constructor(appName)
-		{
-			this._appName = appName;
-		}
-
-		postMessage(message, cb, onErr)
-		{
-			if (typeof message !== "object" || message.tag === "disconnected")
-			{
-				console.warn("not a valid message:", message);
-				onErr(false);
-				return;
-			}
-
-			chrome.runtime.sendNativeMessage(this._appName, message, (response) => {
-				if (chrome.runtime.lastError)
-				{
-					console.warn(chrome.runtime.lastError.message);
-					onErr(false);
-				}
-				else
-				{
-					if (response.tag === "disconnected")
-					{
-						onErr(true);
-					}
-					else
-					{
-						cb(response.message);
-					}
-				}
-			});
-		}
-
-		canAccessApi()
-		{
-			return Boolean(chrome.runtime.sendNativeMessage);
-		}
-	};
-})();
-
 this.DataManager = new (function(){
 	const TAG_KEY = "tags";
 	const ID_LENGTH = 40;
@@ -238,149 +195,47 @@ this.DataManager = new (function(){
 })();
 
 this.RequestManager = (function(){
-	const DEFAULTS = { enableNativeMessaging: false };
-
 	return class {
-		constructor(connector, options)
-		{
-			this._options = U.extend(DEFAULTS, options);
-
-			this._connector = connector;
-			this._appCount = 0;
-		}
-
-		get crError()
-		{
-			return {connectionRequired: true};
-		}
-
-		get prError()
-		{
-			return {permissionRequired: true};
-		}
-
-		setOptions(options)
-		{
-			this._options = U.extend(this._options, options);
-		}
-
 		getContent(cb, onErr)
 		{
-			this._collectData("get-meta", null).then((results) => {
-				let [dm, app] = results;
-
-				let final = { local: { meta: dm.meta }, app: app };
-				cb(final);
+			DataManager.instance.then((dm) => {
+				cb(dm.meta);
 			}).catch(onErr);
 		}
 
 		getTags(cb, onErr)
 		{
-			this._collectData("get-tags", null).then((results) => {
-				let [dm, app] = results;
-
-				if (app)
-				{
-					let concat = dm.tags.concat(app.tags);
-					let combined = U.removeDuplicates(concat);
-					cb(combined);
-				}
-				else
-				{
-					cb(dm.tags);
-				}
+			DataManager.instance.then((dm) => {
+				cb(dm.tags);
 			}).catch(onErr);
 		}
 
-		_collectData(type, message)
+		addContent(content, cb, onErr)
 		{
-			let appPromise = U.bindWrap(this._requestApp, this, type, message).catch(U.noop);
-			return Promise.all([DataManager.instance, appPromise]);
-		}
-
-		addContent(content, cache, cb, onErr)
-		{
-			if (this._options.enableNativeMessaging)
-			{
-				let message = { content: content,
-								download: cache };
-				U.bindWrap(this._requestApp, this, "add-content", message)
-				.then(cb)
-				.catch(addLocal);
-			}
-			else
-			{
-				addLocal();
-			}
-
-			function addLocal()
-			{
-				DataManager.instance.then((dm) => {
-					dm.addContent(content, cb, onErr);
-				}).catch(onErr);
-			}
+			DataManager.instance.then((dm) => {
+				dm.addContent(content, cb, onErr);
+			}).catch(onErr);
 		}
 
 		findContent(contentId, cb, onErr)
 		{
-			this._handleContent("findContent", "find-content", contentId, null, cb, onErr);
+			DataManager.instance.then((dm) => {
+				dm.findContent(contentId, null, cb, onErr);
+			}).catch(onErr);
 		}
 
 		deleteContent(contentId, cb, onErr)
 		{
-			this._handleContent("deleteContent", "remove-content", contentId, null, cb, onErr);
+			DataManager.instance.then((dm) => {
+				dm.deleteContent(contentId, null, cb, onErr);
+			}).catch(onErr);
 		}
 
 		updateContent(contentId, updateInfo, cb, onErr)
 		{
-			this._handleContent("updateContent", "update-content", contentId, {info: updateInfo}, cb, onErr);
-		}
-
-		_handleContent(localFunction, type, contentId, params, cb, onErr)
-		{
-			if (fromApp(contentId))
-			{
-				if (!this._options.enableNativeMessaging || !this._connector.canAccessApi())
-				{
-					onErr(this.prError);
-					return;
-				}
-
-				U.bindWrap(this._requestApp, this, type, {id: contentId, params: params})
-				.then(cb)
-				.catch(() => {
-					onErr({connectionRequired: true});
-				});
-			}
-			else
-			{
-				DataManager.instance.then((dm) => {
-					dm[localFunction](contentId, params, cb, onErr);
-				}).catch(onErr);
-			}
-		}
-
-		async _requestApp(type, message, cb, onErr)
-		{
-			if (!this._options.enableNativeMessaging || !this._connector.canAccessApi())
-			{
-				onErr(this.prError);
-				return;
-			}
-
-			let tag = U.makeTag(type, this._appCount);
-			this._appCount += 1;
-
-			let request = { type: type,
-							tag: tag,
-							message: message };
-
-			this._connector.postMessage(request, cb, onErr);
+			DataManager.instance.then((dm) => {
+				dm.updateContent(contentId, {info: updateInfo}, cb, onErr);
+			}).catch(onErr);
 		}
 	};
-
-	function fromApp(id)
-	{
-		return id.substring(0, 4) === "app_";
-	}
 })();

@@ -2,29 +2,18 @@
 (function(){
 
 	const GALLERY_URL = ApiUtility.getURL("html/gallery.html"),
-		  APP_NAME = "tagger_plus_desktop",
-		  MAX_CACHE_DURATION = 120,
-		  CONTEXT_OPTIONS = { title: "Save",
+		  CONTEXT_OPTIONS = { title: "Grab",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
 				   	   		  documentUrlPatterns: [ "http://*/*",
 				 							  		 "https://*/*",
 				 							  		 "data:image/*",
-				 							  		 "file://*" ] },
-		  DEFAULT_SETTINGS = { enableNativeMessaging: false };
-
-	let	g_settings,
-		g_connector, 
-		g_requester,
+				 							  		 "file://*" ] };
+	let	g_requester,
 		g_popupInfo = {};
 
 	return async function() {
-		g_settings = await DataManager.getKeyWrapper("settings")
-						  .then(d => d.settings ? d.settings : DEFAULT_SETTINGS)
-						  .catch(() => DEFAULT_SETTINGS);
-
-		g_connector = new AppConnector(APP_NAME);
-		g_requester = new RequestManager(g_connector, { enableNativeMessaging: g_settings.enableNativeMessaging });
+		g_requester = new RequestManager();
 
 		ApiUtility.onMessage(handleRequest);
 		ApiUtility.onBrowserAction(openGallery);
@@ -60,11 +49,11 @@
 			let info = g_popupInfo[msg.popupId];
 			fillInSource(msg.info, info);
 
-			g_requester.addContent(msg.info, canCache(msg.info), sendResponse, onErr);
+			g_requester.addContent(msg.info, sendResponse, onErr);
 		}
 		else if (msg.request === "add-content-manually")
 		{
-			g_requester.addContent(msg.info, canCache(msg.info), sendResponse, onErr);	
+			g_requester.addContent(msg.info, sendResponse, onErr);	
 		}
 		else if (msg.request === "find-content")
 		{
@@ -77,19 +66,6 @@
 		else if (msg.request === "update-content")
 		{
 			g_requester.updateContent(msg.id, msg.info, sendResponse, onErr);
-		}
-		else if (msg.request === "get-settings")
-		{
-			sendResponse(g_settings);
-			return false;
-		}
-		else if (msg.request === "update-settings")
-		{
-			let updated = U.extend(g_settings, msg.settings);
-			DataManager.setKeyWrapper({settings: updated}).then(() => {
-				onSettingsUpdate(updated);
-				sendResponse();
-			}, onErr);
 		}
 		else
 		{
@@ -130,13 +106,6 @@
 		}
 	}
 
-	function canCache(content)
-	{
-		return content.category === "image" || 
-			  (content.category === "video" && 
-			   content.duration < MAX_CACHE_DURATION);
-	}
-
 	function requestScanInfo(tabId, cb, onErr)
 	{
 		ApiUtility.sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
@@ -150,12 +119,6 @@
 				cb(scanInfo);
 			}
 		});
-	}
-
-	function onSettingsUpdate(settings)
-	{
-		g_settings = settings;
-		g_requester.setOptions({ enableNativeMessaging: g_settings.enableNativeMessaging });
 	}
 
 	function openGallery(tab)
