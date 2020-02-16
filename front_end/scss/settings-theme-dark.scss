@@ -1,0 +1,36 @@
+
+@import "master";
+
+body {
+	background: $dt-darkest-black; }
+.root {
+	background: $dt-medium-black; }
+
+
+.btn {
+	background-color: $dt-black;
+	color: $dt-font-color; }
+.add-tag-rule-btn {}
+.download-meta-btn {}
+.tag-rules {
+	background-color: $dt-black;
+	.rule {
+		.value {
+			color: $dt-font-color;
+			border: 1px solid $dt-font-color; }
+		.value:focus {
+			background: white; }
+		.delete {
+			background-color: $dt-light-black;
+			color: $dt-font-color; }
+	}
+}
+
+.theme-radio {
+	display: inline-block;
+	background-color: $dt-black;
+	color: $dt-font-color;
+	.title {}
+	.option {}
+	input {}
+}

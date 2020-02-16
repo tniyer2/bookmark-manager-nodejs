@@ -1,15 +1,1 @@
-.noshow {
-  display: none !important;
-}
-
-/* Light Theme */
-/* Colors */
-/* Text */
-/* Misc */
-.customScrollbar1::-webkit-scrollbar-track {
-  background-color: #e2e2e2;
-}
-
-.customScrollbar1::-webkit-scrollbar-thumb {
-  background-color: #9b9b9b;
-}
+.noshow{display:none !important}.customScrollbar1::-webkit-scrollbar-track{background-color:#e2e2e2}.customScrollbar1::-webkit-scrollbar-thumb{background-color:#9b9b9b}

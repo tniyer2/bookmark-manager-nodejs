@@ -2,7 +2,8 @@
 (function(){
 
 	const GALLERY_URL = ApiUtility.getURL("html/gallery.html"),
-		  CONTEXT_OPTIONS = { title: "Grab",
+		  DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
+	const CONTEXT_OPTIONS = { title: "Bookmark",
 				   	   		  id: "Save",
 				   	   		  contexts: ["image", "video", "page"],
 				   	   		  documentUrlPatterns: [ "http://*/*",
@@ -10,10 +11,19 @@
 				 							  		 "data:image/*",
 				 							  		 "file://*" ] };
 	let	g_requester,
-		g_popupInfo = {};
+		g_popupInfo = {},
+		g_settings;
 
 	return async function() {
 		g_requester = new RequestManager();
+		try {
+			const data = await DataManager.getKeyWrapper("settings");
+			g_settings = data.settings || DEFAULT_SETTINGS;
+		} catch (e) {
+			if (e) console.warn(e);
+			console.warn("Failed to retrieve settings from local storage.");
+			g_settings = DEFAULT_SETTINGS;
+		}
 
 		ApiUtility.onMessage(handleRequest);
 		ApiUtility.onBrowserAction(openGallery);
@@ -49,10 +59,12 @@
 			let info = g_popupInfo[msg.popupId];
 			fillInSource(msg.info, info);
 
+			replaceTags(msg.info);
 			g_requester.addContent(msg.info, sendResponse, onErr);
 		}
 		else if (msg.request === "add-content-manually")
 		{
+			replaceTags(msg.info);
 			g_requester.addContent(msg.info, sendResponse, onErr);	
 		}
 		else if (msg.request === "find-content")
@@ -65,7 +77,20 @@
 		}
 		else if (msg.request === "update-content")
 		{
+			replaceTags(msg.info);
 			g_requester.updateContent(msg.id, msg.info, sendResponse, onErr);
+		}
+		else if (msg.request === "get-settings")
+		{
+			sendResponse(g_settings);
+		}
+		else if (msg.request === "update-settings")
+		{
+			const updatedSettings = U.extend(g_settings, msg.settings);
+			DataManager.setKeyWrapper({settings: updatedSettings}).then(() => {
+				g_settings = updatedSettings;
+				sendResponse();
+			}).catch(onErr);
 		}
 		else
 		{
@@ -106,6 +131,20 @@
 		}
 	}
 
+	function replaceTags(content) {
+		const rules = g_settings.tagRules;
+		const tags = content.tags;
+		if (rules && rules.length) {
+			rules.forEach((r) => {
+				const i = tags.findIndex(t => t === r.tag);
+				if (i !== -1) {
+					tags.splice(i, 1);
+					tags.push.apply(tags, r.links);
+				}
+			});
+		}
+	}
+
 	function requestScanInfo(tabId, cb, onErr)
 	{
 		ApiUtility.sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
@@ -124,15 +163,13 @@
 	function openGallery(tab)
 	{
 		tabUrl = new URL(tab.url);
-		let tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
+		const tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
+		const fullGalleryUrl = GALLERY_URL + "?" + "theme=" + g_settings.theme;
 
-		if (tab.url === ApiUtility.NEW_TAB || tabUrlWOQuery === GALLERY_URL)
-		{
-			ApiUtility.updateTab(tab.id, {url: GALLERY_URL});
-		}
-		else
-		{
-			ApiUtility.createTab({url: GALLERY_URL});
+		if (tab.url === ApiUtility.NEW_TAB || tabUrlWOQuery === GALLERY_URL) {
+			ApiUtility.updateTab(tab.id, {url: fullGalleryUrl});
+		} else {
+			ApiUtility.createTab({url: fullGalleryUrl});
 		}
 	}
 
@@ -145,7 +182,8 @@
 		let message = { to: "content.js",
 				  		open: true,
 				  		tabId: tab.id,
-				  		popupId: popupId };
+				  		popupId: popupId,
+				  		theme: g_settings.theme };
 		onScriptLoad(tab.id, "content.js", "js/content.js", message);
 	}
 

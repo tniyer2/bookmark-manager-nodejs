@@ -76,19 +76,19 @@ this.FeedBox = (function(){
 })();
 
 this.PopupManager = (function(){
-	const POPUP_LINK = ApiUtility.getURL("html/popup.html") + "?manual=true"
+	const POPUP_LINK = ApiUtility.getURL("html/popup.html");
 	const el_popup = document.getElementById("popup");
 	const cl_hide = "noshow";
 	
 	let instance;
 
 	const Inner = class {
-		open()
+		open(query)
 		{
 			el_popup.addEventListener("load", () => {
 				U.removeClass(el_popup, cl_hide);
 			}, {once: true});
-			el_popup.src = POPUP_LINK;
+			el_popup.src = POPUP_LINK + "?" + query;
 		}
 
 		close()
@@ -112,7 +112,8 @@ this.PopupManager = (function(){
 		  NO_LOAD_MESSAGE = "Something went wrong :(",
 		  CONTENT_LINK = "singleView.html",
 		  CONTENT_LINK_TARGET = "_self",
-		  DEFAULT_TITLE = "untitled";
+		  DEFAULT_TITLE = "untitled",
+		  CSS_FILES = ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"];
 
 	const cl_hide = "noshow",
 		  cl_searchBoxFocused = "focus",
@@ -145,6 +146,8 @@ this.PopupManager = (function(){
 		g_contentCreator,
 		g_feedBox;
 
+	let g_theme;
+
 	let submitSearch = (function(){
 		let g_submitted = false;
 		
@@ -166,7 +169,9 @@ this.PopupManager = (function(){
 
 	function main()
 	{
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"], "light", ApiUtility.cssDir);
+		const params = U.getParams();
+		g_theme = params.get("theme") || "light";
+		U.injectThemeCss(document.head, CSS_FILES, g_theme, ApiUtility.cssDir);
 
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		g_searchBoxToggle = new Widgets.Toggle();
@@ -314,8 +319,9 @@ this.PopupManager = (function(){
 
 		el_sourceBlock.appendChild(el_content);
 
-		let el_link = document.createElement("a");
-		el_link.href = CONTENT_LINK + "?" + info.id;
+		const el_link = document.createElement("a");
+		const query = "id=" + info.id + "&theme=" + g_theme;
+		el_link.href = CONTENT_LINK + "?" + query;
 		el_link.target = CONTENT_LINK_TARGET;
 		el_link.classList.add("content-wrapper");
 		el_link.appendChild(el_contentBlock);
@@ -399,7 +405,7 @@ this.PopupManager = (function(){
 	function attachSave()
 	{
 		el_saveBtn.addEventListener("click", () => {
-			window.PopupManager.open();
+			window.PopupManager.open("&manual=true" + "&theme=" + g_theme);
 		});
 	}
 

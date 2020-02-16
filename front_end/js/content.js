@@ -27,7 +27,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 	else if (msg.open === true)
 	{
-		openPopup(msg.tabId, msg.popupId);
+		const query = "tabId=" + msg.tabId + 
+					  "&popupId=" + msg.popupId + 
+					  "&theme=" + msg.theme;
+		openPopup(query);
 	}
 	else if (msg.close === true)
 	{
@@ -40,9 +43,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 });
 
-function openPopup(tabId, popupId)
+function openPopup(query)
 {
-	el_iframe.src = chrome.runtime.getURL("html/popup.html") + "?" + "tabId=" + tabId + "&popupId=" + popupId;
+	el_iframe.src = chrome.runtime.getURL("html/popup.html") + "?" + query;
 	el_iframe.addEventListener("load", () => {
 		el_iframe.style.display = "block";
 	});

@@ -188,4 +188,8 @@ this.U = new (function(){
 			self.injectCss(elm, url);
 		});
 	};
+
+	this.getParams = function() {
+		return new URLSearchParams(document.location.search.substring(1));
+	};
 })();

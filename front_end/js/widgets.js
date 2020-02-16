@@ -172,6 +172,16 @@ this.Widgets = new (function(){
 			pushArgs(this._queue, arguments);
 		}
 
+		select(value) {
+			const input = this._inputs.find(e => e.value === value);
+			if (input) {
+				input.setAttribute("checked", "checked");
+				return true;
+			} else {
+				return false;
+			}
+		}
+
 		enable(lock)
 		{
 			if (!this._enabled)

@@ -16,64 +16,58 @@ body {
 	padding: 20px;
 	border-radius: 8px; }
 .root > * {
-	margin: 0;
-	margin-bottom: 40px; }
-.root > * > * {
-	margin: 0;
-	margin-bottom: 5px; }
+	margin-bottom: 10px; }
 
 
-$large-font-size: 24px;
-.button {
+.btn {
 	@extend %revert-button;
-	padding: 3px 8px;
-	border-radius: 3px;
-	font: $regular-font;
-	font-size: $large-font-size; }
-
-
-.download {}
-.download__text {
-	font: $regular-font;
-	font-size: $large-font-size; }
-
-
-.toggle {
-	user-select: none; }
-.toggle label {
-	display: inline-block;
-	vertical-align: bottom;
-	cursor: pointer; }
-.toggle input {
-	position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0; }
-$toggle-height: 20px;
-$toggle-padding: 3px;
-$before-height: $toggle-height - 2 * $toggle-padding;
-.toggle__slider {
-	position: relative;
 	display: block;
-	width: 2 * $toggle-height;
-	height: $toggle-height;
-	border-radius: 10px; }
-.toggle__slider:before {
-	position: absolute;
-	top: 50%;
-	left: $toggle-padding;
-	transform: translate(0, -50%);
-	width: $before-height;
-	height: $before-height;
-	content: "";
-	border-radius: 50%;
-	transition: transform 0.2s; }
-.toggle .noanim ~ .toggle__slider:before {
-	transition: none; }
-.toggle input:checked ~ .toggle__slider:before {
-	transform: translate($toggle-height - $toggle-padding / 2, -50%); }
-.toggle__text {
-	font: $regular-font; }
+	padding: 5px;
+	border-radius: 5px;
+	font: $regular-font;
+	font-size: 20px;
+	user-select: none; }
+.add-tag-rule-btn {}
+.download-meta-btn {}
+.tag-rules {
+	display: inline-block;
+	padding: 10px;
+	padding-bottom: 0;
+	border-radius: 5px;
+	font-size: 20px;
+	.rule {
+		padding-bottom: 10px;
+		$padding: 3px;
+		.value {
+			padding: $padding;
+			margin-right: 5px;
+			border-radius: 3px;
+			background: none;
+			font: $regular-font;
+			font-size: inherit;
+			outline: none; }
+		.value:focus {
+			padding: $padding + 1px;
+			border: none; }
+		.delete {
+			@extend %revert-button;
+			padding: 4px;
+			border-radius: 3px;
+			font: $regular-font;
+			font-size: inherit;
+			user-select: none; }
+	}
+}
 
-
-.app-settings {}
+.theme-radio {
+	padding: 5px;
+	font: $regular-font;
+	border-radius: 8px;
+	user-select: none;
+	.title {
+		display: block;
+		text-align: left;
+		font-size: 20px; }
+	.option {}
+	input { outline: none; }
+}

@@ -63,8 +63,7 @@ this.formatDate = (function(){
 		  cl_active = "active", 
 		  cl_noTags = "empty";
 
-	const CONTENT_ID  = getIdFromHref(),
-		  GALLERY_URL = ApiUtility.getURL("html/gallery.html");
+	const GALLERY_URL = ApiUtility.getURL("html/gallery.html");
 
 	const el_errorMessage = document.getElementById("error-message");
 
@@ -89,9 +88,14 @@ this.formatDate = (function(){
 		g_contentCreator,
 		g_alerter;
 
+	let g_contentId;
+
 	function main()
 	{
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], "light", ApiUtility.cssDir);
+		const params = U.getParams();
+		g_contentId = params.get("id");
+		const theme = params.get("theme") || "light";
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, ApiUtility.cssDir);
 
 		g_alerter = new Widgets.AwesomeAlerter();
 		document.body.appendChild(g_alerter.alertList);
@@ -131,7 +135,7 @@ this.formatDate = (function(){
 
 	function requestContent()
 	{
-		return ApiUtility.makeRequest({request: "find-content", id: CONTENT_ID, to: "background.js"})
+		return ApiUtility.makeRequest({request: "find-content", id: g_contentId, to: "background.js"})
 		.catch((err) => {
 			console.warn("error loading content:", err);
 			setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
@@ -165,7 +169,7 @@ this.formatDate = (function(){
 			attachDelete();
 		}
 
-		return ApiUtility.makeRequest({request: "delete-content", id: CONTENT_ID, to: "background.js"})
+		return ApiUtility.makeRequest({request: "delete-content", id: g_contentId, to: "background.js"})
 		.then((response) => {
 			if (response.success)
 			{
@@ -196,7 +200,7 @@ this.formatDate = (function(){
 	function requestUpdate(info, successMessage, errMessage)
 	{
 		let message = { request: "update-content", 
-						id: CONTENT_ID, 
+						id: g_contentId, 
 						info: info,
 						to: "background.js" };
 
@@ -315,24 +319,6 @@ this.formatDate = (function(){
 	function formatCategory(category)
 	{
 		return category.substring(0, 1).toUpperCase() + category.substring(1);
-	}
-
-	function getIdFromHref()
-	{
-		let decoded = decodeURI(location.search);
-		let index 	= decoded.indexOf("?");
-
-		let id;
-		if (index == decoded.length - 1)
-		{
-			id = "";
-		}
-		else
-		{
-			id = decoded.substring(index + 1);
-		}
-
-		return id;
 	}
 
 	function styleOnEmptyTaggle(taggle)

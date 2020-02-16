@@ -8,7 +8,13 @@ $lt-medium-gray: #ccc;
 $lt-gray: #b2b2b2;
 $lt-dark-gray: #9b9b9b;
 $lt-strong-gray: #595959;
-$lt-black: #333333;
+$lt-black: #333;
+
+/* Dark Theme */
+$dt-darkest-black: #111;
+$dt-black: #212121;
+$dt-medium-black: #2d2d2d;
+$dt-light-black: #444;
 
 /* Colors */
 $light-red: #e53232;
@@ -41,6 +47,7 @@ $regular-font-family: arial, sans-serif;
 $regular-font: $regular-font-weight $regular-font-size $regular-font-family;
 
 $lt-font-color: black;
+$dt-font-color: #d1d1d1;
 $chrome-selected-color: #3297FD;
 
 /* Misc */

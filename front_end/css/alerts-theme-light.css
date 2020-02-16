@@ -1,17 +1,1 @@
-.noshow {
-  display: none !important;
-}
-
-/* Light Theme */
-/* Colors */
-/* Text */
-/* Misc */
-/*alerts*/
-.alerts__alert {
-  background: #636363;
-  color: white;
-}
-
-.alerts__close {
-  color: #424242;
-}
+.noshow{display:none !important}.alerts__alert{background:#636363;color:white}.alerts__close{color:#424242}

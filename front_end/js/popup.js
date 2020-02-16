@@ -59,7 +59,7 @@ this.getTaggleInputFormatter = (function(){
 	const el_sourceMenu = document.getElementById("source-menu");
 
 	const TAGGLE_OPTIONS = { placeholder: "tags...",
-						 tabIndex: 0 },
+							 tabIndex: 0 },
 		  ALERTER_OPTIONS = { duration: 5, insertAtTop: false };
 
 	let g_radioManager,
@@ -93,7 +93,9 @@ this.getTaggleInputFormatter = (function(){
 
 	function main()
 	{
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], "light", ApiUtility.cssDir);
+		const params = U.getParams();
+		const theme = params.get("theme") || "light";
+		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], theme, ApiUtility.cssDir);
 
 		g_alerter = createAlerter();
 		document.body.appendChild(g_alerter.alertList);
@@ -102,7 +104,9 @@ this.getTaggleInputFormatter = (function(){
 		TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(g_alerter);
 		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 
-		let queryInfo = parseQueryString();
+		const queryInfo = { tabId: Number(params.get("tabId")), 
+				 		    popupId: params.get("popupId"),
+				 		    manual: params.has("manual") };
 		g_tabId = queryInfo.tabId;
 		g_popupId = queryInfo.popupId;
 		closePopup = queryInfo.manual ? closePopup2 : closePopup1;
@@ -112,14 +116,6 @@ this.getTaggleInputFormatter = (function(){
 		if (queryInfo.manual) load2();
 		else load();
 		attachStyleEvents();
-	}
-
-	function parseQueryString()
-	{
-		let params = new URLSearchParams(document.location.search.substring(1));
-		return { tabId: Number(params.get("tabId")), 
-				 popupId: params.get("popupId"),
-				 manual: params.has("manual") };
 	}
 
 	function load()

@@ -1,31 +1,36 @@
 
 @import "master";
 
-
 body {
 	background: white; }
 .root {
 	background: $lt-light-gray; }
 
 
-.button {
-	background: $lt-dark-gray;
-	border: 1px solid $lt-strong-gray;
+.btn {
+	background-color: $lt-gray;
 	color: $lt-font-color; }
-.button:hover {
-	background: $blue;
-	border-color: $dark-blue; }
+.add-tag-rule-btn {}
+.download-meta-btn {}
+.tag-rules {
+	background-color: $lt-gray;
+	.rule {
+		.value {
+			color: $lt-font-color;
+			border: 1px solid $lt-font-color; }
+		.value:focus {
+			background: white; }
+		.delete {
+			color: $lt-font-color;
+			background-color: $lt-dark-gray; }
+	}
+}
 
-
-.download__text {
-	color: $lt-font-color; }
-
-
-.toggle__slider {
-	background: $lt-dark-gray; }
-.toggle input:checked ~ .toggle__slider {
-	background: $blue; }
-.toggle__slider:before {
-	background: white; }
-.toggle__text {
-	color: $lt-font-color; }
+.theme-radio {
+	display: inline-block;
+	background-color: $lt-gray;
+	color: $lt-font-color;
+	.title {}
+	.option {}
+	input {}
+}

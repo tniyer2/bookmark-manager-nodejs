@@ -1,106 +1,124 @@
 
 (function(){
+	const el_tagRules = document.getElementById("tag-rules"),
+		  el_addTagRuleBtn = document.getElementById("add-tag-rule-btn"),
+		  el_downloadMetaBtn = document.getElementById("download-meta-btn"),
+		  el_themeRadio = document.getElementById("theme-radio");
 
-	const cl_noTransition = "noanim";
+	const cl_tagRule = "rule",
+		  cl_name = "name",
+		  cl_value = "value",
+		  cl_deleteBtn = "delete";
 
-	const el_appCheckbox = document.getElementById("app-checkbox"),
-		  el_appSettings = document.getElementById("app-settings");
+	let g_settings, 
+		g_tagRules;
 
-	const NM_PERMISSIONS = { permissions: ["nativeMessaging"] };
+	async function main() {
+		g_settings = await getSettings();
+		U.injectThemeCss(document.head, ["settings"], g_settings.theme, ApiUtility.cssDir);
 
-	async function main()
-	{
-		U.injectThemeCss(document.head, ["settings"], "light", ApiUtility.cssDir);
+		g_tagRules = g_settings.tagRules || [];
+		initTagRules(g_tagRules);
+		el_addTagRuleBtn.addEventListener("click", () => {
+			const info = {};
+			createTagRuleDom(info);
+			g_tagRules.push(info);
+			updateTagRules();
+		});
 
-		attachChangeEvents();
-		await load();
+		el_downloadMetaBtn.addEventListener("click", () => {
+			ApiUtility.makeRequest({ to: "background.js", 
+									 request: "get-meta" })
+			.then((meta) => {
+				const s = JSON.stringify(meta);
+				const b = new Blob([s]);
+				const url = URL.createObjectURL(b, {type: "text/plain"});
+				chrome.downloads.download({url: url, filename: "bookmark_manager_data.txt"});
+			})
+			.catch((e) => {
+				if (e) console.warn(e);
+				console.warn("could not download data, something went wrong");
+			});
+		});
+
+		initThemeRadio();
 	}
 
-	function attachChangeEvents()
-	{
-		let requestPermission = (evt) => {
-			if (evt.target.checked)
-			{
-				(async () => {
-					let has = await hasNativeMessaging();
-					if (!has)
-					{
-						let granted = await requestNativeMessaging();
-						if (!granted)
-						{
-							evt.target.checked = false;
-							return;
-						}
-						else
-						{
-							setTimeout(alert, 0, "Refresh the extension to see changes.");
-						}
-					}
-
-					evt.target.removeEventListener(evt.type, requestPermission);
-					
-					attachUpdateOnChange(el_appCheckbox, "enableNativeMessaging");
-					evt.target.addEventListener(evt.type, () => {
-						if (el_appCheckbox.checked) {
-							U.show(el_appSettings);
-						} else {
-							U.hide(el_appSettings);
-						}
-					});
-					evt.target.dispatchEvent(new Event(evt.type));
-				})();
-			}
-		};
-		el_appCheckbox.addEventListener("change", requestPermission);
+	function initTagRules(tagRules) {
+		tagRules.forEach((r) => {
+			createTagRuleDom(r);
+		});
 	}
 
-	function attachUpdateOnChange(input, settingName)
-	{
-		inner();
-		function inner()
-		{	
-			input.addEventListener("change", () => {
-				updateSettings({[settingName]: input.checked}).then(() => {
-					inner();
-				});
-			}, {once: true});
+	function createTagRuleDom(info) {
+		const root = document.createElement("div");
+		root.classList.add(cl_tagRule);
+
+		const valueInput = document.createElement("input");
+		if (info.value) {
+			valueInput.value = info.value;
 		}
+		valueInput.classList.add(cl_value);
+		root.appendChild(valueInput);
+		valueInput.addEventListener("change", (evt) => {
+			const value = evt.target.value;
+			if (value.length < 2) return;
+
+			const arr = value.split("=");
+			if (!arr || arr.length !== 2) {
+				evt.target.value = "";
+				return;
+			}
+			info.tag = arr[0].trim();
+			info.links = arr[1].split(",").map(a => a.trim());
+			info.value = value;
+			console.log("info:", info, g_tagRules);
+			updateTagRules();
+		});
+		valueInput.addEventListener("keydown", (evt) => {
+			if (evt.key === "Enter") {
+				valueInput.blur();
+			}
+		});
+
+		const deleteBtn = document.createElement("button");
+		deleteBtn.innerHTML = "&times;";
+		deleteBtn.classList.add(cl_deleteBtn);
+		root.appendChild(deleteBtn);
+		deleteBtn.addEventListener("click", () => {
+			const i = g_tagRules.findIndex(a => a === info);
+			if (i !== -1) {
+				g_tagRules.splice(i, 1);
+			}
+			updateTagRules();
+			root.remove();
+		});
+
+		el_tagRules.appendChild(root);
 	}
 
-	async function load()
-	{
-		let settings = await ApiUtility.makeRequest({to: "background.js", request: "get-settings"}).catch(U.noop);
-
-		setChecked(settings.enableNativeMessaging, el_appCheckbox);
+	function updateTagRules() {
+		updateSettings({tagRules: g_tagRules});
 	}
 
-	function setChecked(checked, input)
-	{
-		U.addClass(input, cl_noTransition);
-		input.checked = Boolean(checked);
-		input.dispatchEvent(new Event("change"));
-		setTimeout(() => {
-			U.removeClass(input, cl_noTransition);
-		}, 10);
-	}
-
-	function updateSettings(settings)
-	{
-		return ApiUtility.makeRequest({to: "background.js", request: "update-settings", settings: settings});
-	}
-
-	function hasNativeMessaging()
-	{
-		return new Promise((resolve) => {
-			chrome.permissions.contains(NM_PERMISSIONS, resolve);
+	function initThemeRadio() {
+		const inputs = el_themeRadio.querySelectorAll("input");
+		const radio = new Widgets.RadioManager(inputs);
+		radio.select(g_settings.theme);
+		radio.onSelect((input) => {
+			updateSettings({theme: input.value});
 		});
 	}
 
-	function requestNativeMessaging()
-	{
-		return new Promise((resolve) => {
-			chrome.permissions.request(NM_PERMISSIONS, resolve);
-		});
+	function getSettings() {
+		return ApiUtility.makeRequest({ to: "background.js", 
+								 		request: "get-settings" });
+	}
+
+	function updateSettings(settings) {
+		return ApiUtility.makeRequest({ to: "background.js", 
+									    request: "update-settings", 
+									    settings: settings });
 	}
 
 	main();
