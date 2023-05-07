@@ -1,28 +1,47 @@
 {
-  "name": "tagger-plus",
-  "version": "1.0.0",
-  "description": "This is my desktop application and browser extension for saving, bookmarking, and tagging, photos and videos.",
+  "name": "Bookmark Manager",
+  "version": "0.0.0",
+  "description": "A web extension for advanced bookmarking.",
+  "private": true,
   "main": "back_end/js/main.js",
   "scripts": {
-    "start": "electron ."
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode=production --node-env=production",
+    "build:dev": "webpack --mode=development",
+    "build:prod": "webpack --mode=production --node-env=production",
+    "watch": "webpack --watch",
+    "serve": "webpack serve"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tniyer2/tagger-plus.git"
+    "url": "git+https://github.com/tniyer2/bookmark-manager-nodejs.git"
   },
   "author": "Tanishq Iyer",
-  "private": true,
   "bugs": {
-    "url": "https://github.com/tniyer2/tagger-plus/issues"
+    "url": "https://github.com/tniyer2/bookmark-manager-nodejs/issues"
   },
-  "homepage": "https://github.com/tniyer2/tagger-plus#readme",
+  "homepage": "https://github.com/tniyer2/bookmark-manager-nodejs#readme",
   "devDependencies": {
-    "electron": "^4.0.7",
-    "electron-packager": "^13.1.1",
-    "eslint": "^5.15.1"
+    "@babel/core": "^7.20.7",
+    "@babel/preset-env": "^7.20.2",
+    "@webpack-cli/generators": "^3.0.1",
+    "autoprefixer": "^10.4.13",
+    "babel-loader": "^9.1.0",
+    "babel-preset-solid": "^1.6.6",
+    "css-loader": "^6.7.3",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.7.2",
+    "postcss-loader": "^7.0.2",
+    "sass": "^1.57.1",
+    "sass-loader": "^13.2.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
   },
   "dependencies": {
+    "solid-js": "^1.7.4",
     "file-type": "^10.9.0",
-    "parse-data-uri": "^0.2.0"
+    "parse-data-uri": "0.2.0"
   }
 }
