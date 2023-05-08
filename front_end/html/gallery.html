@@ -1,112 +1,111 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Gallery</title>
-    <link rel="stylesheet" type="text/css" href="./css/scrollbar-core.css">
-    <link rel="stylesheet" type="text/css" href="./css/alerts-core.css">
-    <link rel="stylesheet" type="text/css" href="./css/taggle-core.css">
-	<link rel="stylesheet" type="text/css" href="./css/cc-core.css">
-	<link rel="stylesheet" type="text/css" href="./css/gallery-core.css">
-	<link rel="stylesheet" type="text/css" href="./css/feed-core.css">
+  <title>Gallery</title>
+  <link rel="stylesheet" type="text/css" href="./css/scrollbar-core.css">
+  <link rel="stylesheet" type="text/css" href="./css/alerts-core.css">
+  <link rel="stylesheet" type="text/css" href="./css/taggle-core.css">
+  <link rel="stylesheet" type="text/css" href="./css/cc-core.css">
+  <link rel="stylesheet" type="text/css" href="./css/gallery-core.css">
+  <link rel="stylesheet" type="text/css" href="./css/feed-core.css">
 </head>
 <body>
-	<svg style="position:absolute;width:0px;height:0px;">
-     	<defs>
-     		<symbol id="icon-search" viewBox="-0.5 -0.5 32 32">
-     			<title>search</title>
-     			<path d="M14.07 0.04L14.6 0.09L15.11 0.17L15.62 0.26L16.13 0.38L16.62 0.51L17.11 0.66L17.59 0.83L18.06 1.02L18.53 1.23L18.98 1.45L19.42 1.69L19.85 1.95L20.27 2.22L20.68 2.51L21.08 2.81L21.46 3.13L21.84 3.46L22.2 3.81L22.54 4.17L22.88 4.54L23.19 4.92L23.5 5.32L23.78 5.73L24.06 6.15L24.31 6.58L24.55 7.02L24.78 7.48L24.98 7.94L25.17 8.41L25.34 8.89L25.49 9.38L25.63 9.87L25.74 10.38L25.83 10.89L25.91 11.41L25.96 11.93L25.99 12.46L26 13L25.99 13.53L25.96 14.06L25.91 14.59L25.83 15.11L25.74 15.62L25.63 16.12L25.49 16.62L25.34 17.11L25.17 17.59L24.98 18.06L24.78 18.52L24.55 18.97L24.31 19.41L24.06 19.85L23.79 20.25L32 28.46L28.47 32L20.26 23.79L19.85 24.05L19.42 24.31L18.98 24.55L18.53 24.77L18.06 24.98L17.59 25.17L17.11 25.34L16.62 25.49L16.13 25.62L15.62 25.73L15.11 25.83L14.6 25.9L14.07 25.96L13.54 25.99L13 26L12.47 25.99L11.94 25.96L11.41 25.9L10.9 25.83L10.38 25.73L9.88 25.62L9.38 25.49L8.9 25.34L8.42 25.17L7.94 24.98L7.48 24.77L7.03 24.55L6.59 24.31L6.16 24.05L5.74 23.78L5.33 23.49L4.93 23.19L4.54 22.87L4.17 22.54L3.81 22.19L3.47 21.83L3.13 21.46L2.82 21.07L2.51 20.68L2.22 20.27L1.95 19.85L1.7 19.41L1.46 18.97L1.23 18.52L1.03 18.06L0.84 17.59L0.67 17.11L0.52 16.62L0.38 16.12L0.27 15.62L0.17 15.11L0.1 14.59L0.05 14.06L0.02 13.53L0 13L0.02 12.46L0.05 11.93L0.1 11.41L0.17 10.89L0.27 10.38L0.38 9.87L0.52 9.38L0.67 8.89L0.84 8.41L1.03 7.94L1.23 7.48L1.46 7.02L1.7 6.58L1.95 6.15L2.22 5.73L2.51 5.32L2.82 4.92L3.13 4.54L3.47 4.17L3.81 3.81L4.17 3.46L4.54 3.13L4.93 2.81L5.33 2.51L5.74 2.22L6.16 1.95L6.59 1.69L7.03 1.45L7.48 1.23L7.94 1.02L8.42 0.83L8.9 0.66L9.38 0.51L9.88 0.38L10.38 0.26L10.9 0.17L11.41 0.09L11.94 0.04L12.47 0.01L13 0L13.54 0.01L14.07 0.04ZM12.35 5L12.02 5.04L11.7 5.08L11.39 5.14L11.08 5.21L10.77 5.29L10.47 5.39L10.17 5.49L9.88 5.61L9.6 5.73L9.32 5.87L9.05 6.02L8.78 6.18L8.52 6.35L8.27 6.52L8.02 6.71L7.78 6.91L7.55 7.11L7.33 7.33L7.12 7.55L6.91 7.78L6.72 8.02L6.53 8.26L6.35 8.51L6.18 8.77L6.03 9.04L5.88 9.31L5.74 9.59L5.61 9.88L5.5 10.17L5.39 10.46L5.3 10.76L5.22 11.07L5.15 11.38L5.09 11.7L5.04 12.02L5.01 12.34L4.99 12.67L4.98 13L4.99 13.33L5.01 13.66L5.04 13.98L5.09 14.3L5.15 14.61L5.22 14.93L5.3 15.23L5.39 15.53L5.5 15.83L5.61 16.12L5.74 16.41L5.88 16.68L6.03 16.96L6.18 17.22L6.35 17.48L6.53 17.74L6.72 17.98L6.91 18.22L7.12 18.45L7.33 18.67L7.55 18.88L7.78 19.09L8.02 19.28L8.27 19.47L8.52 19.65L8.78 19.82L9.05 19.98L9.32 20.12L9.6 20.26L9.88 20.39L10.17 20.51L10.47 20.61L10.77 20.7L11.08 20.79L11.39 20.86L11.7 20.91L12.02 20.96L12.35 20.99L12.67 21.01L13 21.02L13.34 21.01L13.66 20.99L13.99 20.96L14.31 20.91L14.62 20.86L14.93 20.79L15.24 20.7L15.54 20.61L15.84 20.51L16.13 20.39L16.41 20.26L16.69 20.12L16.96 19.98L17.23 19.82L17.49 19.65L17.74 19.47L17.99 19.28L18.22 19.09L18.45 18.88L18.68 18.67L18.89 18.45L19.09 18.22L19.29 17.98L19.48 17.74L19.66 17.48L19.82 17.22L19.98 16.96L20.13 16.68L20.27 16.41L20.4 16.12L20.51 15.83L20.62 15.53L20.71 15.23L20.79 14.93L20.86 14.61L20.92 14.3L20.97 13.98L21 13.66L21.02 13.33L21.03 13L21.02 12.67L21 12.34L20.97 12.02L20.92 11.7L20.86 11.38L20.79 11.07L20.71 10.76L20.62 10.46L20.51 10.17L20.4 9.88L20.27 9.59L20.13 9.31L19.98 9.04L19.82 8.77L19.66 8.51L19.48 8.26L19.29 8.02L19.09 7.78L18.89 7.55L18.68 7.33L18.45 7.11L18.22 6.91L17.99 6.71L17.74 6.52L17.49 6.35L17.23 6.18L16.96 6.02L16.69 5.87L16.41 5.73L16.13 5.61L15.84 5.49L15.54 5.39L15.24 5.29L14.93 5.21L14.62 5.14L14.31 5.08L13.99 5.04L13.66 5L13.34 4.98L13 4.98L12.67 4.98L12.35 5Z"></path>
-     		</symbol>
-     		<symbol id="icon-title" viewBox="0 0 32 32">
-     			<title>search by title</title>
-     			<text xml:space="preserve" text-anchor="middle" font-family="serif" font-weight="bold" font-size="44" y="32" x="16">T</text>
-     		</symbol>
-     		<symbol id="icon-tag" viewBox="0 0 32 32">
-     			<title>search by tag</title>
-     			<path d="M30.5 0h-12c-0.825 0-1.977 0.477-2.561 1.061l-14.879 14.879c-0.583 0.583-0.583 1.538 0 2.121l12.879 12.879c0.583 0.583 1.538 0.583 2.121 0l14.879-14.879c0.583-0.583 1.061-1.736 1.061-2.561v-12c0-0.825-0.675-1.5-1.5-1.5zM23 12c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"></path>
-     		</symbol>
-     		<symbol id="icon-save" viewBox="0 0 32 32">
-              <title>save content</title>
-              <path d="M31 12h-11v-11c0-0.552-0.448-1-1-1h-6c-0.552 0-1 0.448-1 1v11h-11c-0.552 0-1 0.448-1 1v6c0 0.552 0.448 1 1 1h11v11c0 0.552 0.448 1 1 1h6c0.552 0 1-0.448 1-1v-11h11c0.552 0 1-0.448 1-1v-6c0-0.552-0.448-1-1-1z"></path>
-          	</symbol>
-     		<symbol id="icon-settings" viewBox="0 0 32 32">
-     			<title>settings</title>
-     			<path d="M29.181 19.070c-1.679-2.908-0.669-6.634 2.255-8.328l-3.145-5.447c-0.898 0.527-1.943 0.829-3.058 0.829-3.361 0-6.085-2.742-6.085-6.125h-6.289c0.008 1.044-0.252 2.103-0.811 3.070-1.679 2.908-5.411 3.897-8.339 2.211l-3.144 5.447c0.905 0.515 1.689 1.268 2.246 2.234 1.676 2.903 0.672 6.623-2.241 8.319l3.145 5.447c0.895-0.522 1.935-0.82 3.044-0.82 3.35 0 6.067 2.725 6.084 6.092h6.289c-0.003-1.034 0.259-2.080 0.811-3.038 1.676-2.903 5.399-3.894 8.325-2.219l3.145-5.447c-0.899-0.515-1.678-1.266-2.232-2.226zM16 22.479c-3.578 0-6.479-2.901-6.479-6.479s2.901-6.479 6.479-6.479c3.578 0 6.479 2.901 6.479 6.479s-2.901 6.479-6.479 6.479z"></path>
-     		</symbol>
-     	</defs>
-     </svg>
-    <iframe id="popup" src="" class="noshow popup"></iframe>
-	<div class="menubar">
-		<form id="search" class="search">
-			<input type="text" style="display:none;">
-			<div class="search__row1">
-				<div class="search__search-box-wrapper">
-					<div id="search-box" class="search__search-box">
-						<input id="title-input" maxlength="100" type="text" placeholder="search title..." class="noshow search__title-input">
-						<div id="tag-container" class="noshow search__tag-container">
-						</div>
-						<button id="searchby-btn" class="search__searchby-btn" type="button"></button>
-						<div id="searchby" class="search__searchby">
-							<svg class="noshow">
-								<use href="#icon-title"/>
-							</svg>
-							<svg class="noshow">
-								<use href="#icon-tag"/>
-							</svg>
-						</div>
-					</div>
-				</div>
-				<button id="submit" class="search__submit" type="button">
-					<svg class="search__svg">
-						<use href="#icon-search"/>
-					</svg>
-				</button>
-			</div>
-			<div class="search__row2">
-				<div class="search__dropdown search__date">
-					<p>from</p>
-					<select id="date">
-						<option value="">All time</option>
-						<option value="1">Last 24 hours</option>
-						<option value="7">Last 7 days</option>
-						<option value="28">Last 4 weeks</option>
-					</select>
-				</div>
-				<div class="search__dropdown search__category">
-					<p>include</p>
-					<select id="category">
-						<option value=''>All</option>
-						<option value='*image+*video+*youtube'>Images and videos</option>
-						<option value='bookmark'>Bookmarks</option>
-						<option value='image'>Images</option>
-						<option value='*video+*youtube'>Videos</option>
-					</select>
-				</div>
-				<div class="search__dropdown search__sortby">
-					<p>sort by</p>
-					<select id="sortby">
-						<option value='!date'>New</option>
-						<option value='date'>Old</option>
-					</select>
-				</div>
-			</div>
-		</form>
-		<div class="menubar-right">
-			<button id="save-btn" class="menubar-right__save-btn">
-				<svg class="menubar-right__svg search__svg">
-					<use href="#icon-save"/>
-				</svg>
-			</button>
-			<a href="settings.html" target="_blank" class="settings-link">
-				<svg class="menubar-right__svg search__svg">
-					<use href="#icon-settings"/>
-				</svg>
-			</a>
-		</div>
-	</div>
-	<div id="feed" class="feed">
-		<p id="feed-message" class="noshow feed-message"></p>
-	</div>
-	<script type="text/javascript" src="./taggle.js"></script>
+  <svg style="position:absolute;width:0px;height:0px;">
+    <defs>
+      <symbol id="icon-search" viewBox="-0.5 -0.5 32 32">
+        <title>search</title>
+        <path d="M14.07 0.04L14.6 0.09L15.11 0.17L15.62 0.26L16.13 0.38L16.62 0.51L17.11 0.66L17.59 0.83L18.06 1.02L18.53 1.23L18.98 1.45L19.42 1.69L19.85 1.95L20.27 2.22L20.68 2.51L21.08 2.81L21.46 3.13L21.84 3.46L22.2 3.81L22.54 4.17L22.88 4.54L23.19 4.92L23.5 5.32L23.78 5.73L24.06 6.15L24.31 6.58L24.55 7.02L24.78 7.48L24.98 7.94L25.17 8.41L25.34 8.89L25.49 9.38L25.63 9.87L25.74 10.38L25.83 10.89L25.91 11.41L25.96 11.93L25.99 12.46L26 13L25.99 13.53L25.96 14.06L25.91 14.59L25.83 15.11L25.74 15.62L25.63 16.12L25.49 16.62L25.34 17.11L25.17 17.59L24.98 18.06L24.78 18.52L24.55 18.97L24.31 19.41L24.06 19.85L23.79 20.25L32 28.46L28.47 32L20.26 23.79L19.85 24.05L19.42 24.31L18.98 24.55L18.53 24.77L18.06 24.98L17.59 25.17L17.11 25.34L16.62 25.49L16.13 25.62L15.62 25.73L15.11 25.83L14.6 25.9L14.07 25.96L13.54 25.99L13 26L12.47 25.99L11.94 25.96L11.41 25.9L10.9 25.83L10.38 25.73L9.88 25.62L9.38 25.49L8.9 25.34L8.42 25.17L7.94 24.98L7.48 24.77L7.03 24.55L6.59 24.31L6.16 24.05L5.74 23.78L5.33 23.49L4.93 23.19L4.54 22.87L4.17 22.54L3.81 22.19L3.47 21.83L3.13 21.46L2.82 21.07L2.51 20.68L2.22 20.27L1.95 19.85L1.7 19.41L1.46 18.97L1.23 18.52L1.03 18.06L0.84 17.59L0.67 17.11L0.52 16.62L0.38 16.12L0.27 15.62L0.17 15.11L0.1 14.59L0.05 14.06L0.02 13.53L0 13L0.02 12.46L0.05 11.93L0.1 11.41L0.17 10.89L0.27 10.38L0.38 9.87L0.52 9.38L0.67 8.89L0.84 8.41L1.03 7.94L1.23 7.48L1.46 7.02L1.7 6.58L1.95 6.15L2.22 5.73L2.51 5.32L2.82 4.92L3.13 4.54L3.47 4.17L3.81 3.81L4.17 3.46L4.54 3.13L4.93 2.81L5.33 2.51L5.74 2.22L6.16 1.95L6.59 1.69L7.03 1.45L7.48 1.23L7.94 1.02L8.42 0.83L8.9 0.66L9.38 0.51L9.88 0.38L10.38 0.26L10.9 0.17L11.41 0.09L11.94 0.04L12.47 0.01L13 0L13.54 0.01L14.07 0.04ZM12.35 5L12.02 5.04L11.7 5.08L11.39 5.14L11.08 5.21L10.77 5.29L10.47 5.39L10.17 5.49L9.88 5.61L9.6 5.73L9.32 5.87L9.05 6.02L8.78 6.18L8.52 6.35L8.27 6.52L8.02 6.71L7.78 6.91L7.55 7.11L7.33 7.33L7.12 7.55L6.91 7.78L6.72 8.02L6.53 8.26L6.35 8.51L6.18 8.77L6.03 9.04L5.88 9.31L5.74 9.59L5.61 9.88L5.5 10.17L5.39 10.46L5.3 10.76L5.22 11.07L5.15 11.38L5.09 11.7L5.04 12.02L5.01 12.34L4.99 12.67L4.98 13L4.99 13.33L5.01 13.66L5.04 13.98L5.09 14.3L5.15 14.61L5.22 14.93L5.3 15.23L5.39 15.53L5.5 15.83L5.61 16.12L5.74 16.41L5.88 16.68L6.03 16.96L6.18 17.22L6.35 17.48L6.53 17.74L6.72 17.98L6.91 18.22L7.12 18.45L7.33 18.67L7.55 18.88L7.78 19.09L8.02 19.28L8.27 19.47L8.52 19.65L8.78 19.82L9.05 19.98L9.32 20.12L9.6 20.26L9.88 20.39L10.17 20.51L10.47 20.61L10.77 20.7L11.08 20.79L11.39 20.86L11.7 20.91L12.02 20.96L12.35 20.99L12.67 21.01L13 21.02L13.34 21.01L13.66 20.99L13.99 20.96L14.31 20.91L14.62 20.86L14.93 20.79L15.24 20.7L15.54 20.61L15.84 20.51L16.13 20.39L16.41 20.26L16.69 20.12L16.96 19.98L17.23 19.82L17.49 19.65L17.74 19.47L17.99 19.28L18.22 19.09L18.45 18.88L18.68 18.67L18.89 18.45L19.09 18.22L19.29 17.98L19.48 17.74L19.66 17.48L19.82 17.22L19.98 16.96L20.13 16.68L20.27 16.41L20.4 16.12L20.51 15.83L20.62 15.53L20.71 15.23L20.79 14.93L20.86 14.61L20.92 14.3L20.97 13.98L21 13.66L21.02 13.33L21.03 13L21.02 12.67L21 12.34L20.97 12.02L20.92 11.7L20.86 11.38L20.79 11.07L20.71 10.76L20.62 10.46L20.51 10.17L20.4 9.88L20.27 9.59L20.13 9.31L19.98 9.04L19.82 8.77L19.66 8.51L19.48 8.26L19.29 8.02L19.09 7.78L18.89 7.55L18.68 7.33L18.45 7.11L18.22 6.91L17.99 6.71L17.74 6.52L17.49 6.35L17.23 6.18L16.96 6.02L16.69 5.87L16.41 5.73L16.13 5.61L15.84 5.49L15.54 5.39L15.24 5.29L14.93 5.21L14.62 5.14L14.31 5.08L13.99 5.04L13.66 5L13.34 4.98L13 4.98L12.67 4.98L12.35 5Z"></path>
+      </symbol>
+      <symbol id="icon-title" viewBox="0 0 32 32">
+        <title>search by title</title>
+        <text xml:space="preserve" text-anchor="middle" font-family="serif" font-weight="bold" font-size="44" y="32" x="16">T</text>
+      </symbol>
+      <symbol id="icon-tag" viewBox="0 0 32 32">
+        <title>search by tag</title>
+        <path d="M30.5 0h-12c-0.825 0-1.977 0.477-2.561 1.061l-14.879 14.879c-0.583 0.583-0.583 1.538 0 2.121l12.879 12.879c0.583 0.583 1.538 0.583 2.121 0l14.879-14.879c0.583-0.583 1.061-1.736 1.061-2.561v-12c0-0.825-0.675-1.5-1.5-1.5zM23 12c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"></path>
+      </symbol>
+      <symbol id="icon-save" viewBox="0 0 32 32">
+        <title>save content</title>
+        <path d="M31 12h-11v-11c0-0.552-0.448-1-1-1h-6c-0.552 0-1 0.448-1 1v11h-11c-0.552 0-1 0.448-1 1v6c0 0.552 0.448 1 1 1h11v11c0 0.552 0.448 1 1 1h6c0.552 0 1-0.448 1-1v-11h11c0.552 0 1-0.448 1-1v-6c0-0.552-0.448-1-1-1z"></path>
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 32 32">
+        <title>settings</title>
+        <path d="M29.181 19.070c-1.679-2.908-0.669-6.634 2.255-8.328l-3.145-5.447c-0.898 0.527-1.943 0.829-3.058 0.829-3.361 0-6.085-2.742-6.085-6.125h-6.289c0.008 1.044-0.252 2.103-0.811 3.070-1.679 2.908-5.411 3.897-8.339 2.211l-3.144 5.447c0.905 0.515 1.689 1.268 2.246 2.234 1.676 2.903 0.672 6.623-2.241 8.319l3.145 5.447c0.895-0.522 1.935-0.82 3.044-0.82 3.35 0 6.067 2.725 6.084 6.092h6.289c-0.003-1.034 0.259-2.080 0.811-3.038 1.676-2.903 5.399-3.894 8.325-2.219l3.145-5.447c-0.899-0.515-1.678-1.266-2.232-2.226zM16 22.479c-3.578 0-6.479-2.901-6.479-6.479s2.901-6.479 6.479-6.479c3.578 0 6.479 2.901 6.479 6.479s-2.901 6.479-6.479 6.479z"></path>
+      </symbol>
+    </defs>
+  </svg>
+  <iframe id="popup" src="" class="noshow popup"></iframe>
+  <div class="menubar">
+    <form id="search" class="search">
+      <input type="text" style="display:none;">
+      <div class="search__row1">
+        <div class="search__search-box-wrapper">
+          <div id="search-box" class="search__search-box">
+            <input id="title-input" maxlength="100" type="text" placeholder="search title..." class="noshow search__title-input">
+            <div id="tag-container" class="noshow search__tag-container">
+            </div>
+            <button id="searchby-btn" class="search__searchby-btn" type="button"></button>
+            <div id="searchby" class="search__searchby">
+              <svg class="noshow">
+                <use href="#icon-title"/>
+              </svg>
+              <svg class="noshow">
+                <use href="#icon-tag"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <button id="submit" class="search__submit" type="button">
+          <svg class="search__svg">
+            <use href="#icon-search"/>
+          </svg>
+        </button>
+      </div>
+      <div class="search__row2">
+        <div class="search__dropdown search__date">
+          <p>from</p>
+          <select id="date">
+            <option value="">All time</option>
+            <option value="1">Last 24 hours</option>
+            <option value="7">Last 7 days</option>
+            <option value="28">Last 4 weeks</option>
+          </select>
+        </div>
+        <div class="search__dropdown search__category">
+          <p>include</p>
+          <select id="category">
+            <option value="">All</option>
+            <option value="*image+*video+*youtube">Images and videos</option>
+            <option value="bookmark">Bookmarks</option>
+            <option value="image">Images</option>
+            <option value="*video+*youtube">Videos</option>
+          </select>
+        </div>
+        <div class="search__dropdown search__sortby">
+          <p>sort by</p>
+          <select id="sortby">
+            <option value="!date">New</option>
+            <option value="date">Old</option>
+          </select>
+        </div>
+      </div>
+    </form>
+    <div class="menubar-right">
+      <button id="save-btn" class="menubar-right__save-btn">
+        <svg class="menubar-right__svg search__svg">
+          <use href="#icon-save"/>
+        </svg>
+      </button>
+      <a href="settings.html" target="_blank" class="settings-link">
+        <svg class="menubar-right__svg search__svg">
+          <use href="#icon-settings"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div id="feed" class="feed">
+    <p id="feed-message" class="noshow feed-message"></p>
+  </div>
+  <script type="text/javascript" src="./taggle.js"></script>
 </body>
 </html>

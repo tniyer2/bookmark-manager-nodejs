@@ -1,88 +1,88 @@
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <link rel="stylesheet" type="text/css" href="./css/scrollbar-core.css">
-      <link rel="stylesheet" type="text/css" href="./css/alerts-core.css">
-      <link rel="stylesheet" type="text/css" href="./css/taggle-core.css">
-      <link rel="stylesheet" type="text/css" href="./css/popup-core.css">
-    </head>
-    <body>
-      <svg style="position:absolute;width:0px;height:0px;">
-        <defs>
-          <symbol id="icon-save" viewBox="0 0 32 32">
-            <title>save content</title>
-              <path d="M31 12h-11v-11c0-0.552-0.448-1-1-1h-6c-0.552 0-1 0.448-1 1v11h-11c-0.552 0-1 0.448-1 1v6c0 0.552 0.448 1 1 1h11v11c0 0.552 0.448 1 1 1h6c0.552 0 1-0.448 1-1v-11h11c0.552 0 1-0.448 1-1v-6c0-0.552-0.448-1-1-1z"></path>
-          </symbol>
-          <symbol id="icon-bookmark" viewBox="0 0 32 32">
-            <title>bookmark webpage</title>
-            <path d="M6 0v32l10-10 10 10v-32z"></path>
-          </symbol>
-          <symbol id="icon-link" viewBox="14 4 4 22">
-            <title>link</title>
-            <path d="m0,7c0,-1.086758 0.913242,-2 2,-2l28,0c1.086758,0 2,0.913242 2,2l0,17c0,1.086758 -0.913242,2 -2,2l-28,0c-1.086758,0 -2,-0.913242 -2,-2l0,-17z"/>
-            <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="10" y="19" x="4" fill="#fff">LINK</text>
-          </symbol>
-          <symbol id="icon-download" viewBox="0 0 32 32">
-            <title>download</title>
-            <path d="M16 31l15-15h-9v-16h-12v16h-9z"></path>
-          </symbol>
-          <linearGradient id="gradient-light1" gradientTransform="rotate(90)">
-            <stop offset="20%"  stop-color="#b5b5b5" />
-            <stop offset="80%"  stop-color="#a3a3a3" />
-          </linearGradient>
-          <linearGradient id="gradient-light2" gradientTransform="rotate(90)">
-            <stop offset="20%"  stop-color="#e50000" />
-            <stop offset="80%"  stop-color="#d10000" />
-          </linearGradient>
-          <linearGradient id="gradient-light3" gradientTransform="rotate(90)">
-            <stop offset="20%"  stop-color="#0070e0" />
-            <stop offset="80%"  stop-color="#0062c4" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div id="root" class="root">
-        <p id="error-message" class="noshow error-message"></p>
-        <div id="sizer" class="sizer noshow"></div>
-        <div id="save-menu" class="save-menu noshow">
-          <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
-          <div class="noshow save-menu__input-box awesomeShadow">
-            <input tabindex="0" id="url-input" class="save-menu__input" type="text" placeholder="url...">
-          </div>
-          <div id="radio-box" class="noshow save-menu__category">
-            <label id="category-image" class="save-menu__category-image">
-              <input type="radio" name="category" value="image" checked/>
-              <span class="shape"></span>
-              <span class="text">Image</span>
-            </label>
-            <label id="category-video" class="save-menu__category-video">
-              <input type="radio" name="category" value="video"/>
-              <span class="shape"></span>
-              <span class="text">Video</span>
-            </label>
-          </div>
-          <div class="save-menu__input-box awesomeShadow">
-            <input tabindex="0" id="title-input" class="save-menu__input" type="text" maxlength="100" placeholder="title...">
-          </div>
-          <div id="tag-container-wrapper" class="save-menu__tag-container-wrapper">
-            <div id="tag-container" class="save-menu__tag-container awesomeShadow"></div>
-          </div>
-          <div class="save-menu__button-area">
-            <btn id="save-btn" class="save-menu__save-btn noshow">
-              <svg class="save-menu__save-svg">
-                  <use href="#icon-save"></use>
-              </svg>
-            </btn>
-            <btn id="bookmark-btn" class="save-menu__bookmark-btn noshow">
-              <svg class="save-menu__bookmark-svg">
-                  <use href="#icon-bookmark"></use>
-              </svg>
-            </btn>
-          </div>
-          <div tabindex="0" id="focus-guard-end" class="focus-guard"></div>
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="./css/scrollbar-core.css">
+    <link rel="stylesheet" type="text/css" href="./css/alerts-core.css">
+    <link rel="stylesheet" type="text/css" href="./css/taggle-core.css">
+    <link rel="stylesheet" type="text/css" href="./css/popup-core.css">
+  </head>
+  <body>
+    <svg style="position:absolute;width:0px;height:0px;">
+      <defs>
+        <symbol id="icon-save" viewBox="0 0 32 32">
+          <title>save content</title>
+          <path d="M31 12h-11v-11c0-0.552-0.448-1-1-1h-6c-0.552 0-1 0.448-1 1v11h-11c-0.552 0-1 0.448-1 1v6c0 0.552 0.448 1 1 1h11v11c0 0.552 0.448 1 1 1h6c0.552 0 1-0.448 1-1v-11h11c0.552 0 1-0.448 1-1v-6c0-0.552-0.448-1-1-1z"></path>
+        </symbol>
+        <symbol id="icon-bookmark" viewBox="0 0 32 32">
+          <title>bookmark webpage</title>
+          <path d="M6 0v32l10-10 10 10v-32z"></path>
+        </symbol>
+        <symbol id="icon-link" viewBox="14 4 4 22">
+          <title>link</title>
+          <path d="m0,7c0,-1.086758 0.913242,-2 2,-2l28,0c1.086758,0 2,0.913242 2,2l0,17c0,1.086758 -0.913242,2 -2,2l-28,0c-1.086758,0 -2,-0.913242 -2,-2l0,-17z"/>
+          <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="10" y="19" x="4" fill="#fff">LINK</text>
+        </symbol>
+        <symbol id="icon-download" viewBox="0 0 32 32">
+          <title>download</title>
+          <path d="M16 31l15-15h-9v-16h-12v16h-9z"></path>
+        </symbol>
+        <linearGradient id="gradient-light1" gradientTransform="rotate(90)">
+          <stop offset="20%"  stop-color="#b5b5b5" />
+          <stop offset="80%"  stop-color="#a3a3a3" />
+        </linearGradient>
+        <linearGradient id="gradient-light2" gradientTransform="rotate(90)">
+          <stop offset="20%"  stop-color="#e50000" />
+          <stop offset="80%"  stop-color="#d10000" />
+        </linearGradient>
+        <linearGradient id="gradient-light3" gradientTransform="rotate(90)">
+          <stop offset="20%"  stop-color="#0070e0" />
+          <stop offset="80%"  stop-color="#0062c4" />
+        </linearGradient>
+      </defs>
+    </svg>
+    <div id="root" class="root">
+      <p id="error-message" class="noshow error-message"></p>
+      <div id="sizer" class="sizer noshow"></div>
+      <div id="save-menu" class="save-menu noshow">
+        <div tabindex="-1" id="focus-guard-start" class="focus-guard"></div>
+        <div class="noshow save-menu__input-box awesomeShadow">
+          <input tabindex="0" id="url-input" class="save-menu__input" type="text" placeholder="url...">
         </div>
-        <div id="source-menu" class="source-menu noshow">
+        <div id="radio-box" class="noshow save-menu__category">
+          <label id="category-image" class="save-menu__category-image">
+            <input type="radio" name="category" value="image" checked/>
+            <span class="shape"></span>
+            <span class="text">Image</span>
+          </label>
+          <label id="category-video" class="save-menu__category-video">
+            <input type="radio" name="category" value="video"/>
+            <span class="shape"></span>
+            <span class="text">Video</span>
+          </label>
         </div>
+        <div class="save-menu__input-box awesomeShadow">
+          <input tabindex="0" id="title-input" class="save-menu__input" type="text" maxlength="100" placeholder="title...">
+        </div>
+        <div id="tag-container-wrapper" class="save-menu__tag-container-wrapper">
+          <div id="tag-container" class="save-menu__tag-container awesomeShadow"></div>
+        </div>
+        <div class="save-menu__button-area">
+          <btn id="save-btn" class="save-menu__save-btn noshow">
+            <svg class="save-menu__save-svg">
+              <use href="#icon-save"></use>
+            </svg>
+          </btn>
+          <btn id="bookmark-btn" class="save-menu__bookmark-btn noshow">
+            <svg class="save-menu__bookmark-svg">
+              <use href="#icon-bookmark"></use>
+            </svg>
+          </btn>
+        </div>
+        <div tabindex="0" id="focus-guard-end" class="focus-guard"></div>
       </div>
-      <script type="text/javascript" src="./taggle.js"></script>
-    </body>
-  </html>
+      <div id="source-menu" class="source-menu noshow">
+      </div>
+    </div>
+    <script type="text/javascript" src="./taggle.js"></script>
+  </body>
+</html>
