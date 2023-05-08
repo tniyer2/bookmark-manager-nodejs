@@ -56,7 +56,7 @@ $feed-message-font-size: 32px;
 	height: 300px; }
 .content__info-block {
 	display: flex;
-	padding: ($content-padding / 2) 0; }
+	padding: calc($content-padding / 2) 0; }
 .content__title {
 	flex-grow: 1;
 	width: 0;
