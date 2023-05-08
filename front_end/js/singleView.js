@@ -1,5 +1,10 @@
 
-this.formatDate = (function(){
+import { getParams, injectThemeCss, noop, isUdf, addClass, removeClass, wrap, bindWrap, joinCallbacks } from "./utility.js";
+import { getURL, getCssDir, makeRequest } from "./apiUtility.js";
+import { AwesomeAlerter, ContentCreator } from "./widgets.js";
+import { createTaggle, createAutoComplete } from "./myTaggle.js";
+
+const formatDate = (function(){
 	const SECOND = 1000;
 	const MINUTE = 60 * SECOND;
 	const HOUR = 60 * MINUTE;
@@ -63,7 +68,7 @@ this.formatDate = (function(){
 		  cl_active = "active", 
 		  cl_noTags = "empty";
 
-	const GALLERY_URL = ApiUtility.getURL("html/gallery.html");
+	const GALLERY_URL = getURL("./gallery.html");
 
 	const el_errorMessage = document.getElementById("error-message");
 
@@ -92,50 +97,50 @@ this.formatDate = (function(){
 
 	function main()
 	{
-		const params = U.getParams();
+		const params = getParams();
 		g_contentId = params.get("id");
 		const theme = params.get("theme") || "light";
-		U.injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, ApiUtility.cssDir);
+		injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, getCssDir());
 
-		g_alerter = new Widgets.AwesomeAlerter();
+		g_alerter = new AwesomeAlerter();
 		document.body.appendChild(g_alerter.alertList);
 
-		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
+		g_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 		styleOnEmptyTaggle(g_taggle);
 
-		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
+		g_contentCreator = new ContentCreator(CONTENT_CREATOR_OPTIONS);
 
 		load();
 	}
 
 	async function load()
 	{
-		let info = await requestContent().catch(U.noop);
-		if (U.isUdf(info)) return;
+		let info = await requestContent().catch(noop);
+		if (isUdf(info)) return;
 
 		console.log("info:", info);
 		createContent(info);
 		attachDelete();
 		attachUpdate();
 
-		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
+		let tags = await makeRequest({request: "get-tags", to: "background.js"})
 		.catch((err) => {
 			console.warn("error loading tags:", err);
 		});
 		if (!tags) return;
 
-		MyTaggle.createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
+		createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
 	}
 
 	function setErrorMessage(message)
 	{
 		el_errorMessage.innerText = message;
-		U.removeClass(el_errorMessage, cl_hide);
+		removeClass(el_errorMessage, cl_hide);
 	}
 
 	function requestContent()
 	{
-		return ApiUtility.makeRequest({request: "find-content", id: g_contentId, to: "background.js"})
+		return makeRequest({request: "find-content", id: g_contentId, to: "background.js"})
 		.catch((err) => {
 			console.warn("error loading content:", err);
 			setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
@@ -169,7 +174,7 @@ this.formatDate = (function(){
 			attachDelete();
 		}
 
-		return ApiUtility.makeRequest({request: "delete-content", id: g_contentId, to: "background.js"})
+		return makeRequest({request: "delete-content", id: g_contentId, to: "background.js"})
 		.then((response) => {
 			if (response.success)
 			{
@@ -204,7 +209,7 @@ this.formatDate = (function(){
 						info: info,
 						to: "background.js" };
 
-		return ApiUtility.makeRequest(message).then((response) => {
+		return makeRequest(message).then((response) => {
 			if (response.success)
 			{
 				g_alerter.alert(successMessage);
@@ -222,7 +227,7 @@ this.formatDate = (function(){
 
 	async function createContent(info)
 	{
-		U.bindWrap(g_contentCreator.load, g_contentCreator, info).then((elm) => {
+		bindWrap(g_contentCreator.load, g_contentCreator, info).then((elm) => {
 			el_contentBlock.prepend(elm);
 		}).catch((err) => {
 			if (err)
@@ -235,19 +240,19 @@ this.formatDate = (function(){
 
 		if (info.category === "bookmark")
 		{
-			U.addClass(el_sourceLink.parentElement, cl_hide);
+			addClass(el_sourceLink.parentElement, cl_hide);
 			enableImageSelect(info);
 		}
 
 		el_titleInput.value = info.title;
-		U.removeClass(el_titleInput, cl_hide);
+		removeClass(el_titleInput, cl_hide);
 
 		for (let i = 0, l = info.tags.length; i < l; i+=1)
 		{
 			g_taggle.add(info.tags[i]);
 		}
-		U.removeClass(el_tagContainer, cl_active);
-		U.removeClass(el_tagContainer, cl_hide);
+		removeClass(el_tagContainer, cl_active);
+		removeClass(el_tagContainer, cl_hide);
 
 		let formattedCategory = formatCategory(info.category);
 		let categoryTextNode = document.createTextNode(formattedCategory);
@@ -261,10 +266,10 @@ this.formatDate = (function(){
 		if (info.docUrl)
 		{
 			el_sourceLink.href = info.docUrl;
-			U.removeClass(el_sourceLink.parentElement, cl_hide);
+			removeClass(el_sourceLink.parentElement, cl_hide);
 		}
 
-		U.removeClass(el_infoBlock, cl_hide);
+		removeClass(el_infoBlock, cl_hide);
 	}
 
 	function enableImageSelect(info)
@@ -274,12 +279,12 @@ this.formatDate = (function(){
 
 		let p = el_chooseImage.querySelector("p"); 
 		p.innerText = info.srcUrl ? action2 : action1;
-		U.removeClass(el_chooseImage, cl_hide);
+		removeClass(el_chooseImage, cl_hide);
 
 		el_fileUpload.addEventListener("change", () => {
 			let imageUrl = URL.createObjectURL(el_fileUpload.files[0]);
 
-			U.wrap(getDataUri, imageUrl).then((uri) => {
+			wrap(getDataUri, imageUrl).then((uri) => {
 				p.innerText = action2;
 				el_contentBlock.querySelector("img").src = uri;
 				requestUpdate({srcUrl: uri}, 
@@ -328,17 +333,17 @@ this.formatDate = (function(){
 			let container = taggle.getContainer();
 			if (taggle.getTags().values.length)
 			{
-				U.removeClass(container, cl_noTags);
+				removeClass(container, cl_noTags);
 			}
 			else
 			{
-				U.addClass(container, cl_noTags);
+				addClass(container, cl_noTags);
 			}
 		}
 
 		inner();
-		let add = U.joinCallbacks(taggle.settings.onTagAdd, inner);
-		let remove = U.joinCallbacks(taggle.settings.onTagRemove, inner);
+		let add = joinCallbacks(taggle.settings.onTagAdd, inner);
+		let remove = joinCallbacks(taggle.settings.onTagRemove, inner);
 		taggle.setOptions({onTagAdd: add, onTagRemove: remove});
 	}
 

@@ -1,5 +1,14 @@
 
-this.DataManager = new (function(){
+import { wrap, extend, isUdf } from "./utility.js";
+import {
+	getLocalData, getLastError, setLocalData
+} from "./apiUtility.js";
+import {
+	TagCounter, getRandomString, searchId
+} from "./metaUtility.js";
+
+
+const DataManager = new (function(){
 	const TAG_KEY = "tags";
 	const ID_LENGTH = 40;
 
@@ -9,10 +18,10 @@ this.DataManager = new (function(){
 	// resolves data, rejects undefined
 	this.getKeyWrapper = function(keys) {
 		return new Promise((resolve, reject) => {
-			ApiUtility.getLocalData(keys, (data) => {
-				if (ApiUtility.lastError)
+			getLocalData(keys, (data) => {
+				if (getLastError())
 				{
-					console.warn(ApiUtility.lastError.message);
+					console.warn(getLastError().message);
 					reject();
 				}
 				else
@@ -26,10 +35,10 @@ this.DataManager = new (function(){
 	// resolves undefined, rejects {memoryError: true}
 	this.setKeyWrapper = function(data) {
 		return new Promise((resolve, reject) => {
-			ApiUtility.setLocalData(data, () => {
-				if (ApiUtility.lastError)
+			setLocalData(data, () => {
+				if (getLastError())
 				{
-					console.warn(ApiUtility.lastError.message);
+					console.warn(getLastError().message);
 					reject({memoryError: true});
 				}
 				else
@@ -48,7 +57,7 @@ this.DataManager = new (function(){
 			}
 			else
 			{
-				U.wrap(load).then((meta) => {
+				wrap(load).then((meta) => {
 					instance = new Inner(meta);
 					resolve(instance);
 				}).catch(reject);
@@ -59,7 +68,7 @@ this.DataManager = new (function(){
 	class Inner {
 		constructor(meta)
 		{
-			this._tagTracker = new MetaUtility.TagCounter();
+			this._tagTracker = new TagCounter();
 
 			meta.forEach((content) => {
 				this._tagTracker.increment(content[TAG_KEY]);
@@ -89,10 +98,10 @@ this.DataManager = new (function(){
 
 		addContent(content, cb, onErr)
 		{
-			content.id = MetaUtility.getRandomString(ID_LENGTH);
+			content.id = getRandomString(ID_LENGTH);
 			this._meta.push(content);
 
-			U.wrap(save, this._meta).then(() => {
+			wrap(save, this._meta).then(() => {
 				this._tagTracker.increment(content[TAG_KEY]);
 				cb(this._successResponse);
 			}).catch((err) => {
@@ -103,12 +112,12 @@ this.DataManager = new (function(){
 
 		deleteContent(contentId, params, cb, onErr)
 		{
-			let {content, index} = MetaUtility.searchId(this._meta, contentId);
+			let {content, index} = searchId(this._meta, contentId);
 			if (content)
 			{
 				this._meta.splice(index, 1);
 
-				U.wrap(save, this._meta).then(() => {
+				wrap(save, this._meta).then(() => {
 					this._tagTracker.decrement(content[TAG_KEY]);
 					cb(this._successResponse);
 				}).catch((err) => {
@@ -124,7 +133,7 @@ this.DataManager = new (function(){
 
 		findContent(contentId, params, cb, onErr)
 		{
-			let {content} = MetaUtility.searchId(this._meta, contentId);
+			let {content} = searchId(this._meta, contentId);
 			if (content)
 			{
 				cb({content: content});
@@ -138,14 +147,14 @@ this.DataManager = new (function(){
 		// @todo find a way to undo update if save fails.
 		updateContent(contentId, params, cb, onErr)
 		{
-			let {content, index} = MetaUtility.searchId(this._meta, contentId);
+			let {content, index} = searchId(this._meta, contentId);
 			if (content)
 			{
 				delete params.info.id;
 
-				this._meta[index] = U.extend(content, params.info);
+				this._meta[index] = extend(content, params.info);
 
-				U.wrap(save, this._meta).then(() => {
+				wrap(save, this._meta).then(() => {
 					if (params.info[TAG_KEY])
 					{
 						this._tagTracker.decrement(content[TAG_KEY]);
@@ -167,7 +176,7 @@ this.DataManager = new (function(){
 	async function load(cb, onErr)
 	{
 		let data = await self.getKeyWrapper("meta").catch(onErr);
-		if (U.isUdf(data)) return;
+		if (isUdf(data)) return;
 
 		let json = data.meta;
 		if (!json)
@@ -194,7 +203,7 @@ this.DataManager = new (function(){
 	}
 })();
 
-this.RequestManager = (function(){
+const RequestManager = (function(){
 	return class {
 		getContent(cb, onErr)
 		{
@@ -239,3 +248,5 @@ this.RequestManager = (function(){
 		}
 	};
 })();
+
+export { DataManager, RequestManager };

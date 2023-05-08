@@ -1,5 +1,5 @@
 
-this.Ratio = (function(){
+const Ratio = (function(){
 	const CASE_WEIGHT = 0.1;
 	const FOUND_AT_END_WEIGHT = 0.3;
 	const FOUND_IN_MIDDLE_WEIGHT = 0.85;
@@ -181,7 +181,7 @@ this.Ratio = (function(){
 	}
 })();
 
-this.Searcher = new (function(){
+const Searcher = new (function(){
 
 	const TITLE_KEY = "title";
 	const TAG_KEY   = "tags";
@@ -528,3 +528,5 @@ this.Searcher = new (function(){
 		return arr.find(o => o === item);
 	}
 })();
+
+export { Ratio, Searcher };

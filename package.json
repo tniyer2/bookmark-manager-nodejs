@@ -21,13 +21,21 @@
     "url": "https://github.com/tniyer2/bookmark-manager-nodejs/issues"
   },
   "homepage": "https://github.com/tniyer2/bookmark-manager-nodejs#readme",
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ]
+  },
   "devDependencies": {
     "@babel/core": "^7.20.7",
     "@babel/preset-env": "^7.20.2",
+    "@babel/preset-react": "^7.18.6",
     "@webpack-cli/generators": "^3.0.1",
     "autoprefixer": "^10.4.13",
     "babel-loader": "^9.1.0",
     "babel-preset-solid": "^1.6.6",
+    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
@@ -40,7 +48,6 @@
     "webpack-dev-server": "^4.11.1"
   },
   "dependencies": {
-    "solid-js": "^1.7.4",
     "file-type": "^10.9.0",
     "parse-data-uri": "0.2.0"
   }

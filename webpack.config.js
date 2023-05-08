@@ -3,24 +3,24 @@ const path = require("path");
 
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-
+const CopyPlugin = require("copy-webpack-plugin");
 
 const isProduction = process.env.NODE_ENV == "production";
 const stylesHandler = MiniCssExtractPlugin.loader;
 
 
 const OUTPUT_PATH = "./front_end/dist";
-const HTML_TEMPLATE_PATH = "./front_end/html/index.html";
 
 const resolvePath = (p) => path.resolve(__dirname, p);
 
 const config = {
+    devtool: "source-map",
     entry: {
+        background: "./front_end/js/background.js",
         popup: "./front_end/js/popup.js",
         gallery: "./front_end/js/gallery.js",
         singleView: "./front_end/js/singleView.js",
-        settings: "./front_end/js/settings.js",
-        icon: "./front_end/js/icons/icon.png"
+        settings: "./front_end/js/settings.js"
     },
 	optimization: {
 		splitChunks: {
@@ -44,26 +44,41 @@ const config = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: HTML_TEMPLATE_PATH,
+            template: "./front_end/html/background.html",
+            filename: "background.html",
+            chunks: ["background"]
+        }),
+        new HtmlWebpackPlugin({
+            template: "./front_end/html/popup.html",
             filename: "popup.html",
             chunks: ["popup"]
         }),
         new HtmlWebpackPlugin({
-            template: HTML_TEMPLATE_PATH,
+            template: "./front_end/html/gallery.html",
             filename: "gallery.html",
             chunks: ["gallery"]
         }),
         new HtmlWebpackPlugin({
-            template: HTML_TEMPLATE_PATH,
+            template: "./front_end/html/singleView.html",
             filename: "singleView.html",
             chunks: ["singleView"]
         }),
         new HtmlWebpackPlugin({
-            template: HTML_TEMPLATE_PATH,
+            template: "./front_end/html/settings.html",
             filename: "settings.html",
             chunks: ["settings"]
         }),
-        new MiniCssExtractPlugin()
+        new MiniCssExtractPlugin(),
+        new CopyPlugin({
+            patterns: [
+                { from: "./front_end/manifest.json", to: "./manifest.json" },
+                { from: "./front_end/js/content.js", to: "./content.js" },
+                { from: "./front_end/js/scanner.js", to: "./scanner.js" },
+                { from: "./front_end/taggle.js", to: "./taggle.js" },
+                { from: "./front_end/css", to: "./css" },
+                { from: "./front_end/icons", to: "./icons" }
+            ],
+        })
     ],
     module: {
         rules: [

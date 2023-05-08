@@ -1,5 +1,12 @@
 
-this.FeedBox = (function(){
+import { extend, removeClass, addClass, getParams, injectThemeCss, isUdf, wrap, bindWrap, preventBubble } from "./utility.js";
+import { getURL, getCssDir, makeRequest } from "./apiUtility.js";
+import { createTaggle, createAutoComplete } from "./myTaggle.js";
+import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
+import { Searcher } from "./query.js";
+import { render } from 'solid-js/web';
+
+const FeedBox = (function(){
 
 	const DEFAULTS = { bufferSize: 20,
 					   bufferOnScroll: { offset: 0,
@@ -8,11 +15,11 @@ this.FeedBox = (function(){
 		constructor(meta, el_parent, createContent, options)
 		{
 			this._meta = meta;
-			this._queue = new Widgets.DOMQueue(el_parent);
+			this._queue = new DOMQueue(el_parent);
 			this._el_test = document.createElement("canvas");
 			this._createContent = createContent;
 
-			this._options = U.extend(DEFAULTS, options);
+			this._options = extend(DEFAULTS, options);
 
 			this._onScroll = () => {
 				this._checkIfReachedBottom();
@@ -75,8 +82,8 @@ this.FeedBox = (function(){
 	};
 })();
 
-this.PopupManager = (function(){
-	const POPUP_LINK = ApiUtility.getURL("html/popup.html");
+window.PopupManager = (function(){
+	const POPUP_LINK = getURL("./popup.html");
 	const el_popup = document.getElementById("popup");
 	const cl_hide = "noshow";
 	
@@ -86,14 +93,14 @@ this.PopupManager = (function(){
 		open(query)
 		{
 			el_popup.addEventListener("load", () => {
-				U.removeClass(el_popup, cl_hide);
+				removeClass(el_popup, cl_hide);
 			}, {once: true});
 			el_popup.src = POPUP_LINK + "?" + query;
 		}
 
 		close()
 		{
-			U.addClass(el_popup, cl_hide);
+			addClass(el_popup, cl_hide);
 		}
 	};
 
@@ -104,352 +111,350 @@ this.PopupManager = (function(){
 	return instance;
 })();
 
-(function(){
-	const DEFAULT_QUERY = "sort=!date",
-		  SEARCH_BY_TAG = true,
-		  NO_RESULTS_MESSAGE = "No search results.",
-		  TUTORIAL_MESSAGE = "You can add content by opening the context menu on a page, an image, or a video. You can add by url by clicking the <svg><use href='#icon-save'/></svg> above.",
-		  NO_LOAD_MESSAGE = "Something went wrong :(",
-		  CONTENT_LINK = "singleView.html",
-		  CONTENT_LINK_TARGET = "_self",
-		  DEFAULT_TITLE = "untitled",
-		  CSS_FILES = ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"];
+const DEFAULT_QUERY = "sort=!date",
+	  SEARCH_BY_TAG = true,
+	  NO_RESULTS_MESSAGE = "No search results.",
+	  TUTORIAL_MESSAGE = "You can add content by opening the context menu on a page, an image, or a video. You can add by url by clicking the <svg><use href='#icon-save'/></svg> above.",
+	  NO_LOAD_MESSAGE = "Something went wrong :(",
+	  CONTENT_LINK = "singleView.html",
+	  CONTENT_LINK_TARGET = "_self",
+	  DEFAULT_TITLE = "untitled",
+	  CSS_FILES = ["scrollbar", "alerts", "taggle", "cc", "gallery", "feed"];
 
-	const cl_hide = "noshow",
-		  cl_searchBoxFocused = "focus",
-		  cl_noLoad = "message",
-		  cl_hover = "hover";
+const cl_hide = "noshow",
+	  cl_searchBoxFocused = "focus",
+	  cl_noLoad = "message",
+	  cl_hover = "hover";
 
-	const el_feed = document.getElementById("feed"),
-		  el_feedMessage = el_feed.querySelector("#feed-message");
+const el_feed = document.getElementById("feed"),
+	  el_feedMessage = el_feed.querySelector("#feed-message");
 
-	const el_form = document.getElementById("search"),
-		  el_searchBox = el_form.querySelector("#search-box"),
-		  el_titleInput = el_form.querySelector("#title-input"),
-		  el_tagContainer = el_form.querySelector("#tag-container"),
-		  el_searchBy = el_form.querySelector("#searchby"),
-		  [el_titleSvg, el_tagSvg] = el_searchBy.querySelectorAll("svg"),
-		  el_searchByBtn = el_form.querySelector("#searchby-btn"),
-		  el_date = el_form.querySelector("#date"),
-		  el_category = el_form.querySelector("#category"),
-		  el_sortBy = el_form.querySelector("#sortby"),
-		  el_submit = el_form.querySelector("#submit");
+const el_form = document.getElementById("search"),
+	  el_searchBox = el_form.querySelector("#search-box"),
+	  el_titleInput = el_form.querySelector("#title-input"),
+	  el_tagContainer = el_form.querySelector("#tag-container"),
+	  el_searchBy = el_form.querySelector("#searchby"),
+	  [el_titleSvg, el_tagSvg] = el_searchBy.querySelectorAll("svg"),
+	  el_searchByBtn = el_form.querySelector("#searchby-btn"),
+	  el_date = el_form.querySelector("#date"),
+	  el_category = el_form.querySelector("#category"),
+	  el_sortBy = el_form.querySelector("#sortby"),
+	  el_submit = el_form.querySelector("#submit");
 
-	const el_saveBtn = document.getElementById("save-btn");
+const el_saveBtn = document.getElementById("save-btn");
 
-	const TAGGLE_OPTIONS = { placeholder: "search tags..." },
-		  FEEDBOX_OPTIONS = {},
-		  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 300, ignoreError: true };
+const TAGGLE_OPTIONS = { placeholder: "search tags..." },
+	  FEEDBOX_OPTIONS = {},
+	  CONTENT_CREATOR_OPTIONS = { BEMBlock: "cc", maxHeight: 300, ignoreError: true };
 
-	let g_taggle,
-		g_searchBoxToggle,
-		g_contentCreator,
-		g_feedBox;
+let g_taggle,
+	g_searchBoxToggle,
+	g_contentCreator,
+	g_feedBox;
 
-	let g_theme;
+let g_theme;
 
-	let submitSearch = (function(){
-		let g_submitted = false;
-		
-		return function() {
-			if (g_submitted)
-				return;
-			else
-				g_submitted = true;
-
-			let queryString = makeQueryString();
-			let cookie = makeCookie();
-
-			let i = location.href.indexOf("?");
-			let loc = location.href.substring(0, i);
-			let redirect = loc + "?" + queryString + "&" + cookie;
-			location.href = redirect;
-		};
-	})();
-
-	function main()
-	{
-		const params = U.getParams();
-		g_theme = params.get("theme") || "light";
-		U.injectThemeCss(document.head, CSS_FILES, g_theme, ApiUtility.cssDir);
-
-		g_taggle = MyTaggle.createTaggle(el_tagContainer, TAGGLE_OPTIONS);
-		g_searchBoxToggle = new Widgets.Toggle();
-		g_contentCreator = new Widgets.ContentCreator(CONTENT_CREATOR_OPTIONS);
-
-		attachSubmit();
-		attachSave();
-		g_searchBoxToggle.onToggleOn(switchToTags);
-		g_searchBoxToggle.onToggleOff(switchToTitle);
-		el_searchByBtn.addEventListener("click", (evt) => {
-			g_searchBoxToggle.toggle();
-		});
-
-		load();
-	}
-
-	function load()
-	{
-		let {query, cookie} = parseQueryString();
-		setSearch(query, cookie);
-		addAwesomeFocusToSearchBox();
-		loadContent(query);
-	}
-
-	function parseQueryString()
-	{
-		let queryString = location.search.substring(1);
-		let i = queryString.lastIndexOf("&");
-		let len = queryString.length;
-		let query = queryString.substring(0, i);
-		let cookie  = queryString.substring(i + 1, len);
-
-		let q = query ? query : DEFAULT_QUERY;
-		let map = Searcher.parse(q);
-
-		return {cookie: cookie, query: map};
-	}
-
-	function setSearch(query, cookie)
-	{
-		if (query.title)
-		{
-			el_titleInput.value = query.title;
-			g_searchBoxToggle.toggle(false);
-		}
-		else if (query.tags)
-		{
-			query.tags.forEach((tag) => {
-				g_taggle.add(tag);
-			});
-			g_searchBoxToggle.toggle(true);
-		}
+let submitSearch = (function(){
+	let g_submitted = false;
+	
+	return function() {
+		if (g_submitted)
+			return;
 		else
-		{
-			g_searchBoxToggle.toggle(SEARCH_BY_TAG);
-			el_titleInput.value = "";
-		}
+			g_submitted = true;
 
-		let indices = cookie.split("-").filter(o => o);
-		if (indices.length === 3)
-		{
-			el_date.selectedIndex = indices[0];
-			el_category.selectedIndex = indices[1];
-			el_sortBy.selectedIndex = indices[2];
-		}
-	}
+		let queryString = makeQueryString();
+		let cookie = makeCookie();
 
-	async function loadContent(query)
+		let i = location.href.indexOf("?");
+		let loc = location.href.substring(0, i);
+		let redirect = loc + "?" + queryString + "&" + cookie;
+		location.href = redirect;
+	};
+})();
+
+function main()
+{
+	const params = getParams();
+	g_theme = params.get("theme") || "light";
+	injectThemeCss(document.head, CSS_FILES, g_theme, getCssDir());
+
+	g_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
+	g_searchBoxToggle = new Toggle();
+	g_contentCreator = new ContentCreator(CONTENT_CREATOR_OPTIONS);
+
+	attachSubmit();
+	attachSave();
+	g_searchBoxToggle.onToggleOn(switchToTags);
+	g_searchBoxToggle.onToggleOff(switchToTitle);
+	el_searchByBtn.addEventListener("click", (evt) => {
+		g_searchBoxToggle.toggle();
+	});
+
+	load();
+}
+
+function load()
+{
+	let {query, cookie} = parseQueryString();
+	setSearch(query, cookie);
+	addAwesomeFocusToSearchBox();
+	loadContent(query);
+}
+
+function parseQueryString()
+{
+	let queryString = location.search.substring(1);
+	let i = queryString.lastIndexOf("&");
+	let len = queryString.length;
+	let query = queryString.substring(0, i);
+	let cookie  = queryString.substring(i + 1, len);
+
+	let q = query ? query : DEFAULT_QUERY;
+	let map = Searcher.parse(q);
+
+	return {cookie: cookie, query: map};
+}
+
+function setSearch(query, cookie)
+{
+	if (query.title)
 	{
-		let meta = await ApiUtility.makeRequest({request: "get-meta", to: "background.js"}).catch((err) => {
-			console.warn("error loading content:", err);
-			showMessage(NO_LOAD_MESSAGE);
+		el_titleInput.value = query.title;
+		g_searchBoxToggle.toggle(false);
+	}
+	else if (query.tags)
+	{
+		query.tags.forEach((tag) => {
+			g_taggle.add(tag);
 		});
-		if (U.isUdf(meta)) return;
-
-		let results = Searcher.query(meta, query);
-		g_feedBox = new FeedBox(results, el_feed, (info) => U.wrap(createContent, info), FEEDBOX_OPTIONS);
-		if (!results.length)
-		{
-			let m = meta.length ? NO_RESULTS_MESSAGE : TUTORIAL_MESSAGE;
-			showMessage(m);
-		}
-		else
-		{
-			g_feedBox.buffer();
-		}
-
-		let tags = await ApiUtility.makeRequest({request: "get-tags", to: "background.js"})
-		.catch((err) => {
-			console.log("error loading tags:", err);
-		});
-		if (!tags) return;
-
-		MyTaggle.createAutoComplete(g_taggle, el_searchBox, tags);
+		g_searchBoxToggle.toggle(true);
 	}
-
-	function showMessage(message)
+	else
 	{
-		el_feedMessage.innerHTML = message;
-		U.removeClass(el_feedMessage, cl_hide);
-		el_feed.classList.add(cl_noLoad);
-	}
-
-	async function createContent(info, cb, onErr)
-	{
-		let el_contentBlock = document.createElement("div");
-		el_contentBlock.classList.add("content");
-
-		let el_sourceBlock = document.createElement("div");
-		el_sourceBlock.classList.add("content__source-block");
-		el_contentBlock.appendChild(el_sourceBlock);
-
-		let el_infoBlock = document.createElement("div");
-		el_infoBlock.classList.add("content__info-block");
-		el_contentBlock.appendChild(el_infoBlock);
-
-		let el_title = document.createElement("p");
-		el_title.classList.add("content__title");
-
-		let titleText = info.title ? info.title : DEFAULT_TITLE;
-		let titleTextNode = document.createTextNode(titleText);
-		el_title.appendChild(titleTextNode);
-		el_infoBlock.appendChild(el_title);
-
-		let el_content = await U.bindWrap(g_contentCreator.load, g_contentCreator, info).catch(onErr);
-		if (U.isUdf(el_content)) return;
-
-		let addHover = () => {
-			U.addClass(el_contentBlock, cl_hover);
-		};
-		let removeHover = () => {
-			U.removeClass(el_contentBlock, cl_hover);
-		};
-		el_contentBlock.addEventListener("mouseenter", addHover);
-		el_contentBlock.addEventListener("mouseleave", removeHover);
-
-		if (info.category === "bookmark")
-		{
-			U.preventBubble(el_content, "click");
-			el_content.addEventListener("mouseenter", removeHover);
-			el_content.addEventListener("mouseleave", addHover);
-		}
-
-		U.preventBubble(el_infoBlock, "click");
-
-		el_sourceBlock.appendChild(el_content);
-
-		const el_link = document.createElement("a");
-		const query = "id=" + info.id + "&theme=" + g_theme;
-		el_link.href = CONTENT_LINK + "?" + query;
-		el_link.target = CONTENT_LINK_TARGET;
-		el_link.classList.add("content-wrapper");
-		el_link.appendChild(el_contentBlock);
-		cb(el_link);
-	}
-
-	function makeQueryString()
-	{
-		let getSelected = (elm) => elm.options[elm.selectedIndex].value;
-		let q = "";
-
-		let title = el_titleInput.value.trim();
-		let tags = g_taggle.getTags().values;
-		if (title)
-		{
-			q += "&title=" + encodeURIComponent(title);
-		}
-		else if (tags.length)
-		{
-			q += "&tags=";
-			for (let i = 0, l = tags.length; i < l; i+=1)
-			{
-				q += "+" + encodeURIComponent(tags[i]);
-			}
-		}
-
-		let sortby = getSelected(el_sortBy);
-		if (sortby)
-		{
-			q += "&sort=" + sortby;
-		}
-
-		let category = getSelected(el_category);
-		if (category)
-		{
-			q += "&category=" + category;
-		}
-
-		let pastDays = getSelected(el_date);
-		if (pastDays)
-		{
-			let pastMs = Number(pastDays) * 24 * 60 * 60 * 1000;
-			let date = Date.now() - pastMs;
-			q += "&date=x>" + date;
-		}
-
-		return q;
-	}
-
-	function makeCookie()
-	{
-		let cookie = `${el_date.selectedIndex}-${el_category.selectedIndex}-${el_sortBy.selectedIndex}`;
-		return cookie;
-	}
-
-	function attachSubmit()
-	{
-		function onEnter(elm, callback, condition)
-		{
-			elm.addEventListener("keydown", (evt) => {
-				if (evt.key === "Enter" && condition())
-				{
-					callback();
-				}
-			});
-		}
-
-		el_form.addEventListener("submit", (evt) => {
-			evt.preventDefault();
-		});
-		el_submit.addEventListener("click", submitSearch, {once: true});
-
-		onEnter(el_titleInput, submitSearch, () => el_titleInput.value);
-
-		let taggleInput = g_taggle.getInput();
-		onEnter(taggleInput, submitSearch, () => {
-			return !taggleInput.value && g_taggle.getTags().values.length > 0;
-		});
-	}
-
-	function attachSave()
-	{
-		el_saveBtn.addEventListener("click", () => {
-			window.PopupManager.open("&manual=true" + "&theme=" + g_theme);
-		});
-	}
-
-	function addAwesomeFocusToSearchBox()
-	{
-		let o1 = { focusTarget: el_titleInput,
-				   mouseTarget: el_searchBox,
-				   disable: g_searchBoxToggle.toggled };
-		let titleAf = Widgets.styleOnFocus(el_searchBox, cl_searchBoxFocused, o1);
-
-		let o2 = { focusTarget: el_tagContainer,
-				   mouseTarget: el_searchBox,
-				   disable: !g_searchBoxToggle.toggled };
-		let tagAf = Widgets.styleOnFocus(el_searchBox, cl_searchBoxFocused, o2);
-
-		g_searchBoxToggle.onToggleOn(() => {
-			titleAf.disable();
-			tagAf.enable();
-		});
-		g_searchBoxToggle.onToggleOn(() => {
-			tagAf.disable();
-			titleAf.enable();
-		});
-	}
-
-	function switchToTags()
-	{
-		U.addClass(el_titleInput, cl_hide);
-		U.addClass(el_titleSvg, cl_hide);
-		U.removeClass(el_tagContainer, cl_hide);
-		U.removeClass(el_tagSvg, cl_hide);
-
+		g_searchBoxToggle.toggle(SEARCH_BY_TAG);
 		el_titleInput.value = "";
 	}
 
-	function switchToTitle()
+	let indices = cookie.split("-").filter(o => o);
+	if (indices.length === 3)
 	{
-		U.addClass(el_tagContainer, cl_hide);
-		U.addClass(el_tagSvg, cl_hide);
-		U.removeClass(el_titleInput, cl_hide);
-		U.removeClass(el_titleSvg, cl_hide);
+		el_date.selectedIndex = indices[0];
+		el_category.selectedIndex = indices[1];
+		el_sortBy.selectedIndex = indices[2];
+	}
+}
 
-		g_taggle.removeAll();
+async function loadContent(query)
+{
+	let meta = await makeRequest({request: "get-meta", to: "background.js"}).catch((err) => {
+		console.warn("error loading content:", err);
+		showMessage(NO_LOAD_MESSAGE);
+	});
+	if (isUdf(meta)) return;
+
+	let results = Searcher.query(meta, query);
+	g_feedBox = new FeedBox(results, el_feed, (info) => wrap(createContent, info), FEEDBOX_OPTIONS);
+	if (!results.length)
+	{
+		let m = meta.length ? NO_RESULTS_MESSAGE : TUTORIAL_MESSAGE;
+		showMessage(m);
+	}
+	else
+	{
+		g_feedBox.buffer();
 	}
 
-	main();
-})();
+	let tags = await makeRequest({request: "get-tags", to: "background.js"})
+	.catch((err) => {
+		console.log("error loading tags:", err);
+	});
+	if (!tags) return;
+
+	createAutoComplete(g_taggle, el_searchBox, tags);
+}
+
+function showMessage(message)
+{
+	el_feedMessage.innerHTML = message;
+	removeClass(el_feedMessage, cl_hide);
+	el_feed.classList.add(cl_noLoad);
+}
+
+async function createContent(info, cb, onErr)
+{
+	let el_contentBlock = document.createElement("div");
+	el_contentBlock.classList.add("content");
+
+	let el_sourceBlock = document.createElement("div");
+	el_sourceBlock.classList.add("content__source-block");
+	el_contentBlock.appendChild(el_sourceBlock);
+
+	let el_infoBlock = document.createElement("div");
+	el_infoBlock.classList.add("content__info-block");
+	el_contentBlock.appendChild(el_infoBlock);
+
+	let el_title = document.createElement("p");
+	el_title.classList.add("content__title");
+
+	let titleText = info.title ? info.title : DEFAULT_TITLE;
+	let titleTextNode = document.createTextNode(titleText);
+	el_title.appendChild(titleTextNode);
+	el_infoBlock.appendChild(el_title);
+
+	let el_content = await bindWrap(g_contentCreator.load, g_contentCreator, info).catch(onErr);
+	if (isUdf(el_content)) return;
+
+	let addHover = () => {
+		addClass(el_contentBlock, cl_hover);
+	};
+	let removeHover = () => {
+		removeClass(el_contentBlock, cl_hover);
+	};
+	el_contentBlock.addEventListener("mouseenter", addHover);
+	el_contentBlock.addEventListener("mouseleave", removeHover);
+
+	if (info.category === "bookmark")
+	{
+		preventBubble(el_content, "click");
+		el_content.addEventListener("mouseenter", removeHover);
+		el_content.addEventListener("mouseleave", addHover);
+	}
+
+	preventBubble(el_infoBlock, "click");
+
+	el_sourceBlock.appendChild(el_content);
+
+	const el_link = document.createElement("a");
+	const query = "id=" + info.id + "&theme=" + g_theme;
+	el_link.href = CONTENT_LINK + "?" + query;
+	el_link.target = CONTENT_LINK_TARGET;
+	el_link.classList.add("content-wrapper");
+	el_link.appendChild(el_contentBlock);
+	cb(el_link);
+}
+
+function makeQueryString()
+{
+	let getSelected = (elm) => elm.options[elm.selectedIndex].value;
+	let q = "";
+
+	let title = el_titleInput.value.trim();
+	let tags = g_taggle.getTags().values;
+	if (title)
+	{
+		q += "&title=" + encodeURIComponent(title);
+	}
+	else if (tags.length)
+	{
+		q += "&tags=";
+		for (let i = 0, l = tags.length; i < l; i+=1)
+		{
+			q += "+" + encodeURIComponent(tags[i]);
+		}
+	}
+
+	let sortby = getSelected(el_sortBy);
+	if (sortby)
+	{
+		q += "&sort=" + sortby;
+	}
+
+	let category = getSelected(el_category);
+	if (category)
+	{
+		q += "&category=" + category;
+	}
+
+	let pastDays = getSelected(el_date);
+	if (pastDays)
+	{
+		let pastMs = Number(pastDays) * 24 * 60 * 60 * 1000;
+		let date = Date.now() - pastMs;
+		q += "&date=x>" + date;
+	}
+
+	return q;
+}
+
+function makeCookie()
+{
+	let cookie = `${el_date.selectedIndex}-${el_category.selectedIndex}-${el_sortBy.selectedIndex}`;
+	return cookie;
+}
+
+function attachSubmit()
+{
+	function onEnter(elm, callback, condition)
+	{
+		elm.addEventListener("keydown", (evt) => {
+			if (evt.key === "Enter" && condition())
+			{
+				callback();
+			}
+		});
+	}
+
+	el_form.addEventListener("submit", (evt) => {
+		evt.preventDefault();
+	});
+	el_submit.addEventListener("click", submitSearch, {once: true});
+
+	onEnter(el_titleInput, submitSearch, () => el_titleInput.value);
+
+	let taggleInput = g_taggle.getInput();
+	onEnter(taggleInput, submitSearch, () => {
+		return !taggleInput.value && g_taggle.getTags().values.length > 0;
+	});
+}
+
+function attachSave()
+{
+	el_saveBtn.addEventListener("click", () => {
+		window.PopupManager.open("&manual=true" + "&theme=" + g_theme);
+	});
+}
+
+function addAwesomeFocusToSearchBox()
+{
+	let o1 = { focusTarget: el_titleInput,
+			   mouseTarget: el_searchBox,
+			   disable: g_searchBoxToggle.toggled };
+	let titleAf = styleOnFocus(el_searchBox, cl_searchBoxFocused, o1);
+
+	let o2 = { focusTarget: el_tagContainer,
+			   mouseTarget: el_searchBox,
+			   disable: !g_searchBoxToggle.toggled };
+	let tagAf = styleOnFocus(el_searchBox, cl_searchBoxFocused, o2);
+
+	g_searchBoxToggle.onToggleOn(() => {
+		titleAf.disable();
+		tagAf.enable();
+	});
+	g_searchBoxToggle.onToggleOn(() => {
+		tagAf.disable();
+		titleAf.enable();
+	});
+}
+
+function switchToTags()
+{
+	addClass(el_titleInput, cl_hide);
+	addClass(el_titleSvg, cl_hide);
+	removeClass(el_tagContainer, cl_hide);
+	removeClass(el_tagSvg, cl_hide);
+
+	el_titleInput.value = "";
+}
+
+function switchToTitle()
+{
+	addClass(el_tagContainer, cl_hide);
+	addClass(el_tagSvg, cl_hide);
+	removeClass(el_titleInput, cl_hide);
+	removeClass(el_titleSvg, cl_hide);
+
+	g_taggle.removeAll();
+}
+
+main();
