@@ -1,15 +1,10 @@
-
-java_server
 node_modules
 
-front_end/svgs
 front_end/css
+front_end/dist
 
 back_end/**/meta/*
 back_end/**/resources/*
 
 native_messaging/error_log.txt
 native_messaging/port
-
-specs
-todo.txt

@@ -1,7 +1,16 @@
 
+import {
+	getURL, onMessage, onBrowserAction,
+	resetContextMenu, createContextMenu, onContextMenuClicked,
+	sendMessageToTab, getLastError, NEW_TAB,
+	updateTab, createTab, injectScript
+} from "./apiUtility.js";
+import { extend, wrap, bindWrap, isUdf, makeTag } from "./utility.js";
+import { DataManager, RequestManager } from "./data.js";
+
 (function(){
 
-	const GALLERY_URL = ApiUtility.getURL("html/gallery.html"),
+	const GALLERY_URL = getURL("./gallery.html"),
 		  DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
 	const CONTEXT_OPTIONS = { title: "Bookmark",
 				   	   		  id: "Save",
@@ -25,11 +34,11 @@
 			g_settings = DEFAULT_SETTINGS;
 		}
 
-		ApiUtility.onMessage(handleRequest);
-		ApiUtility.onBrowserAction(openGallery);
-		ApiUtility.resetContextMenu(() => {
-			ApiUtility.createContextMenu(CONTEXT_OPTIONS);
-			ApiUtility.onContextMenuClicked(onContextClicked);
+		onMessage(handleRequest);
+		onBrowserAction(openGallery);
+		resetContextMenu(() => {
+			createContextMenu(CONTEXT_OPTIONS);
+			onContextMenuClicked(onContextClicked);
 		});
 	};
 
@@ -86,7 +95,7 @@
 		}
 		else if (msg.request === "update-settings")
 		{
-			const updatedSettings = U.extend(g_settings, msg.settings);
+			const updatedSettings = extend(g_settings, msg.settings);
 			DataManager.setKeyWrapper({settings: updatedSettings}).then(() => {
 				g_settings = updatedSettings;
 				sendResponse();
@@ -105,11 +114,11 @@
 		let info = g_popupInfo[popupId];
 		info.docUrl = sender.tab.url;
 
-		let scanInfoPromise = U.wrap(requestScanInfo, sender.tab.id);
-		let tagsPromise = U.bindWrap(g_requester.getTags, g_requester);
+		let scanInfoPromise = wrap(requestScanInfo, sender.tab.id);
+		let tagsPromise = bindWrap(g_requester.getTags, g_requester);
 		let all = Promise.all([scanInfoPromise, tagsPromise]);
 		let results = await all.catch(onErr);
-		if (U.isUdf(results)) return;
+		if (isUdf(results)) return;
 
 		info.scanInfo = results[0];
 		info.tags = results[1];
@@ -147,10 +156,10 @@
 
 	function requestScanInfo(tabId, cb, onErr)
 	{
-		ApiUtility.sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
-			if (ApiUtility.lastError)
+		sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
+			if (getLastError())
 			{
-				console.warn(ApiUtility.lastError.message);
+				console.warn(getLastError().message);
 				onErr();
 			}
 			else
@@ -162,20 +171,20 @@
 
 	function openGallery(tab)
 	{
-		tabUrl = new URL(tab.url);
+		const tabUrl = new URL(tab.url);
 		const tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
 		const fullGalleryUrl = GALLERY_URL + "?" + "theme=" + g_settings.theme;
 
-		if (tab.url === ApiUtility.NEW_TAB || tabUrlWOQuery === GALLERY_URL) {
-			ApiUtility.updateTab(tab.id, {url: fullGalleryUrl});
+		if (tab.url === NEW_TAB || tabUrlWOQuery === GALLERY_URL) {
+			updateTab(tab.id, {url: fullGalleryUrl});
 		} else {
-			ApiUtility.createTab({url: fullGalleryUrl});
+			createTab({url: fullGalleryUrl});
 		}
 	}
 
 	function onContextClicked(info, tab)
 	{
-		let popupId = U.makeTag(tab.id, "popupId");
+		let popupId = makeTag(tab.id, "popupId");
 		g_popupInfo[popupId] = { srcUrl: info.srcUrl,
 							  	 mediaType: info.mediaType };
 
@@ -184,15 +193,15 @@
 				  		tabId: tab.id,
 				  		popupId: popupId,
 				  		theme: g_settings.theme };
-		onScriptLoad(tab.id, "content.js", "js/content.js", message);
+		onScriptLoad(tab.id, "content.js", "./content.js", message);
 	}
 
 	function onScriptLoad(tabId, to, script, message, cb)
 	{
-		ApiUtility.sendMessageToTab(tabId, {to: to, check: true}, (exists) => {
-			if (ApiUtility.lastError) { /*ignore*/ }
+		sendMessageToTab(tabId, {to: to, check: true}, (exists) => {
+			if (getLastError()) { /*ignore*/ }
 			let send = () => {
-				ApiUtility.sendMessageToTab(tabId, message, cb); 
+				sendMessageToTab(tabId, message, cb); 
 			};
 
 			if (exists === true)
@@ -201,7 +210,7 @@
 			}
 			else
 			{
-				ApiUtility.injectScript(tabId, {file: script}, send);
+				injectScript(tabId, {file: script}, send);
 			}
 		});
 	}

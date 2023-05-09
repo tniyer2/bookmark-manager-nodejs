@@ -17,7 +17,7 @@
   float: left;
   width: 100%;
   max-width: 100%;
-  padding: ($taggle-vertical-padding/2) 0;
+  padding: calc($taggle-vertical-padding / 2) 0;
   background: inherit;
   border: none;
   outline: none;
@@ -35,7 +35,7 @@
   cursor: pointer; 
   transition: padding 0.1s; }
 .taggle_inputLi {
-  padding: ($taggle-vertical-padding / 2) 0; }
+  padding: calc($taggle-vertical-padding / 2) 0; }
 .taggle_input {
   height: calc(100% + (2 * #{$taggle-vertical-padding}));}
 .taggle:hover {

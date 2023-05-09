@@ -1,104 +1,103 @@
 
-this.MetaUtility = new (function(){
+const getRandomString = (function(){
+	const all = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-	this.getRandomString = (function(){
-		const all = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-		return function(len) {
-			let s = "";
-			let allLen = all.length;
-			for (let i = 0; i < len; i+=1)
-			{
-				let rand = Math.floor(Math.random() * allLen);
-				s += all.charAt(rand);
-			}
-			return s;
-		};
-	})();
-
-	this.searchId = function(meta, id) {
-		let i = meta.findIndex(m => m.id === id);
-		let content = meta[i];
-
-		if (content)
+	return function(len) {
+		let s = "";
+		let allLen = all.length;
+		for (let i = 0; i < len; i+=1)
 		{
-			return {index: i, content: content};
+			let rand = Math.floor(Math.random() * allLen);
+			s += all.charAt(rand);
 		}
-		else
-		{
-			return {index: null, content: null};
-		}
+		return s;
 	};
+})();
 
-	this.TagCounter = (function(){
-		let proto = "__proto__";
+const searchId = function(meta, id) {
+	let i = meta.findIndex(m => m.id === id);
+	let content = meta[i];
 
-		return class{
-			constructor()
+	if (content)
+	{
+		return {index: i, content: content};
+	}
+	else
+	{
+		return {index: null, content: null};
+	}
+};
+
+const TagCounter = (function(){
+	let proto = "__proto__";
+
+	return class{
+		constructor()
+		{
+			this._master = Object.create(null);
+			this._protoCount = 0;
+		}
+
+		get tags()
+		{
+			let keys = Object.keys(this._master);
+			if (this._protoCount > 0)
 			{
-				this._master = Object.create(null);
-				this._protoCount = 0;
+				keys.push(proto);
 			}
+			return keys;
+		}
 
-			get tags()
+		increment(keys)
+		{
+			keys.forEach(this._increment.bind(this));
+		}
+
+		decrement(keys)
+		{
+			keys.forEach(this._decrement.bind(this));
+		}
+
+		_increment(key)
+		{
+			if (key === proto)
 			{
-				let keys = Object.keys(this._master);
+				this._protoCount += 1;
+			}
+			else if (!(key in this._master))
+			{
+				this._master[key] = 1;
+			}
+			else
+			{
+				this._master[key] += 1;
+			}
+		}
+
+		_decrement(key)
+		{
+			if (key === proto)
+			{
 				if (this._protoCount > 0)
 				{
-					keys.push(proto);
-				}
-				return keys;
+					this._protoCount -= 1;
+				} 
+				else {/*ignore*/}
 			}
-
-			increment(keys)
+			else if (key in this._master)
 			{
-				keys.forEach(this._increment.bind(this));
-			}
-
-			decrement(keys)
-			{
-				keys.forEach(this._decrement.bind(this));
-			}
-
-			_increment(key)
-			{
-				if (key === proto)
+				if (this._master[key] === 1)
 				{
-					this._protoCount += 1;
-				}
-				else if (!(key in this._master))
-				{
-					this._master[key] = 1;
+					delete this._master[key];
 				}
 				else
 				{
-					this._master[key] += 1;
+					this._master[key] -= 1;
 				}
 			}
-
-			_decrement(key)
-			{
-				if (key === proto)
-				{
-					if (this._protoCount > 0)
-					{
-						this._protoCount -= 1;
-					} 
-					else {/*ignore*/}
-				}
-				else if (key in this._master)
-				{
-					if (this._master[key] === 1)
-					{
-						delete this._master[key];
-					}
-					else
-					{
-						this._master[key] -= 1;
-					}
-				}
-				else {/*ignore*/}
-			}
-		};
-	})();
+			else {/*ignore*/}
+		}
+	};
 })();
+
+export { getRandomString, searchId, TagCounter };

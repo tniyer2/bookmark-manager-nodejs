@@ -1,4 +1,8 @@
 
+import { injectThemeCss } from "./utility.js";
+import { getCssDir, makeRequest } from "./apiUtility.js";
+import { RadioManager } from "./widgets.js";
+
 (function(){
 	const el_tagRules = document.getElementById("tag-rules"),
 		  el_addTagRuleBtn = document.getElementById("add-tag-rule-btn"),
@@ -15,7 +19,7 @@
 
 	async function main() {
 		g_settings = await getSettings();
-		U.injectThemeCss(document.head, ["settings"], g_settings.theme, ApiUtility.cssDir);
+		injectThemeCss(document.head, ["settings"], g_settings.theme, getCssDir());
 
 		g_tagRules = g_settings.tagRules || [];
 		initTagRules(g_tagRules);
@@ -27,7 +31,7 @@
 		});
 
 		el_downloadMetaBtn.addEventListener("click", () => {
-			ApiUtility.makeRequest({ to: "background.js", 
+			makeRequest({ to: "background.js", 
 									 request: "get-meta" })
 			.then((meta) => {
 				const s = JSON.stringify(meta);
@@ -103,7 +107,7 @@
 
 	function initThemeRadio() {
 		const inputs = el_themeRadio.querySelectorAll("input");
-		const radio = new Widgets.RadioManager(inputs);
+		const radio = new RadioManager(inputs);
 		radio.select(g_settings.theme);
 		radio.onSelect((input) => {
 			updateSettings({theme: input.value});
@@ -111,12 +115,12 @@
 	}
 
 	function getSettings() {
-		return ApiUtility.makeRequest({ to: "background.js", 
+		return makeRequest({ to: "background.js", 
 								 		request: "get-settings" });
 	}
 
 	function updateSettings(settings) {
-		return ApiUtility.makeRequest({ to: "background.js", 
+		return makeRequest({ to: "background.js", 
 									    request: "update-settings", 
 									    settings: settings });
 	}

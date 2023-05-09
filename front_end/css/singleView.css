@@ -1,8 +1,0 @@
-.main {
-  display: flex;
-  flex-direction: column;
-}
-
-.delete-btn {
-  width: 50px;
-}

@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 function openPopup(query)
 {
-	el_iframe.src = chrome.runtime.getURL("html/popup.html") + "?" + query;
+	el_iframe.src = chrome.runtime.getURL("popup.html") + "?" + query;
 	el_iframe.addEventListener("load", () => {
 		el_iframe.style.display = "block";
 	});
