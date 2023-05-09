@@ -1,9 +1,6 @@
 
 import { wrap, extend, isUdf } from "./utility.js";
 import {
-	getLocalData, getLastError, setLocalData
-} from "./apiUtility.js";
-import {
 	TagCounter, getRandomString, searchId
 } from "./metaUtility.js";
 
@@ -18,10 +15,11 @@ const DataManager = new (function(){
 	// resolves data, rejects undefined
 	this.getKeyWrapper = function(keys) {
 		return new Promise((resolve, reject) => {
-			getLocalData(keys, (data) => {
-				if (getLastError())
+			chrome.storage.local.get(keys, (data) => {
+				const e = chrome.runtime.lastError;
+				if (e)
 				{
-					console.warn(getLastError().message);
+					console.warn(e.message);
 					reject();
 				}
 				else
@@ -35,10 +33,11 @@ const DataManager = new (function(){
 	// resolves undefined, rejects {memoryError: true}
 	this.setKeyWrapper = function(data) {
 		return new Promise((resolve, reject) => {
-			setLocalData(data, () => {
-				if (getLastError())
+			chrome.storage.local.set(data, () => {
+				const e = chrome.runtime.lastError;
+				if (e)
 				{
-					console.warn(getLastError().message);
+					console.warn(e.message);
 					reject({memoryError: true});
 				}
 				else

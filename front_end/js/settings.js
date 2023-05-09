@@ -1,6 +1,5 @@
 
-import { injectThemeCss } from "./utility.js";
-import { getCssDir, makeRequest } from "./apiUtility.js";
+import { CSS_DIR, injectThemeCss, makeRequest } from "./utility.js";
 import { RadioManager } from "./widgets.js";
 
 (function(){
@@ -19,7 +18,7 @@ import { RadioManager } from "./widgets.js";
 
 	async function main() {
 		g_settings = await getSettings();
-		injectThemeCss(document.head, ["settings"], g_settings.theme, getCssDir());
+		injectThemeCss(document.head, ["settings"], g_settings.theme, chrome.runtime.getURL(CSS_DIR));
 
 		g_tagRules = g_settings.tagRules || [];
 		initTagRules(g_tagRules);

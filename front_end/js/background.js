@@ -1,16 +1,10 @@
 
-import {
-	getURL, onMessage, onBrowserAction,
-	resetContextMenu, createContextMenu, onContextMenuClicked,
-	sendMessageToTab, getLastError, NEW_TAB,
-	updateTab, createTab, injectScript
-} from "./apiUtility.js";
-import { extend, wrap, bindWrap, isUdf, makeTag } from "./utility.js";
+import { NEW_TAB, extend, wrap, bindWrap, isUdf, makeTag } from "./utility.js";
 import { DataManager, RequestManager } from "./data.js";
 
 (function(){
 
-	const GALLERY_URL = getURL("./gallery.html"),
+	const GALLERY_URL = chrome.runtime.getURL("./gallery.html"),
 		  DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
 	const CONTEXT_OPTIONS = { title: "Bookmark",
 				   	   		  id: "Save",
@@ -34,11 +28,11 @@ import { DataManager, RequestManager } from "./data.js";
 			g_settings = DEFAULT_SETTINGS;
 		}
 
-		onMessage(handleRequest);
-		onBrowserAction(openGallery);
-		resetContextMenu(() => {
-			createContextMenu(CONTEXT_OPTIONS);
-			onContextMenuClicked(onContextClicked);
+		chrome.runtime.onMessage.addListener(handleRequest);
+		chrome.browserAction.onClicked.addListener(openGallery);
+		chrome.contextMenus.removeAll(() => {
+			chrome.contextMenus.create(CONTEXT_OPTIONS);
+			chrome.contextMenus.onClicked.addListener(onContextClicked);
 		});
 	};
 
@@ -156,10 +150,11 @@ import { DataManager, RequestManager } from "./data.js";
 
 	function requestScanInfo(tabId, cb, onErr)
 	{
-		sendMessageToTab(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
-			if (getLastError())
+		chrome.tabs.sendMessage(tabId, {to: "scanner.js", scan: true}, (scanInfo) => {
+			const e = chrome.runtime.lastError;
+			if (e)
 			{
-				console.warn(getLastError().message);
+				console.warn(e.message);
 				onErr();
 			}
 			else
@@ -176,9 +171,9 @@ import { DataManager, RequestManager } from "./data.js";
 		const fullGalleryUrl = GALLERY_URL + "?" + "theme=" + g_settings.theme;
 
 		if (tab.url === NEW_TAB || tabUrlWOQuery === GALLERY_URL) {
-			updateTab(tab.id, {url: fullGalleryUrl});
+			chrome.tabs.update(tab.id, {url: fullGalleryUrl});
 		} else {
-			createTab({url: fullGalleryUrl});
+			chrome.tabs.create({url: fullGalleryUrl});
 		}
 	}
 
@@ -198,10 +193,10 @@ import { DataManager, RequestManager } from "./data.js";
 
 	function onScriptLoad(tabId, to, script, message, cb)
 	{
-		sendMessageToTab(tabId, {to: to, check: true}, (exists) => {
-			if (getLastError()) { /*ignore*/ }
+		chrome.tabs.sendMessage(tabId, {to: to, check: true}, (exists) => {
+			if (chrome.runtime.lastError) { /*ignore*/ }
 			let send = () => {
-				sendMessageToTab(tabId, message, cb); 
+				chrome.tabs.sendMessage(tabId, message, cb); 
 			};
 
 			if (exists === true)
@@ -210,7 +205,7 @@ import { DataManager, RequestManager } from "./data.js";
 			}
 			else
 			{
-				injectScript(tabId, {file: script}, send);
+				chrome.tabs.executeScript(tabId, {file: script}, send);
 			}
 		});
 	}

@@ -1,6 +1,5 @@
 
-import { removeClass, addClass, getParams, injectThemeCss, getYoutubeEmbed, extend, preventBubble } from "./utility.js";
-import { getURL, getCssDir, makeRequest, sendMessageToTab } from "./apiUtility.js";
+import { CSS_DIR, removeClass, addClass, getParams, injectThemeCss, getYoutubeEmbed, extend, preventBubble, makeRequest } from "./utility.js";
 import { RadioManager, ListManager, AwesomeAlerter, styleOnFocus } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 
@@ -34,7 +33,7 @@ const getTaggleInputFormatter = (function(){
 })();
 
 
-const DEFAULT_BOOKMARK_ICON = getURL("svgs/defaultIcon.svg");
+const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
 
 const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
 	  NO_SOURCE_MESSAGE = "Pick a source first.",
@@ -99,7 +98,7 @@ function main()
 {
 	const params = getParams();
 	const theme = params.get("theme") || "light";
-	injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], theme, getCssDir());
+	injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], theme, chrome.runtime.getURL(CSS_DIR));
 
 	g_alerter = createAlerter();
 	document.body.appendChild(g_alerter.alertList);
@@ -280,7 +279,7 @@ function closePopup1()
 	if (g_tabId)
 	{
 		let message = {to: "content.js", close: true};
-		sendMessageToTab(g_tabId, message);
+		chrome.tabs.sendMessage(g_tabId, message);
 	}
 }
 

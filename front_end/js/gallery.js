@@ -1,10 +1,8 @@
 
-import { extend, removeClass, addClass, getParams, injectThemeCss, isUdf, wrap, bindWrap, preventBubble } from "./utility.js";
-import { getURL, getCssDir, makeRequest } from "./apiUtility.js";
+import { CSS_DIR, extend, removeClass, addClass, getParams, injectThemeCss, isUdf, wrap, bindWrap, preventBubble, makeRequest } from "./utility.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
 import { Searcher } from "./query.js";
-import { render } from 'solid-js/web';
 
 const FeedBox = (function(){
 
@@ -83,7 +81,7 @@ const FeedBox = (function(){
 })();
 
 window.PopupManager = (function(){
-	const POPUP_LINK = getURL("./popup.html");
+	const POPUP_LINK = chrome.runtime.getURL("./popup.html");
 	const el_popup = document.getElementById("popup");
 	const cl_hide = "noshow";
 	
@@ -177,7 +175,7 @@ function main()
 {
 	const params = getParams();
 	g_theme = params.get("theme") || "light";
-	injectThemeCss(document.head, CSS_FILES, g_theme, getCssDir());
+	injectThemeCss(document.head, CSS_FILES, g_theme, chrome.runtime.getURL(CSS_DIR));
 
 	g_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 	g_searchBoxToggle = new Toggle();

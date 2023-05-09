@@ -1,6 +1,5 @@
 
-import { getParams, injectThemeCss, noop, isUdf, addClass, removeClass, wrap, bindWrap, joinCallbacks } from "./utility.js";
-import { getURL, getCssDir, makeRequest } from "./apiUtility.js";
+import { CSS_DIR, getParams, injectThemeCss, noop, isUdf, addClass, removeClass, wrap, bindWrap, joinCallbacks, makeRequest } from "./utility.js";
 import { AwesomeAlerter, ContentCreator } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 
@@ -68,7 +67,7 @@ const formatDate = (function(){
 		  cl_active = "active", 
 		  cl_noTags = "empty";
 
-	const GALLERY_URL = getURL("./gallery.html");
+	const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
 
 	const el_errorMessage = document.getElementById("error-message");
 
@@ -100,7 +99,7 @@ const formatDate = (function(){
 		const params = getParams();
 		g_contentId = params.get("id");
 		const theme = params.get("theme") || "light";
-		injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, getCssDir());
+		injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, chrome.runtime.getURL(CSS_DIR));
 
 		g_alerter = new AwesomeAlerter();
 		document.body.appendChild(g_alerter.alertList);

@@ -1,4 +1,7 @@
 
+const NEW_TAB = "chrome://newtab/";
+const CSS_DIR = "css";
+
 function noop(){}; // eslint-disable-line no-empty-function
 
 function isUdf(arg) {
@@ -186,7 +189,23 @@ function getParams() {
 	return new URLSearchParams(document.location.search.substring(1));
 };
 
+function makeRequest(request) {
+	return new Promise((resolve) => {
+		chrome.runtime.sendMessage(request, (response, reject) => {
+			const e = chrome.runtime.lastError;
+			if (e) {
+				console.warn(e.message);
+				reject();
+			} else {
+				resolve(response);
+			}
+		});
+	});
+};
+
 export {
+	NEW_TAB,
+	CSS_DIR,
 	noop,
 	isUdf,
 	min,
@@ -208,5 +227,6 @@ export {
 	hide,
 	injectCss,
 	injectThemeCss,
-	getParams
+	getParams,
+	makeRequest
 };

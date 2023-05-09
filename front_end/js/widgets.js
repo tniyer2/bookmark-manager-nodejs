@@ -1,5 +1,4 @@
 
-import { download } from "./apiUtility.js";
 import { addClass, removeClass, isUdf, extend, noop, min, bindWrap, parseFileName } from "./utility.js";
 
 const SVGNS   = "http://www.w3.org/2000/svg";
@@ -914,7 +913,7 @@ const ListManager = function(){
 
 		_download(url)
 		{
-			download({url: url});
+			chrome.downloads.download({url: url});
 		}
 	};
 }();
