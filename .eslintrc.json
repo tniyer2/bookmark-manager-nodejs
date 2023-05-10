@@ -8,9 +8,10 @@
         "SharedArrayBuffer": "readonly"
     },
     "parserOptions": {
-        "ecmaVersion": 2018
+        "ecmaVersion": 2018,
+		"sourceType": "module"
     },
-    "rules": 
+    "rules":
 	{
 		"for-direction": 2,
 		"getter-return": 2,
@@ -70,7 +71,6 @@
 		"comma-dangle": [2, "never"],
 		"consistent-this": [2, "self"],
 		"eol-last": [2, "always"],
-		"linebreak-style": [2, "windows"],
 		"new-parens": 2,
 		"no-bitwise": 2,
 		"no-lonely-if": 2,

@@ -17,176 +17,211 @@ $search-br: 8px;
 $input-placeholder-font-size: 18px;
 
 body {
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	padding: 10px;
-	margin: 0; }
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin: 0;
+}
 
 
 .popup {
-	position: fixed;
-	top: 0px;
-	left: 0px;
-	z-index: 1000;
-	width: 100%;
-	height: 100%;
-	outline: none;
-	background: none;
-	border: none; }
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  background: none;
+  border: none;
+}
 
 
 .menubar {
-	display: flex;
-	flex-wrap: nowrap;
-	justify-content: space-between;
-	padding: 10px;
-	margin-bottom: 15px;
-	border-radius: $search-br; }
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: $search-br;
+}
 
 
 .search {
-	user-select: none; }
+  user-select: none;
+}
 
 
 .search__row1 {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 10px; }
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
 
 .search__search-box-wrapper { // background in wrapper
-	position: relative;
-	z-index: 0;
-	width: 80%;
-	max-width: 380px;
-	min-height: $input-min-height + 2px;
-	border-radius: $search-br; }
+  position: relative;
+  z-index: 0;
+  width: 80%;
+  max-width: 380px;
+  min-height: $input-min-height + 2px;
+  border-radius: $search-br;
+}
 .search__search-box { // border in box
-	position: relative;
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	border-radius: inherit; }
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: inherit;
+}
 
 %search__input {
-	width: calc(100% - #{$searchby-width});
-	height: 100%;
-	box-sizing: border-box;
-	padding: 0;
-	padding-left: $input-padding-left;
-	padding-right: $input-padding-right; }
+  width: calc(100% - #{$searchby-width});
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  padding-left: $input-padding-left;
+  padding-right: $input-padding-right;
+}
 .search__search-box.focus %search__input {
-	padding-left: $input-padding-left + $search-box-border-width; }
+  padding-left: $input-padding-left + $search-box-border-width;
+}
 
 .search__title-input {
-	@extend %search__input;
-	margin: 0;
-	border: none;
-	outline: none;
-	background: none;
-	font: $regular-font;
-	font-size: $input-placeholder-font-size; }
+  @extend %search__input;
+  margin: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: $regular-font;
+  font-size: $input-placeholder-font-size;
+}
 .search__title-input::placeholder {
-	font-size: $input-placeholder-font-size; }
+  font-size: $input-placeholder-font-size;
+}
 .search__title-input:focus::placeholder {
-  opacity: 0; }
+  opacity: 0;
+}
 
 .search__tag-container {
-	@extend %search__input;
-	padding-top: $container-padding;
-	margin-right: $searchby-width;
-	cursor: text; }
+  @extend %search__input;
+  padding-top: $container-padding;
+  margin-right: $searchby-width;
+  cursor: text;
+}
 .search__search-box.focus .search__tag-container {
-	padding-top: $container-padding + $search-box-border-width; }
+  padding-top: $container-padding + $search-box-border-width;
+}
 .taggle {
-	margin-bottom: $container-padding + $search-box-border-width; }
+  margin-bottom: $container-padding + $search-box-border-width;
+}
 .search__search-box.focus .taggle_placeholder {
-	left: $input-padding-left + $search-box-border-width; }
+  left: $input-padding-left + $search-box-border-width;
+}
 .taggle_placeholder {
-	left: $input-padding-left;
-	font-size: $input-placeholder-font-size; }
+  left: $input-padding-left;
+  font-size: $input-placeholder-font-size;
+}
 
 $search-br-minus1: $search-br - 2.5px;
 $search-br-minus2: $search-br;
 %searchby {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: $searchby-width;
-	height: 100%; }
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: $searchby-width;
+  height: 100%;
+}
 .search__searchby {
-	@extend %searchby;
-	z-index: -1;
-	border-radius: 0 $search-br-minus1 $search-br-minus1 0; }
+  @extend %searchby;
+  z-index: -1;
+  border-radius: 0 $search-br-minus1 $search-br-minus1 0;
+}
 .search__searchby-btn:hover + .search__searchby {
-	border-radius: 0 $search-br-minus2 $search-br-minus2 0; }
+  border-radius: 0 $search-br-minus2 $search-br-minus2 0;
+}
 .search__searchby svg {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: $searchby-svg-width;
-	height: $searchby-svg-height; }
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: $searchby-svg-width;
+  height: $searchby-svg-height;
+}
 .search__searchby-btn {
-	@extend %revert-button; 
-	@extend %searchby; }
+  @extend %revert-button;
+  @extend %searchby;
+}
 
 .search__submit {
-	@extend %revert-button; 
-	width: $input-min-height;
-	height: $input-min-height;
-	margin: auto; }
+  @extend %revert-button;
+  width: $input-min-height;
+  height: $input-min-height;
+  margin: auto;
+}
 .search__submit svg {
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	padding: $svg-padding; }
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: $svg-padding;
+}
 
 
 .search__row2 {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: space-between; }
+  display: flex;
+  flex-wrap: wrap;
+  align-items: space-between;
+}
 
 .search__dropdown {
-	white-space: nowrap;
-	margin-right: 10px;
-	margin-bottom: 5px;
-	font: $regular-font;
-	font-size: 16px; }
+  white-space: nowrap;
+  margin-right: 10px;
+  margin-bottom: 5px;
+  font: $regular-font;
+  font-size: 16px;
+}
 .search__dropdown p {
-	display: inline-block;
-	margin: 0; }
+  display: inline-block;
+  margin: 0;
+}
 .search__dropdown select {
-	display: inline-block;
-	border: none;
-	outline: none;
-	font: inherit;
-	color: inherit; }
+  display: inline-block;
+  border: none;
+  outline: none;
+  font: inherit;
+  color: inherit;
+}
 .search__dropdown option {
-	font: inherit;
-	color: inherit;
-	border: none;
-	outline: none; }
+  font: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+}
 .search__date {}
 .search__category {}
 .search__sortby {}
 
 
 .menubar-right {
-	display: flex;
-	align-items: flex-start; }
+  display: flex;
+  align-items: flex-start;
+}
 
 %menubar-right__svg {
-	width: $input-min-height;
-	height: $input-min-height;
-	box-sizing: border-box;
-	padding: $svg-padding; }
+  width: $input-min-height;
+  height: $input-min-height;
+  box-sizing: border-box;
+  padding: $svg-padding;
+}
 .menubar-right__save-btn {
-	@extend %revert-button; }
+  @extend %revert-button;
+}
 .menubar-right__save-btn svg {
-	@extend %menubar-right__svg; }
+  @extend %menubar-right__svg;
+}
 .settings-link {
-	cursor: pointer; }
+  cursor: pointer;
+}
 .settings-link svg {
-	@extend %menubar-right__svg; }
+  @extend %menubar-right__svg;
+}

@@ -8,59 +8,68 @@ $content-padding: 15px;
 $br: 8px;
 
 .feed {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-start;
-	align-items: stretch;
-	padding-left: 25px;
-	padding-right: 25px;
-	padding-top: $row-vertical-margin;
-	padding-bottom: $row-vertical-margin - $row-spacing;
-	border-radius: $br; }
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: $row-vertical-margin;
+  padding-bottom: $row-vertical-margin - $row-spacing;
+  border-radius: $br;
+}
 .feed.message {
-	justify-content: center;
-	padding: 5px; }
+  justify-content: center;
+  padding: 5px;
+}
 
 
 $feed-message-font-size: 32px;
 .feed-message {
-	display: inline-block;
-	padding: 0 30px;
-	font: $regular-font;
-	font-size: $feed-message-font-size; 
-	text-align: center; }
+  display: inline-block;
+  padding: 0 30px;
+  font: $regular-font;
+  font-size: $feed-message-font-size;
+  text-align: center;
+}
 .feed-message svg {
-	display: inline;
-	vertical-align: baseline;
-	width: $feed-message-font-size;
-	height: $feed-message-font-size; }
+  display: inline;
+  vertical-align: baseline;
+  width: $feed-message-font-size;
+  height: $feed-message-font-size;
+}
 
 
 .content-wrapper {
-	text-decoration: none;
-	cursor: default; }
+  text-decoration: none;
+  cursor: default;
+}
 .content {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: $content-padding;
-	padding-bottom: 0;
-	margin-right: 20px;
-	margin-bottom: $row-spacing;
-	border-radius: $br; }
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: $content-padding;
+  padding-bottom: 0;
+  margin-right: 20px;
+  margin-bottom: $row-spacing;
+  border-radius: $br;
+}
 .content__source-block {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-width: 100px;
-	height: 300px; }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 100px;
+  height: 300px;
+}
 .content__info-block {
-	display: flex;
-	padding: calc($content-padding / 2) 0; }
+  display: flex;
+  padding: calc($content-padding / 2) 0;
+}
 .content__title {
-	flex-grow: 1;
-	width: 0;
-	margin: 0;
-	font: $regular-font;
-	text-align: center;
-	word-wrap: break-word; }
+  flex-grow: 1;
+  width: 0;
+  margin: 0;
+  font: $regular-font;
+  text-align: center;
+  word-wrap: break-word;
+}

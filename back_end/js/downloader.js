@@ -1,16 +1,16 @@
 
-const fs  	= require("fs"),
-	  http  = require("http"),
+const fs = require("fs"),
+	  http = require("http"),
 	  https = require("https");
 
 const parseDataUri = require("parse-data-uri"),
 	  fileType = require("file-type");
 
-const {U} = require("../../front_end/js/utility");
+const { U } = require("../../front_end/js/utility");
 
 // @param srcUrl a url object of the resource to be downloaded.
 // @param filePath path of the file without a file extension.
-// 				   the extension is added on after the download. 
+// 				   the extension is added on after the download.
 module.exports = function(srcUrl, filePath) {
 	if (srcUrl.protocol === "http:")
 	{
@@ -26,7 +26,7 @@ module.exports = function(srcUrl, filePath) {
 	}
 	else
 	{
-		let m = `${srcUrl.protocol} is not supported.\nOnly 'http', 'https', and 'data' are supported.`
+		let m = `${srcUrl.protocol} is not supported.\nOnly 'http', 'https', and 'data' are supported.`;
 		throw new Error(m);
 	}
 };
@@ -37,7 +37,7 @@ class HttpDownloader {
 		this._protocol = protocol;
 		this._srcUrl   = srcUrl;
 		this._filePath = filePath;
-		this._headers  = {"User-Agent": "Mozilla/5.0"};
+		this._headers  = { "User-Agent": "Mozilla/5.0" };
 
 		let arr = U.parseFileName(srcUrl.pathname, true);
 		this._ext = arr ? arr[1] : null;
@@ -56,7 +56,7 @@ class HttpDownloader {
 
 		let wStream = fs.createWriteStream(this._filePath + this._ext);
 
-		this._protocol.get(this._srcUrl, {headers: this._headers}, (rStream) => {
+		this._protocol.get(this._srcUrl, { headers: this._headers }, (rStream) => {
 			console.log("download: connecting to", this._srcUrl.toString());
 
 			rStream.pipe(wStream);
@@ -77,7 +77,7 @@ class HttpDownloader {
 	{
 		let firstTime = true;
 
-		this._protocol.get(this._srcUrl, {headers: this._headers}, (rStream) => {
+		this._protocol.get(this._srcUrl, { headers: this._headers }, (rStream) => {
 			rStream.on("readable", () => {
 				if (firstTime) {
 					firstTime = false;
@@ -95,7 +95,7 @@ class HttpDownloader {
 					return;
 				}
 
-				let ft  = fileType(buf);
+				let ft = fileType(buf);
 				if (!ft)
 				{
 					errorCallback(null);
@@ -128,8 +128,10 @@ class DataURIDownloader {
 		let slash = parsed.mimeType.indexOf("/");
 		if (slash === -1)
 		{
-			throw new Error(`Could not parse mimeType into 
-							type and subtype: ${parsed.mimeType}`);
+			throw new Error(
+				`Could not parse mimeType into
+				type and subtype: ${parsed.mimeType}`
+			);
 		}
 
 		let type = parsed.mimeType.substring(0, slash);

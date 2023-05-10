@@ -14,52 +14,57 @@ let AC_TAGGLE_DEFAULTS = { submitKeys: [COMMA] };
 
 function createTaggle(container, options) {
 
-	options = extend(options, TAGGLE_DEFAULTS);
+    options = extend(options, TAGGLE_DEFAULTS);
 
-	let taggle = new Taggle(container, options);
-	let taggleInput = taggle.getInput();
+    let taggle = new Taggle(container, options);
+    let taggleInput = taggle.getInput();
 
-	taggleInput.maxLength = TAG_LENGTH_LIMIT;
+    taggleInput.maxLength = TAG_LENGTH_LIMIT;
 
-	taggleInput.addEventListener("focus", () => {
-		container.dispatchEvent(new Event("focus"));
-	});
-	taggleInput.addEventListener("blur", () => {
-		container.dispatchEvent(new Event("blur"));
-	});
+    taggleInput.addEventListener("focus", () => {
+        container.dispatchEvent(new Event("focus"));
+    });
+    taggleInput.addEventListener("blur", () => {
+        container.dispatchEvent(new Event("blur"));
+    });
 
-	let tagFormatter = joinCallbacks(options.tagFormatter, (li) => {
-		li.addEventListener("mousedown", (evt) => {
-			evt.preventDefault();
-		});
-		li.addEventListener("click", (evt) => {
-			evt.stopPropagation();
+    let tagFormatter = joinCallbacks(options.tagFormatter, (li) => {
+        li.addEventListener("mousedown", (evt) => {
+            evt.preventDefault();
+        });
+        li.addEventListener("click", (evt) => {
+            evt.stopPropagation();
 
-			let text = li.querySelector("span").innerText;
-			taggle.remove(text);
+            let text = li.querySelector("span").innerText;
+            taggle.remove(text);
 
-			taggleInput.focus();
-		});
-	});
-	let onTagAdd = joinCallbacks(options.onTagAdd, (evt, text) => {
-		container.scrollTop = container.scrollHeight;
-	});
-	taggle.setOptions({tagFormatter: tagFormatter, onTagAdd: onTagAdd});
+            taggleInput.focus();
+        });
+    });
+    let onTagAdd = joinCallbacks(options.onTagAdd, (evt, text) => {
+        container.scrollTop = container.scrollHeight;
+    });
+    taggle.setOptions({
+        tagFormatter,
+        onTagAdd
+    });
 
-	return taggle;
+    return taggle;
 };
 
 function createAutoComplete(taggle, parentElement, values) {
 
-	let taggleInput = taggle.getInput();
-	let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA});
-	let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
+    let taggleInput = taggle.getInput();
+    let confirmEvent = new KeyboardEvent("keydown", {keyCode: COMMA});
+    let confirmInput = () => { taggleInput.dispatchEvent(confirmEvent); };
 
-	let acOptions = { values: values,
-					  onConfirm: confirmInput };
-	let ac = new AutoComplete(taggleInput, parentElement, acOptions);
-	ac.el_list.classList.add(cl_scrollbar);
-	taggle.setOptions(AC_TAGGLE_DEFAULTS);
+    let acOptions = {
+        values: values,
+        onConfirm: confirmInput
+    };
+    let ac = new AutoComplete(taggleInput, parentElement, acOptions);
+    ac.el_list.classList.add(cl_scrollbar);
+    taggle.setOptions(AC_TAGGLE_DEFAULTS);
 };
 
 export { createTaggle, createAutoComplete };

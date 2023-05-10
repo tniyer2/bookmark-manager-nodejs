@@ -2,40 +2,54 @@
 @import "master";
 
 body {
-	background: white; }
+  background: white;
+}
 .menubar {
-	background: $lt-light-gray; }
+  background: $lt-light-gray;
+}
 
 
 .search__search-box-wrapper { // background in wrapper
-	background: white; }
+  background: white;
+}
 .search__search-box { // border in box
-	border: $search-box-border-width solid $lt-gray; }
+  border: $search-box-border-width solid $lt-gray;
+}
 .search__search-box.focus {
-	border: none;
-	box-shadow: 0 0 4px 1.25px $lt-gray; }
+  border: none;
+  box-shadow: 0 0 4px 1.25px $lt-gray;
+}
 
 
 .search__title-input {
-	color: $lt-font-color; }
+  color: $lt-font-color;
+}
 .search__title-input::placeholder {
-	color: $lt-dark-gray; }
+  color: $lt-dark-gray;
+}
 
 .search__searchby {
-	background: $lt-gray; }
+  background: $lt-gray;
+}
 .search__searchby-btn:hover + .search__searchby {
-	background: $blue; }
+  background: $blue;
+}
 .search__searchby svg {
-	fill: $lt-black; }
+  fill: $lt-black;
+}
 .search__searchby-btn:hover + .search__searchby svg {
-	fill: $lt-black; }
+  fill: $lt-black;
+}
 
 .search__svg {
-	fill: $lt-black;
-	stroke: $lt-black; }
+  fill: $lt-black;
+  stroke: $lt-black;
+}
 .search__svg:hover {
-	fill: $blue;
-	stroke: $blue; }
+  fill: $blue;
+  stroke: $blue;
+}
 
 .search__dropdown {
-	color: $lt-font-color; }
+  color: $lt-font-color;
+}

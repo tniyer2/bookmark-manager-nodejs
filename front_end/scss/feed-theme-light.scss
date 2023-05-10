@@ -2,20 +2,26 @@
 @import "master";
 
 .feed {
-	background: $lt-light-gray; }
+  background: $lt-light-gray;
+}
 
 
 .feed-message {
-	color: $lt-strong-gray; }
+  color: $lt-strong-gray;
+}
 .feed-message svg {
-	fill: $lt-black;
-	stroke: $lt-black; }
+  fill: $lt-black;
+  stroke: $lt-black;
+}
 
 
 .content {
-	background: $lt-dark-gray;
-	border: 2px solid $lt-strong-gray; }
+  background: $lt-dark-gray;
+  border: 2px solid $lt-strong-gray;
+}
 .content.hover {
-	border-color: $blue; }
+  border-color: $blue;
+}
 .content__title {
-	color: $lt-font-color; }
+  color: $lt-font-color;
+}

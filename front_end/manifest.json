@@ -1,31 +1,33 @@
-
 {
-	"manifest_version": 2,
-	"short_name": "Bookmark Manager",
-	"name": "Bookmark Manager",
-	"version": "0.0.0",
-	"minimum_chrome_version": "63",
+    "manifest_version": 2,
+    "short_name": "Bookmark Manager",
+    "name": "Bookmark Manager",
+    "version": "0.0.0",
+    "minimum_chrome_version": "63",
 
-	"description": "Bookmark sites, images, and videos to a gallery. Supports downloading videos from most sites.",
-	"icons": {
-		"16": "icons/icon.png",
-		"48": "icons/icon.png",
-		"128": "icons/icon.png"
-	},
+    "description": "Bookmark sites, images, and videos to a gallery. Supports downloading videos from most sites.",
+    "icons": {
+        "16": "icons/icon.png",
+        "48": "icons/icon.png",
+        "128": "icons/icon.png"
+    },
 
-	"permissions": [ "activeTab", 
-					 "storage",
-					 "contextMenus",
-					 "downloads" ],
-	"background": {
-		"page": "background.html",
-		"persistent": false
-	},
-	"content_scripts": [{
-     	"matches": ["<all_urls>"],
-    	"js": ["scanner.js"]
-   	}],
+    "permissions": [
+        "activeTab",
+        "storage",
+        "contextMenus",
+        "downloads"
+    ],
+    "background": {
+        "page": "background.html",
+        "persistent": false
+    },
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": ["scanner.js"]
+    }],
     "browser_action": {
-    	"default_title": "Bookmark Manager" },
+        "default_title": "Bookmark Manager"
+    },
     "web_accessible_resources": ["popup.html"]
 }

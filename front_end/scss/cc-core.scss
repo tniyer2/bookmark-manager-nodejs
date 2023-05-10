@@ -5,22 +5,26 @@
 
 
 .cc__image {
-	border-radius: 5px; }
+  border-radius: 5px;
+}
 
 
 .cc__bookmark {
-	align-self: flex-start;
-	width: $favicon-resolution;
-	height: $favicon-resolution; }
+  align-self: flex-start;
+  width: $favicon-resolution;
+  height: $favicon-resolution;
+}
 .cc__bookmark img {
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	border-radius: 8px; }
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
 
 
 .cc__video {}
 
 
 .cc__youtube {
-	border: none; }
+  border: none;
+}

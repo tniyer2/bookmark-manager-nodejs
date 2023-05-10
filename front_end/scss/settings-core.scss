@@ -3,71 +3,79 @@
 
 $body-vertical-padding: 10px;
 body {
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	padding: $body-vertical-padding 10px;
-	margin: 0; }
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: $body-vertical-padding 10px;
+  margin: 0;
+}
 .root {
-	width: 100%;
-	height: 100%;
-	min-height: calc(100vh - 2 * #{$body-vertical-padding});
-	box-sizing: border-box;
-	padding: 20px;
-	border-radius: 8px; }
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 2 * #{$body-vertical-padding});
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 8px;
+}
 .root > * {
-	margin-bottom: 10px; }
+  margin-bottom: 10px;
+}
 
 
 .btn {
-	@extend %revert-button;
-	display: block;
-	padding: 5px;
-	border-radius: 5px;
-	font: $regular-font;
-	font-size: 20px;
-	user-select: none; }
+  @extend %revert-button;
+  display: block;
+  padding: 5px;
+  border-radius: 5px;
+  font: $regular-font;
+  font-size: 20px;
+  user-select: none;
+}
 .add-tag-rule-btn {}
 .download-meta-btn {}
 .tag-rules {
-	display: inline-block;
-	padding: 10px;
-	padding-bottom: 0;
-	border-radius: 5px;
-	font-size: 20px;
-	.rule {
-		padding-bottom: 10px;
-		$padding: 3px;
-		.value {
-			padding: $padding;
-			margin-right: 5px;
-			border-radius: 3px;
-			background: none;
-			font: $regular-font;
-			font-size: inherit;
-			outline: none; }
-		.value:focus {
-			padding: $padding + 1px;
-			border: none; }
-		.delete {
-			@extend %revert-button;
-			padding: 4px;
-			border-radius: 3px;
-			font: $regular-font;
-			font-size: inherit;
-			user-select: none; }
-	}
+  display: inline-block;
+  padding: 10px;
+  padding-bottom: 0;
+  border-radius: 5px;
+  font-size: 20px;
+  .rule {
+    padding-bottom: 10px;
+    $padding: 3px;
+    .value {
+      padding: $padding;
+      margin-right: 5px;
+      border-radius: 3px;
+      background: none;
+      font: $regular-font;
+      font-size: inherit;
+      outline: none;
+    }
+    .value:focus {
+      padding: $padding + 1px;
+      border: none;
+    }
+    .delete {
+      @extend %revert-button;
+      padding: 4px;
+      border-radius: 3px;
+      font: $regular-font;
+      font-size: inherit;
+      user-select: none;
+    }
+  }
 }
 
 .theme-radio {
-	padding: 5px;
-	font: $regular-font;
-	border-radius: 8px;
-	user-select: none;
-	.title {
-		display: block;
-		text-align: left;
-		font-size: 20px; }
-	.option {}
-	input { outline: none; }
+  padding: 5px;
+  font: $regular-font;
+  border-radius: 8px;
+  user-select: none;
+  .title {
+    display: block;
+    text-align: left;
+    font-size: 20px;
+  }
+  .option {}
+  input { outline: none; }
 }

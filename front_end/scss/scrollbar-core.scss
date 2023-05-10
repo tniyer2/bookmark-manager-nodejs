@@ -1,9 +1,13 @@
 
 .customScrollbar1::-webkit-scrollbar {
-  width: 7px; }
-.customScrollbar1::-webkit-scrollbar-track { 
-  border-radius: 3px; }
-.customScrollbar1::-webkit-scrollbar-thumb { 
-  border-radius: 3px; }
+  width: 7px;
+}
+.customScrollbar1::-webkit-scrollbar-track {
+  border-radius: 3px;
+}
+.customScrollbar1::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+}
 .customScrollbar1::-webkit-scrollbar-button {
-  display: none; }
+  display: none;
+}

@@ -2,80 +2,92 @@
 @import "master";
 
 body {
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-	padding: 10px;
-	margin: 0; }
-.main {	
-	display: inline-block;
-	padding: 20px;
-	border-radius: 8px; }
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin: 0;
+}
+.main {
+  display: inline-block;
+  padding: 20px;
+  border-radius: 8px;
+}
 
 
 .error-message {
-	font: $regular-font; 
-	font-size: 32px; }
+  font: $regular-font;
+  font-size: 32px;
+}
 
 $spacing: 5px;
 .content-block {
-	display: inline-flex;
-	flex-direction: column;
-	justify-content: flex-start;
-	align-items: center; }
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
 
 
 .content-block__choose-image {
-	padding: 0;
-	margin-top: $spacing;
-	background: none; 
-	border: none;
-  outline: none; }
+  padding: 0;
+  margin-top: $spacing;
+  background: none;
+  border: none;
+  outline: none;
+}
 .content-block__choose-image p {
-	margin: 0;
-	font: $regular-font;
-	text-align: center; }
+  margin: 0;
+  font: $regular-font;
+  text-align: center;
+}
 
 
 .info-block {
-	margin: 0;
-	margin-top: 5px;
-	margin-bottom: $spacing;
-	padding: 0;
-	font: $regular-font;
-	text-align: left;
-	list-style-type: none;
-	user-select: none; }
+  margin: 0;
+  margin-top: 5px;
+  margin-bottom: $spacing;
+  padding: 0;
+  font: $regular-font;
+  text-align: left;
+  list-style-type: none;
+  user-select: none;
+}
 .info-block li {
-	display: inline-block;
-	vertical-align: bottom;
-	margin-right: 5px;
-	border-radius: 5px; }
+  display: inline-block;
+  vertical-align: bottom;
+  margin-right: 5px;
+  border-radius: 5px;
+}
 $info-tag-padding: 3px;
 .info-block__tag {
-	padding: $info-tag-padding;
-	user-select: text; }
+  padding: $info-tag-padding;
+  user-select: text;
+}
 .info-block__source-link {}
 .info-block__source-link a {
-	display: block;
-	padding: $info-tag-padding; }
+  display: block;
+  padding: $info-tag-padding;
+}
 
 %removeDefaultButton {
-	background: none;
-	font: inherit;
-	color: inherit;
-	border: none;
-	outline: none; 
-	cursor: pointer;
+  background: none;
+  font: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  cursor: pointer;
 }
 .info-block__update-btn {}
 .info-block__update-btn button {
-	@extend %removeDefaultButton;
-	padding: $info-tag-padding; }
+  @extend %removeDefaultButton;
+  padding: $info-tag-padding;
+}
 .info-block__delete-btn {}
 .info-block__delete-btn button {
-	@extend %removeDefaultButton;
-	padding: $info-tag-padding; }
+  @extend %removeDefaultButton;
+  padding: $info-tag-padding;
+}
 
 
 $input-width: 400px;
@@ -83,75 +95,89 @@ $input-br: 5px;
 $input-border-width: 2px;
 $input-font-size: 18px;
 @mixin func-input-padding($vertical, $horizontal, $border-width) {
-	padding: ($vertical - $border-width) ($horizontal - $border-width);
-	border-width: $border-width;
+  padding: ($vertical - $border-width) ($horizontal - $border-width);
+  border-width: $border-width;
 }
 
 $title-padding-vertical: 5px;
 $title-padding-horizontal: 10px;
 @mixin func-title-padding($border-width) {
-	@include func-input-padding($title-padding-vertical, $title-padding-horizontal, $border-width);
+  @include func-input-padding($title-padding-vertical, $title-padding-horizontal, $border-width);
 }
 .title-input {
-	width: $input-width - (2 * $title-padding-horizontal);
-	height: 30px;
-	@include func-title-padding(0px);
-	margin-bottom: $spacing;
-	font: $regular-font;
-	font-size: $input-font-size;
-	outline: none;
-	border-radius: $input-br; }
+  width: $input-width - (2 * $title-padding-horizontal);
+  height: 30px;
+  @include func-title-padding(0px);
+  margin-bottom: $spacing;
+  font: $regular-font;
+  font-size: $input-font-size;
+  outline: none;
+  border-radius: $input-br;
+}
 .title-input:hover {
-	@include func-title-padding($input-border-width); }
+  @include func-title-padding($input-border-width);
+}
 .title-input:focus {
-	@include func-title-padding(0px); }
+  @include func-title-padding(0px);
+}
 
 
 $taggle-spacing: 5px;
 $taggle-padding-horizontal: 8px;
 $taggle-padding-vertical: 10px;
 @mixin func-taggle-padding($border-width) {
-	@include func-input-padding($taggle-padding-vertical, $taggle-padding-horizontal, $border-width);
+  @include func-input-padding($taggle-padding-vertical, $taggle-padding-horizontal, $border-width);
 }
 .tag-container-wrapper {
-	width: $input-width;
-	position: relative; }
+  width: $input-width;
+  position: relative;
+}
 .tag-container {
-	width: 100%;
-	min-height: auto;
+  width: 100%;
+  min-height: auto;
   box-sizing: border-box;
-	@include func-taggle-padding(0);
-	padding-bottom: 0;
-	margin-bottom: $auto-complete-max-height;
-	overflow: hidden;
-	border-radius: $input-br; }
+  @include func-taggle-padding(0);
+  padding-bottom: 0;
+  margin-bottom: $auto-complete-max-height;
+  overflow: hidden;
+  border-radius: $input-br;
+}
 .tag-container:hover {
-	@include func-taggle-padding($input-border-width);
-	padding-bottom: 0; }
+  @include func-taggle-padding($input-border-width);
+  padding-bottom: 0;
+}
 %tag-container-active {
-	@include func-taggle-padding(0);
-	padding-bottom: 0;
+  @include func-taggle-padding(0);
+  padding-bottom: 0;
 }
 .tag-container.active {
-	@extend %tag-container-active; }
+  @extend %tag-container-active;
+}
 .tag-container.empty:hover {
-	@include func-taggle-padding(0);
-	padding-bottom: 0; }
+  @include func-taggle-padding(0);
+  padding-bottom: 0;
+}
 
 @mixin func-taggle-list-margin($border-width) {
-	margin-bottom: $taggle-padding-vertical - $taggle-spacing - $border-width;
+  margin-bottom: $taggle-padding-vertical - $taggle-spacing - $border-width;
 }
 .taggle_list {
-	@include func-taggle-list-margin(0); }
+  @include func-taggle-list-margin(0);
+}
 .tag-container:hover > .taggle_list {
-	@include func-taggle-list-margin($input-border-width); }
+  @include func-taggle-list-margin($input-border-width);
+}
 .tag-container.active > .taggle_list {
-	@include func-taggle-list-margin(0); }
+  @include func-taggle-list-margin(0);
+}
 .tag-container.empty:hover > .taggle_list {
-	@include func-taggle-list-margin(0); }
+  @include func-taggle-list-margin(0);
+}
 
 .taggle_list li {
-	margin-bottom: $taggle-spacing; }
+  margin-bottom: $taggle-spacing;
+}
 .taggle_placeholder {
-	margin-left: $taggle-padding-horizontal;
-	font-size: $input-font-size; }
+  margin-left: $taggle-padding-horizontal;
+  font-size: $input-font-size;
+}

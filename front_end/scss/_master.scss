@@ -1,6 +1,7 @@
 
 .noshow {
-	display: none !important; }
+  display: none !important;
+}
 
 /* Light Theme */
 $lt-light-gray: #e2e2e2;
@@ -57,9 +58,10 @@ $search-box-border-width: 2px;
 $favicon-resolution: 128px;
 
 %revert-button {
-	padding: 0;
-	margin: 0; 
-	background: none;
-	border: none;
-	outline: none;
-	cursor: pointer; }
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}

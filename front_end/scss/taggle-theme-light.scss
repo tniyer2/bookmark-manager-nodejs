@@ -2,26 +2,36 @@
 @import "master";
 
 .taggle_input {
-  color: $lt-font-color; }
+  color: $lt-font-color;
+}
 .taggle_placeholder {
-    color: $lt-dark-gray; }
+  color: $lt-dark-gray;
+}
 .taggle {
-  background: $lt-light-gray; }
+  background: $lt-light-gray;
+}
 .taggle:hover {
-  background: $lt-gray; }
+  background: $lt-gray;
+}
 .taggle_hot {
-  background: $lt-gray !important; }
+  background: $lt-gray !important;
+}
 .taggle_text {
- color: $lt-font-color; }
+ color: $lt-font-color;
+}
 .taggle .close {
-  color: $dark-red; }
+  color: $dark-red;
+}
 .auto-complete {
   background: white;
-  border: 1px solid $lt-gray; }
+  border: 1px solid $lt-gray;
+}
 .auto-complete-li {
   background: inherit;
   color: $lt-dark-gray;
-  font-weight: 400; }
+  font-weight: 400;
+}
 .auto-complete-li.active {
-  background: $lt-gray; 
-  color: $lt-strong-gray; }
+  background: $lt-gray;
+  color: $lt-strong-gray;
+}

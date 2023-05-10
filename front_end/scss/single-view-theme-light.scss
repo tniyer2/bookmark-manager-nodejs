@@ -3,69 +3,92 @@
 
 
 .main {
-	background: #c6c6c6;
-	border: 3px solid $lt-strong-gray; }
+  background: #c6c6c6;
+  border: 3px solid $lt-strong-gray;
+}
 
 
 .error-message {
-	color: $lt-strong-gray; }
+  color: $lt-strong-gray;
+}
 
 
 .content-block__choose-image p {
-	color: $green; }
+  color: $green;
+}
 .content-block__choose-image:hover p {
-	color: $dark-green; }
+  color: $dark-green;
+}
 
 
 .info-block {
-	color: $lt-font-color; }
+  color: $lt-font-color;
+}
 .info-block li {
-	border-width: 2px;
-	border-style: solid; }
+  border-width: 2px;
+  border-style: solid;
+}
 .info-block__tag {
-	background: $yellow;
-	border-color: $dark-yellow;
-	color: $lt-font-color; }
+  background: $yellow;
+  border-color: $dark-yellow;
+  color: $lt-font-color;
+}
 .info-block__source-link {
-	background: $blue;
-	border-color: $dark-blue; }
+  background: $blue;
+  border-color: $dark-blue;
+}
 .info-block__source-link:hover {
-	background: $medium-blue; }
+  background: $medium-blue;
+}
 .info-block__source-link a {
-	color: $lt-font-color;
-	text-decoration: none; }
+  color: $lt-font-color;
+  text-decoration: none;
+}
 .info-block__update-btn {
-	background: $blue;
-	border-color: $dark-blue; }
+  background: $blue;
+  border-color: $dark-blue;
+}
 .info-block__update-btn:hover {
-	background: $medium-blue; }
+  background: $medium-blue;
+}
 .info-block__delete-btn {
-	background: $red;
-	border-color: $strong-red; }
+  background: $red;
+  border-color: $strong-red;
+}
 .info-block__delete-btn:hover {
-	background: $dark-red; }
+  background: $dark-red;
+}
 
 
 $input-border: 0px solid $lt-strong-gray;
 .title-input {
-	background: none;
-	color: $lt-font-color;
-	border: $input-border; }
+  background: none;
+  color: $lt-font-color;
+  border: $input-border;
+}
 .title-input:focus {
-	background: white; }
+  background: white;
+}
 .title-input::placeholder {
-	color: $lt-strong-gray; }
+  color: $lt-strong-gray;
+}
 .title-input:focus::placeholder {
-	opacity: 0; }
+  opacity: 0;
+}
 
 .tag-container {
-	background: none;
-	border: $input-border; }
+  background: none;
+  border: $input-border;
+}
 %tag-container-active {
-	background: white; }
+  background: white;
+}
 .tag-container.active {
-	@extend %tag-container-active; }
+  @extend %tag-container-active;
+}
 .tag-container.empty {
-	@extend %tag-container-active; }
+  @extend %tag-container-active;
+}
 .taggle_placeholder {
-	color: $lt-strong-gray; }
+  color: $lt-strong-gray;
+}
