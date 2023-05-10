@@ -1,5 +1,5 @@
 
-import { CSS_DIR, getParams, injectThemeCss, noop, isUdf, addClass, removeClass, wrap, bindWrap, joinCallbacks, makeRequest } from "./utility.js";
+import { CSS_DIR, getParams, injectThemeCss, noop, isUdf, addClass, removeClass, joinCallbacks, makeRequest } from "./utility.js";
 import { AwesomeAlerter, ContentCreator } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 
@@ -245,7 +245,7 @@ const formatDate = (function(){
 
     async function createContent(info)
     {
-        bindWrap(g_contentCreator.load, g_contentCreator, info).then((elm) => {
+        g_contentCreator.load(info).then((elm) => {
             el_contentBlock.prepend(elm);
         }).catch((err) => {
             if (err)
@@ -302,7 +302,7 @@ const formatDate = (function(){
         el_fileUpload.addEventListener("change", () => {
             let imageUrl = URL.createObjectURL(el_fileUpload.files[0]);
 
-            wrap(getDataUri, imageUrl).then((uri) => {
+            getDataUri(imageUrl).then((uri) => {
                 p.innerText = action2;
                 el_contentBlock.querySelector("img").src = uri;
                 requestUpdate(
@@ -320,25 +320,27 @@ const formatDate = (function(){
         });
     }
 
-    function getDataUri(url, cb, onErr) {
-        let image = new Image();
+    function getDataUri(url) {
+        return new Promise((resolve, reject) => {
+            let image = new Image();
 
-        image.addEventListener("load", function() {
-            let canvas = document.createElement('canvas');
-            canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
-            canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
+            image.addEventListener("load", function() {
+                let canvas = document.createElement('canvas');
+                canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
+                canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
 
-            canvas.getContext('2d').drawImage(this, 0, 0);
+                canvas.getContext('2d').drawImage(this, 0, 0);
 
-            cb(canvas.toDataURL('image/png'));
+                resolve(canvas.toDataURL('image/png'));
+            });
+
+            image.addEventListener("error", (err) => {
+                console.warn(err);
+                reject();
+            });
+
+            image.src = url;
         });
-
-        image.addEventListener("error", (err) => {
-            console.warn(err);
-            onErr();
-        });
-
-        image.src = url;
     }
 
     function formatCategory(category)

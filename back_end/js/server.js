@@ -6,7 +6,7 @@ const net = require("net"),
 
 const getDownloader = require("./downloader");
 
-const { U } = require("../../front_end/js/utility");
+const { bindWrap } = require("./utility");
 const { MetaUtility } = require("../../front_end/js/metaUtility");
 
 const RESOURCES_PATH = "back_end/resources",
@@ -116,7 +116,7 @@ module.exports = class {
                 let d;
                 try {
                     d = getDownloader(srcUrl, filePath);
-                    await U.bindWrap(d.download, d);
+                    await bindWrap(d.download, d);
                 } catch (e) {
                     console.log(e.message);
                     return;

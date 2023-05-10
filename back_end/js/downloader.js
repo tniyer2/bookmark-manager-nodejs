@@ -7,6 +7,7 @@ const parseDataUri = require("parse-data-uri"),
 	  fileType = require("file-type");
 
 const { U } = require("../../front_end/js/utility");
+const { bindWrap } = require("./utility");
 
 // @param srcUrl a url object of the resource to be downloaded.
 // @param filePath path of the file without a file extension.
@@ -49,7 +50,7 @@ class HttpDownloader {
 	{
 		if (!this._ext)
 		{
-			this._ext = await U.bindWrap(this._getRemoteExtension, this).catch(() => {
+			this._ext = await bindWrap(this._getRemoteExtension, this).catch(() => {
 				this._ext = "";
 			});
 		}

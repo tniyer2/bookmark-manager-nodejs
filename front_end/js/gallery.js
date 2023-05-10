@@ -1,5 +1,5 @@
 
-import { CSS_DIR, extend, removeClass, addClass, getParams, injectThemeCss, isUdf, wrap, bindWrap, preventBubble, makeRequest } from "./utility.js";
+import { CSS_DIR, extend, removeClass, addClass, getParams, injectThemeCss, isUdf, preventBubble, makeRequest } from "./utility.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
 import { Searcher } from "./query.js";
@@ -258,7 +258,7 @@ async function loadContent(query)
     if (isUdf(meta)) return;
 
     let results = Searcher.query(meta, query);
-    g_feedBox = new FeedBox(results, el_feed, (info) => wrap(createContent, info), FEEDBOX_OPTIONS);
+    g_feedBox = new FeedBox(results, el_feed, (info) => createContent(info), FEEDBOX_OPTIONS);
     if (!results.length)
     {
         let m = meta.length ? NO_RESULTS_MESSAGE : TUTORIAL_MESSAGE;
@@ -285,57 +285,60 @@ function showMessage(message)
     el_feed.classList.add(cl_noLoad);
 }
 
-async function createContent(info, cb, onErr)
-{
+function createContent(info) {
     let el_contentBlock = document.createElement("div");
     el_contentBlock.classList.add("content");
-
+    
     let el_sourceBlock = document.createElement("div");
     el_sourceBlock.classList.add("content__source-block");
     el_contentBlock.appendChild(el_sourceBlock);
-
+    
     let el_infoBlock = document.createElement("div");
     el_infoBlock.classList.add("content__info-block");
     el_contentBlock.appendChild(el_infoBlock);
-
+    
     let el_title = document.createElement("p");
     el_title.classList.add("content__title");
-
+    
     let titleText = info.title ? info.title : DEFAULT_TITLE;
     let titleTextNode = document.createTextNode(titleText);
     el_title.appendChild(titleTextNode);
     el_infoBlock.appendChild(el_title);
+    
+    return g_contentCreator.load(info)
+    .then((el_content) => {
+        if (isUdf(el_content)) {
+            throw new Error("el_content is undefined.");
+        }
+        
+        let addHover = () => {
+            addClass(el_contentBlock, cl_hover);
+        };
+        let removeHover = () => {
+            removeClass(el_contentBlock, cl_hover);
+        };
+        el_contentBlock.addEventListener("mouseenter", addHover);
+        el_contentBlock.addEventListener("mouseleave", removeHover);
+        
+        if (info.category === "bookmark") {
+            preventBubble(el_content, "click");
+            el_content.addEventListener("mouseenter", removeHover);
+            el_content.addEventListener("mouseleave", addHover);
+        }
+        
+        preventBubble(el_infoBlock, "click");
+        
+        el_sourceBlock.appendChild(el_content);
+        
+        const el_link = document.createElement("a");
+        const query = "id=" + info.id + "&theme=" + g_theme;
+        el_link.href = CONTENT_LINK + "?" + query;
+        el_link.target = CONTENT_LINK_TARGET;
+        el_link.classList.add("content-wrapper");
+        el_link.appendChild(el_contentBlock);
 
-    let el_content = await bindWrap(g_contentCreator.load, g_contentCreator, info).catch(onErr);
-    if (isUdf(el_content)) return;
-
-    let addHover = () => {
-        addClass(el_contentBlock, cl_hover);
-    };
-    let removeHover = () => {
-        removeClass(el_contentBlock, cl_hover);
-    };
-    el_contentBlock.addEventListener("mouseenter", addHover);
-    el_contentBlock.addEventListener("mouseleave", removeHover);
-
-    if (info.category === "bookmark")
-    {
-        preventBubble(el_content, "click");
-        el_content.addEventListener("mouseenter", removeHover);
-        el_content.addEventListener("mouseleave", addHover);
-    }
-
-    preventBubble(el_infoBlock, "click");
-
-    el_sourceBlock.appendChild(el_content);
-
-    const el_link = document.createElement("a");
-    const query = "id=" + info.id + "&theme=" + g_theme;
-    el_link.href = CONTENT_LINK + "?" + query;
-    el_link.target = CONTENT_LINK_TARGET;
-    el_link.classList.add("content-wrapper");
-    el_link.appendChild(el_contentBlock);
-    cb(el_link);
+        return el_link;
+    });
 }
 
 function makeQueryString()

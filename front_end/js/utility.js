@@ -2,38 +2,29 @@
 const NEW_TAB = "chrome://newtab/";
 const CSS_DIR = "css";
 
-function noop(){} // eslint-disable-line no-empty-function
+function noop() {} // eslint-disable-line no-empty-function
 
-function isUdf(arg) {
-    return typeof arg === "undefined";
+function isUdf(x) {
+    return typeof x === "undefined";
 }
 
-function min(a, b) {
-    let q = typeof a === "number";
-    let p = typeof b === "number";
-    let final = q && p ? Math.min(a, b):
-                q ? a:
-                p ? b:
-                null;
-    return final;
+function isNumber(x) {
+    return typeof x === "number";
 }
 
-// @return concatenation of arguments and current date.
-function makeTag() {
-    let arr = Array.from(arguments);
-    arr.push(Date.now());
-    return arr.join("-");
-}
+function minIfNumber(a, b) {
+    let aIsNum = isNumber(a);
+    let bIsNum = isNumber(b);
 
-// wraps f(...args, resolve, reject) in a Promise
-function wrap(f, ...args) {
-    return new Promise((resolve, reject) => {
-        f(...args, resolve, reject);
-    });
-}
-
-function bindWrap(f, context, ...args) {
-    return wrap(f.bind(context), ...args);
+    if (aIsNum && bIsNum) {
+        return Math.min(a, b);
+    } else if (aIsNum) {
+        return a;
+    } else if (bIsNum) {
+        return b;
+    } else {
+        return null;
+    }
 }
 
 // @return an array of funcs bound to context
@@ -191,11 +182,10 @@ function getParams() {
 
 function makeRequest(request) {
     return new Promise((resolve) => {
-        chrome.runtime.sendMessage(request, (response, reject) => {
+        chrome.runtime.sendMessage(request, (response) => {
             const e = chrome.runtime.lastError;
             if (e) {
-                console.warn(e.message);
-                reject();
+                throw new Error(e.message);
             } else {
                 resolve(response);
             }
@@ -208,10 +198,8 @@ export {
     CSS_DIR,
     noop,
     isUdf,
-    min,
-    makeTag,
-    wrap,
-    bindWrap,
+    isNumber,
+    minIfNumber,
     bindAll,
     extend,
     joinCallbacks,

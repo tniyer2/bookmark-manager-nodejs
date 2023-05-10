@@ -131,8 +131,11 @@ function main()
 
 function load()
 {
-    makeRequest({request: "get-popup-info", popupId: g_popupId, to: "background.js"})
-    .then((response) => {
+    makeRequest({
+        request: "get-popup-info",
+        popupId: g_popupId,
+        to: "background.js"
+    }).then((response) => {
         g_docUrl = response.docUrl;
         show(el_bookmarkBtn);
         show(el_saveMenu);
@@ -264,19 +267,14 @@ function requestSaveManual(source)
     requestSaveCommon(message);
 }
 
-function requestSaveCommon(message)
-{
-    makeRequest(message).then((response) => {
-        if (response.success)
-        {
+function requestSaveCommon(message) {
+    makeRequest(message)
+    .then((response) => {
+        if (response.success) {
             closePopup();
-        }
-        else if (response.memoryError)
-        {
+        } else if (response.memoryError) {
             g_alerter.alert(MEMORY_ERROR_MESSAGE);
-        }
-        else
-        {
+        } else {
             console.warn("could not handle response:", response);
             closePopup();
         }
