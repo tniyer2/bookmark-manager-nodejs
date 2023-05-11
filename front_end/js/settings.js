@@ -1,5 +1,5 @@
 
-import { CSS_DIR, injectThemeCss, makeRequest } from "./utility.js";
+import { injectThemeCss, sendMessage } from "./utility.js";
 import { RadioManager } from "./widgets.js";
 
 (function(){
@@ -18,7 +18,7 @@ import { RadioManager } from "./widgets.js";
 
     async function main() {
         g_settings = await getSettings();
-        injectThemeCss(document.head, ["settings"], g_settings.theme, chrome.runtime.getURL(CSS_DIR));
+        injectThemeCss(["settings"], g_settings.theme);
 
         g_tagRules = g_settings.tagRules || [];
         initTagRules(g_tagRules);
@@ -30,7 +30,7 @@ import { RadioManager } from "./widgets.js";
         });
 
         el_downloadMetaBtn.addEventListener("click", () => {
-            makeRequest({
+            sendMessage({
                 to: "background.js",
                 request: "get-meta"
             }).then((meta) => {
@@ -114,14 +114,14 @@ import { RadioManager } from "./widgets.js";
     }
 
     function getSettings() {
-        return makeRequest({
+        return sendMessage({
             to: "background.js",
             request: "get-settings"
         });
     }
 
     function updateSettings(settings) {
-        return makeRequest({
+        return sendMessage({
             to: "background.js",
             request: "update-settings",
             settings

@@ -1,5 +1,10 @@
 
-import { addClass, removeClass, isUdf, extend, noop, minIfNumber, parseFileName } from "./utility.js";
+import {
+    noop, isUdf, minIfNumber,
+    initOptions, parseFileName,
+    preventDefault,
+    addClass, removeClass
+} from "./utility.js";
 
 const SVGNS   = "http://www.w3.org/2000/svg";
 const XLINKNS = "http://www.w3.org/1999/xlink";
@@ -344,9 +349,8 @@ const ContentCreator = function(){
     };
 
     return class {
-        constructor(options)
-        {
-            this._options = extend(DEFAULTS, options);
+        constructor(options) {
+            this._options = options = initOptions(options, DEFAULTS);
             prependBEMBlock(CLASSES, this._options.BEMBlock);
         }
 
@@ -498,9 +502,8 @@ const AwesomeAlerter = function(){
     };
 
     return class {
-        constructor(options)
-        {
-            this._options = extend(DEFAULTS, options);
+        constructor(options) {
+            this._options = options = initOptions(options, DEFAULTS);
             prependBEMBlock(CLASSES, this._options.BEMBlock);
             if (this._options.insertAtTop)
             {
@@ -690,9 +693,8 @@ const ListManager = function(){
     };
 
     return class {
-        constructor(el_parent, options)
-        {
-            this._options = extend(CLASS_DEFAULTS, options);
+        constructor(el_parent, options) {
+            this._options = options = initOptions(options, CLASS_DEFAULTS);
             prependBEMBlock(CLASSES, this._options.BEMBlock);
 
             this._data = [];
@@ -728,11 +730,10 @@ const ListManager = function(){
             this._selected = obj;
         }
 
-        async addSource(srcUrl, sourceOptions)
-        {
+        async addSource(srcUrl, sourceOptions) {
             let insertSource = this._queue.next();
 
-            sourceOptions = extend(SOURCE_DEFAULTS, sourceOptions);
+            sourceOptions = initOptions(sourceOptions, SOURCE_DEFAULTS);
 
             const el_source = document.createElement("li");
             el_source.classList.add(CLASSES.source);
@@ -962,9 +963,9 @@ const AutoComplete = function(){
     const IGNORE_MODIFIERS = ["*", "!"];
 
     return class {
-        constructor(input, parentElement, options)
-        {
-            this._options = extend(DEFAULTS, options);
+        constructor(input, parentElement, options) {
+            this._options = options = initOptions(options, DEFAULTS);
+
             prependBEMBlock(CLASSES, this._options.BEMBlock);
             if (!this._options.values)
             {
@@ -1144,8 +1145,7 @@ const AutoComplete = function(){
             return similarValues;
         }
 
-        _setList(newValues)
-        {
+        _setList(newValues) {
             this._clearList();
 
             newValues.forEach((value) => {
@@ -1163,9 +1163,7 @@ const AutoComplete = function(){
 
             this._show();
         }
-
-        _createListElement(text)
-        {
+        _createListElement(text) {
             let li = document.createElement("li");
             li.classList.add(CLASSES.li);
 
@@ -1179,18 +1177,14 @@ const AutoComplete = function(){
                 evt.preventDefault();
                 this._confirm(text);
             });
-            li.addEventListener("mousedown", (evt) => {
-                evt.preventDefault();
-            });
+            preventDefault(li, "mousedown");
 
             let textNode = document.createTextNode(text);
             li.appendChild(textNode);
 
             return li;
         }
-
-        _clearList()
-        {
+        _clearList() {
             this.selected = null;
 
             let child = this._el_list.firstChild;
@@ -1200,30 +1194,16 @@ const AutoComplete = function(){
                 child = this._el_list.firstChild;
             }
         }
-
-        _isOpen()
-        {
+        _isOpen() {
             return !this._el_list.classList.contains(cl_hide);
         }
-
-        _show()
-        {
-            if (this._el_list.classList.contains(cl_hide))
-            {
-                this._el_list.classList.remove(cl_hide);
-            }
+        _show() {
+            removeClass(this._el_list, cl_hide);
         }
-
-        _hide()
-        {
-            if (!this._el_list.classList.contains(cl_hide))
-            {
-                this._el_list.classList.add(cl_hide);
-            }
+        _hide() {
+            addClass(this._el_list, cl_hide);
         }
-
-        _close()
-        {
+        _close() {
             this._hide();
             this._clearList();
         }

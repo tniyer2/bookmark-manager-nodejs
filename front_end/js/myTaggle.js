@@ -1,5 +1,5 @@
 
-import { extend, joinCallbacks } from "./utility.js";
+import { initOptions, joinFunctions, preventDefault } from "./utility.js";
 import { AutoComplete } from "./widgets.js";
 
 const TAG_LENGTH_LIMIT = 30;
@@ -13,8 +13,7 @@ let TAGGLE_DEFAULTS = { submitKeys: [COMMA, ENTER, TAB] };
 let AC_TAGGLE_DEFAULTS = { submitKeys: [COMMA] };
 
 function createTaggle(container, options) {
-
-    options = extend(options, TAGGLE_DEFAULTS);
+    options = initOptions(options, TAGGLE_DEFAULTS);
 
     let taggle = new Taggle(container, options);
     let taggleInput = taggle.getInput();
@@ -28,10 +27,8 @@ function createTaggle(container, options) {
         container.dispatchEvent(new Event("blur"));
     });
 
-    let tagFormatter = joinCallbacks(options.tagFormatter, (li) => {
-        li.addEventListener("mousedown", (evt) => {
-            evt.preventDefault();
-        });
+    let tagFormatter = joinFunctions(options.tagFormatter, (li) => {
+        preventDefault(li, "mousedown");
         li.addEventListener("click", (evt) => {
             evt.stopPropagation();
 
@@ -41,7 +38,7 @@ function createTaggle(container, options) {
             taggleInput.focus();
         });
     });
-    let onTagAdd = joinCallbacks(options.onTagAdd, (evt, text) => {
+    let onTagAdd = joinFunctions(options.onTagAdd, (evt, text) => {
         container.scrollTop = container.scrollHeight;
     });
     taggle.setOptions({

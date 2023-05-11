@@ -62,7 +62,7 @@ module.exports = class {
         }
 
         delete info.id;
-        this._meta[index] = U.extend(content, info);
+        this._meta[index] = Object.assign({}, content, info);
 
         this._saveSync();
 

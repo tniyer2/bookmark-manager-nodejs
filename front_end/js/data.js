@@ -1,9 +1,10 @@
 
-import { extend, isUdf } from "./utility.js";
+import { rethrowAs, isUdf, WebApiError, asyncWebApiToPromise } from "./utility.js";
 import {
     TagCounter, getRandomString, searchId
 } from "./metaUtility.js";
 
+class LocalStorageMemoryError extends WebApiError {}
 
 const DataManager = new (function(){
     const TAG_KEY = "tags";
@@ -13,29 +14,20 @@ const DataManager = new (function(){
     let self = this;
 
     this.getKey = function(keys) {
-        return new Promise((resolve, reject) => {
-            chrome.storage.local.get(keys, (data) => {
-                const e = chrome.runtime.lastError;
-                if (e) {
-                    throw new Error(e.message);
-                } else {
-                    resolve(data);
-                }
-            });
-        });
+        return asyncWebApiToPromise(
+            cb => chrome.storage.local.get(keys, cb)
+        );
     };
 
     this.setKey = function(data) {
-        return new Promise((resolve, reject) => {
-            chrome.storage.local.set(data, () => {
-                const e = chrome.runtime.lastError;
-                if (e) {
-                    console.warn(e.message);
-                    reject({ memoryError: true });
-                } else {
-                    resolve();
-                }
-            });
+        return asyncWebApiToPromise(
+            cb => chrome.storage.local.set(data, cb)
+        ).catch((err) => {
+            if (err instanceof WebApiError) {
+                rethrowAs(err, LocalStorageMemoryError);
+            } else {
+                throw err;
+            }
         });
     };
 
@@ -134,7 +126,7 @@ const DataManager = new (function(){
             if (content) {
                 delete info.id;
 
-                this._meta[index] = extend(content, info);
+                this._meta[index] = Object.assign({}, content, info);
 
                 return save(this._meta).then(() => {
                     if (info[TAG_KEY]) {
@@ -205,4 +197,4 @@ const RequestManager = (function(){
     };
 })();
 
-export { DataManager, RequestManager };
+export { DataManager, LocalStorageMemoryError, RequestManager };

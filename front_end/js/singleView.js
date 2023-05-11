@@ -1,5 +1,9 @@
 
-import { CSS_DIR, getParams, injectThemeCss, noop, isUdf, addClass, removeClass, joinCallbacks, makeRequest } from "./utility.js";
+import {
+    noop, isUdf, joinFunctions,
+    addClass, removeClass, injectThemeCss,
+    getURLSearchParams, sendMessage
+} from "./utility.js";
 import { AwesomeAlerter, ContentCreator } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 
@@ -102,10 +106,10 @@ const formatDate = (function(){
 
     function main()
     {
-        const params = getParams();
+        const params = getURLSearchParams();
         g_contentId = params.get("id");
         const theme = params.get("theme") || "light";
-        injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "cc", "single-view"], theme, chrome.runtime.getURL(CSS_DIR));
+        injectThemeCss(["scrollbar", "alerts", "taggle", "cc", "single-view"], theme);
 
         g_alerter = new AwesomeAlerter();
         document.body.appendChild(g_alerter.alertList);
@@ -128,7 +132,7 @@ const formatDate = (function(){
         attachDelete();
         attachUpdate();
 
-        let tags = await makeRequest({
+        let tags = await sendMessage({
             request: "get-tags",
             to: "background.js"
         }).catch((err) => {
@@ -147,7 +151,7 @@ const formatDate = (function(){
 
     function requestContent()
     {
-        return makeRequest({
+        return sendMessage({
             request: "find-content",
             id: g_contentId,
             to: "background.js"
@@ -183,7 +187,7 @@ const formatDate = (function(){
             attachDelete();
         }
 
-        return makeRequest({
+        return sendMessage({
             request: "delete-content",
             id: g_contentId,
             to: "background.js"
@@ -218,16 +222,13 @@ const formatDate = (function(){
         el_updateBtn.disabled = false;
     }
 
-    function requestUpdate(info, successMessage, errMessage)
-    {
-        let message = {
+    function requestUpdate(info, successMessage, errMessage) {
+        return sendMessage({
             request: "update-content",
             id: g_contentId,
             info,
             to: "background.js"
-        };
-
-        return makeRequest(message).then((response) => {
+        }).then((response) => {
             if (response.success)
             {
                 g_alerter.alert(successMessage);
@@ -364,8 +365,8 @@ const formatDate = (function(){
         }
 
         inner();
-        let add = joinCallbacks(taggle.settings.onTagAdd, inner);
-        let remove = joinCallbacks(taggle.settings.onTagRemove, inner);
+        let add = joinFunctions(taggle.settings.onTagAdd, inner);
+        let remove = joinFunctions(taggle.settings.onTagRemove, inner);
         taggle.setOptions({onTagAdd: add, onTagRemove: remove});
     }
 

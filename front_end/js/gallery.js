@@ -1,5 +1,10 @@
 
-import { CSS_DIR, extend, removeClass, addClass, getParams, injectThemeCss, isUdf, preventBubble, makeRequest } from "./utility.js";
+import {
+    isUdf, initOptions,
+    preventDefault, preventBubble,
+    addClass, removeClass, injectThemeCss,
+    getURLSearchParams, sendMessage
+} from "./utility.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
 import { Searcher } from "./query.js";
@@ -14,14 +19,13 @@ const FeedBox = (function(){
     };
 
     return class {
-        constructor(meta, el_parent, createContent, options)
-        {
+        constructor(meta, el_parent, createContent, options) {
+            this._options = options = initOptions(options, DEFAULTS);
+
             this._meta = meta;
             this._queue = new DOMQueue(el_parent);
             this._el_test = document.createElement("canvas");
             this._createContent = createContent;
-
-            this._options = extend(DEFAULTS, options);
 
             this._onScroll = () => {
                 this._checkIfReachedBottom();
@@ -179,9 +183,9 @@ let submitSearch = (function(){
 
 function main()
 {
-    const params = getParams();
+    const params = getURLSearchParams();
     g_theme = params.get("theme") || "light";
-    injectThemeCss(document.head, CSS_FILES, g_theme, chrome.runtime.getURL(CSS_DIR));
+    injectThemeCss(CSS_FILES, g_theme);
 
     g_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
     g_searchBoxToggle = new Toggle();
@@ -251,7 +255,10 @@ function setSearch(query, cookie)
 
 async function loadContent(query)
 {
-    let meta = await makeRequest({request: "get-meta", to: "background.js"}).catch((err) => {
+    let meta = await sendMessage({
+        request: "get-meta",
+        to: "background.js"
+    }).catch((err) => {
         console.warn("error loading content:", err);
         showMessage(NO_LOAD_MESSAGE);
     });
@@ -269,8 +276,10 @@ async function loadContent(query)
         g_feedBox.buffer();
     }
 
-    let tags = await makeRequest({request: "get-tags", to: "background.js"})
-    .catch((err) => {
+    let tags = await sendMessage({
+        request: "get-tags",
+        to: "background.js"
+    }).catch((err) => {
         console.log("error loading tags:", err);
     });
     if (!tags) return;
@@ -402,9 +411,7 @@ function attachSubmit()
         });
     }
 
-    el_form.addEventListener("submit", (evt) => {
-        evt.preventDefault();
-    });
+    preventDefault(el_form, "submit");
     el_submit.addEventListener("click", submitSearch, {once: true});
 
     onEnter(el_titleInput, submitSearch, () => el_titleInput.value);

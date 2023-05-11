@@ -1,9 +1,9 @@
 
-import { NEW_TAB, extend, isUdf } from "./utility.js";
-import { DataManager, RequestManager } from "./data.js";
+import { NEW_TAB, WebApiError, isUdf, sendMessageToTab } from "./utility.js";
+import { DataManager, LocalStorageMemoryError, RequestManager } from "./data.js";
 
-const GALLERY_URL = chrome.runtime.getURL("./gallery.html"),
-    DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
+const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
+const DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
 const CONTEXT_OPTIONS = {
     title: "Bookmark",
     id: "Save",
@@ -16,23 +16,35 @@ const CONTEXT_OPTIONS = {
     ]
 };
 
-let g_requester,
-    g_popupInfo = {},
-    g_settings;
+let g_requester;
+const g_popupInfo = {};
+let g_settings;
 
 async function main() {
     g_requester = new RequestManager();
+
     try {
         const data = await DataManager.getKey("settings");
-        g_settings = data.settings || DEFAULT_SETTINGS;
-    } catch (e) {
-        if (e) console.warn(e);
-        console.warn("Failed to retrieve settings from local storage.");
-        g_settings = DEFAULT_SETTINGS;
+
+        g_settings = data.settings;
+        if (isUdf(g_settings)) {
+            g_settings = DEFAULT_SETTINGS;
+        }
+    } catch (err) {
+        if (err instanceof LocalStorageMemoryError) {
+            console.warn("Failed to retrieve settings from local storage.");
+            console.warn(err);
+
+            g_settings = DEFAULT_SETTINGS;
+        } else {
+            throw err;
+        }
     }
 
     chrome.runtime.onMessage.addListener(handleRequest);
+
     chrome.browserAction.onClicked.addListener(openGallery);
+    
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create(CONTEXT_OPTIONS);
         chrome.contextMenus.onClicked.addListener(onContextClicked);
@@ -71,7 +83,7 @@ function handleRequest(msg, sender, sendResponse) {
     } else if (msg.request === "get-settings") {
         sendResponse(g_settings);
     } else if (msg.request === "update-settings") {
-        const updatedSettings = extend(g_settings, msg.settings);
+        const updatedSettings = Object.assign({}, g_settings, msg.settings);
         DataManager.setKey({settings: updatedSettings}).then(() => {
             g_settings = updatedSettings;
             sendResponse();
@@ -132,26 +144,12 @@ function replaceTags(content) {
 }
 
 function requestScanInfo(tabId) {
-    return new Promise((resolve, reject) => {
-        const message = {
-            to: "scanner.js",
-            scan: true
-        };
+    const message = {
+        to: "scanner.js",
+        scan: true
+    };
 
-        chrome.tabs.sendMessage(
-            tabId,
-            message,
-            (scanInfo) => {
-                const e = chrome.runtime.lastError;
-                if (e) {
-                    console.warn(e.message);
-                    reject();
-                } else {
-                    resolve(scanInfo);
-                }
-            }
-        );
-    });
+    return sendMessageToTab(tabId, message);
 }
 
 function openGallery(tab)
@@ -167,40 +165,47 @@ function openGallery(tab)
     }
 }
 
-function onContextClicked(info, tab)
-{
-    let popupId = [tab.id, "popupId", Date.now()].join("-");
+function onContextClicked(info, tab) {
+    const popupId = [
+        tab.id,
+        "popupId",
+        Date.now()
+    ].join("-");
+
     g_popupInfo[popupId] = {
         srcUrl: info.srcUrl,
         mediaType: info.mediaType
     };
 
-    let message = {
-        to: "content.js",
+    const to = "content.js";
+    const tabId = tab.id;
+    const message = {
+        to,
         open: true,
-        tabId: tab.id,
-        popupId: popupId,
+        tabId,
+        popupId,
         theme: g_settings.theme
     };
 
-    return onScriptLoad(tab.id, "content.js", "./content.js", message);
+    loadScript(tabId, to, "./content.js")
+    .then(() => sendMessageToTab(tabId, message));
 }
 
-function onScriptLoad(tabId, to, script, message) {
-    return new Promise((resolve) => {
-        chrome.tabs.sendMessage(tabId, { to, check: true }, (exists) => {
-            if (chrome.runtime.lastError) { /*ignore*/ }
-
-            const send = () => {
-                chrome.tabs.sendMessage(tabId, message, resolve);
-            };
-
-            if (exists === true) {
-                send();
-            } else {
-                chrome.tabs.executeScript(tabId, { file: script }, send);
-            }
-        });
+function loadScript(tabId, to, script) {
+    return sendMessageToTab(tabId, { to, check: true })
+    .catch((err) => {
+        if (err instanceof WebApiError) {
+            return false;
+        } else {
+            throw err;
+        }
+    })
+    .then((exists) => {
+        if (exists !== true) {
+            return asyncWebApiToPromise(
+                (cb) => chrome.tabs.executeScript(tabId, { file: script }, cb)
+            );
+        }
     });
 }
 

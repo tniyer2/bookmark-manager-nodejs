@@ -1,7 +1,13 @@
 
-import { CSS_DIR, removeClass, addClass, getParams, injectThemeCss, getYoutubeEmbed, extend, preventBubble, makeRequest } from "./utility.js";
+import {
+    preventBubble, getYoutubeEmbed,
+    removeClass, addClass, injectThemeCss,
+    getURLSearchParams, sendMessage, sendMessageToTab
+} from "./utility.js";
 import { RadioManager, ListManager, AwesomeAlerter, styleOnFocus } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
+
+import { LocalStorageMemoryError } from "./data.js";
 
 const getTaggleInputFormatter = (function(){
     const RESERVED_KEYS = ['*', '!'];
@@ -32,7 +38,6 @@ const getTaggleInputFormatter = (function(){
     };
 })();
 
-
 const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
 
 const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
@@ -41,9 +46,10 @@ const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
       INVALID_URL_MESSAGE = "Url entered is not a valid url.",
       MEMORY_ERROR_MESSAGE = "No more data left in chrome storage. Download the desktop app for extra storage.";
 
-const cl_scrollbar = "customScrollbar1",
-      show = (e) => removeClass(e, "noshow"),
-      hide = (e) => addClass(e, "noshow");
+const cl_scrollbar = "customScrollbar1";
+const cl_hide = "noshow";
+const show = e => removeClass(e, cl_hide);
+const hide = e => addClass(e, cl_hide);
 
 const el_errorMessage = document.getElementById("error-message");
 
@@ -102,9 +108,9 @@ let onUrlChange = (function(){
 
 function main()
 {
-    const params = getParams();
+    const params = getURLSearchParams();
     const theme = params.get("theme") || "light";
-    injectThemeCss(document.head, ["scrollbar", "alerts", "taggle", "popup"], theme, chrome.runtime.getURL(CSS_DIR));
+    injectThemeCss(["scrollbar", "alerts", "taggle", "popup"], theme);
 
     g_alerter = createAlerter();
     document.body.appendChild(g_alerter.alertList);
@@ -131,7 +137,7 @@ function main()
 
 function load()
 {
-    makeRequest({
+    sendMessage({
         request: "get-popup-info",
         popupId: g_popupId,
         to: "background.js"
@@ -152,7 +158,7 @@ function load()
 
 function load2()
 {
-    makeRequest({request: "get-tags", to: "background.js"})
+    sendMessage({request: "get-tags", to: "background.js"})
     .then((tags) => {
         show(el_radioBox);
         let radioInputs = el_radioBox.querySelectorAll("label input");
@@ -237,7 +243,7 @@ function attachHideRadio()
 
 function requestSave(source)
 {
-    let info = extend(genContentInfo(), source);
+    let info = Object.assign({}, genContentInfo(), source);
 
     if (g_source)
     {
@@ -256,7 +262,7 @@ function requestSave(source)
 
 function requestSaveManual(source)
 {
-    let info = extend(genContentInfo(), source);
+    let info = Object.assign({}, genContentInfo(), source);
 
     let message = {
         request: "add-content-manually",
@@ -268,12 +274,12 @@ function requestSaveManual(source)
 }
 
 function requestSaveCommon(message) {
-    makeRequest(message)
-    .then((response) => {
-        if (response.success) {
-            closePopup();
-        } else if (response.memoryError) {
+    sendMessage(message)
+    .then((response) => {        
+        if (response instanceof LocalStorageMemoryError) {
             g_alerter.alert(MEMORY_ERROR_MESSAGE);
+        } else if (response.success === true) {
+            closePopup();
         } else {
             console.warn("could not handle response:", response);
             closePopup();
@@ -292,12 +298,10 @@ function onNoLoad(err)
     show(el_errorMessage);
 }
 
-function closePopup1()
-{
-    if (g_tabId)
-    {
-        let message = { to: "content.js", close: true };
-        chrome.tabs.sendMessage(g_tabId, message);
+function closePopup1() {
+    if (g_tabId) {
+        const message = { to: "content.js", close: true };
+        sendMessageToTab(g_tabId, message);
     }
 }
 

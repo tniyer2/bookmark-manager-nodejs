@@ -2,10 +2,28 @@
 const NEW_TAB = "chrome://newtab/";
 const CSS_DIR = "css";
 
+class InvalidArgument extends Error {}
+
+function rethrowAs(error, newErrorType) {
+    return new newErrorType(error.message, { cause: error });
+}
+
 function noop() {} // eslint-disable-line no-empty-function
 
 function isUdf(x) {
     return typeof x === "undefined";
+}
+
+function isString(x) {
+    return typeof x === "string";
+}
+
+function isObject(x) {
+    return typeof x === "object";
+}
+
+function isFunction(x) {
+    return typeof x === "function";
 }
 
 function isNumber(x) {
@@ -27,165 +45,128 @@ function minIfNumber(a, b) {
     }
 }
 
-// @return an array of funcs bound to context
-function bindAll(context, ...funcs) {
-    return funcs.map(f => f.bind(context));
-}
-
-function extend() {
-    var master = {};
-    for (var i = 0, l = arguments.length; i < l; i+=1) {
-        var object = arguments[i];
-        for (var key in object) {
-            if (object.hasOwnProperty(key)) {
-                master[key] = object[key];
-            }
-        }
+/**
+ * Initializes an options argument with defaults
+ * for options not supplied.
+ */
+function initOptions(options, defaults) {
+    if (isUdf(options)) {
+        options = {};
+    } else if (!isObject(options)) {
+        throw new InvalidArgument();
     }
-    return master;
+
+    return Object.assign({}, defaults, options);
 }
 
-// only use this for functions that don't return.
-function joinCallbacks(...cbs) {
-    cbs = cbs.filter(Boolean);
+function joinFunctions(...functions) {
+    functions = functions.filter(isFunction);
 
-    return (...args) => {
-        cbs.forEach((f) => {
+    return function(...args) {
+        for (let i = 0; i < functions.length; ++i) {
+            const f = functions[i];
             f(...args);
-        });
+        }
     };
 }
 
-function removeDuplicates(arr, sorter) {
-    arr.sort(sorter);
-    for (let i = arr.length - 1; i >= 0; i-=1)
-    {
-        let a = arr[i];
-        let b = arr[i-1];
-        if ((sorter && sorter(a, b) === 0) || a === b)
-        {
-            arr.splice(i, 1);
-        }
-    }
-    return arr;
-}
-
-function getRandomDate(days) {
-    let rand = Math.random() * days;
-    let offset = rand * 24 * 60 * 60 * 1000;
-    return Date.now() - offset;
-}
-
 // parses a filename from a url.
-// @return the filename or [name, .extension] if split is true.
-const rgx = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
+// returns the filename or [name, .extension] if split is true.
+const FILENAME_REGEX = /\w+(?:\.\w{3,4})+(?!.+\w+(?:\.\w{3,4})+)/;
 
-function parseFileName(pathname, split) {
-    let matches = pathname.match(rgx);
+function parseFileName(pathname, splitExtension) {
+    const matches = pathname.match(FILENAME_REGEX);
 
-    if (matches && matches.length > 0)
-    {
-        let match = matches[0];
+    if (matches === null) return null;
 
-        if (split)
-        {
-            let p = match.lastIndexOf(".");
-            return [match.substring(0, p), match.substring(p)];
-        }
-        else
-        {
-            return match;
-        }
-    }
-    else
-    {
-        return null;
-    }
+    const match = matches[0];
+    if (!splitExtension) return match;
+
+    const i = match.lastIndexOf(".");
+    const filename = match.substring(0, i);
+    const extension = match.substring(i);
+
+    return [filename, extension];
 }
 
 const YOUTUBE_EMBED_URL = "http://www.youtube.com/embed/";
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
 
 function getYoutubeEmbed(url) {
-    let matches = url.match(YOUTUBE_REGEX);
-    if (!matches || !matches[1])
-    {
-        return null;
-    }
-    let source = YOUTUBE_EMBED_URL + matches[1];
-    return source;
-}
+    const matches = url.match(YOUTUBE_REGEX);
+    if (!matches) return null;
 
-function preventBubble(elm, eventnames) {
-    _eventUtility(elm, eventnames, (evt) => {
-        evt.stopPropagation();
-    });
+    const source = matches[1];
+    if (!source) return null;
+
+    return YOUTUBE_EMBED_URL + source;
 }
 
 function preventDefault(elm, eventnames) {
-    _eventUtility(elm, eventnames, (evt) => {
-        evt.preventDefault();
-    });
+    const listener = (e) => { e.preventDefault(); };
+    onEvents(elm, eventnames, listener);
 }
 
-function _eventUtility(elm, eventnames, cb) {
-    if (eventnames.constructor !== Array)
-    {
+function preventBubble(elm, eventnames) {
+    const listener = (e) => { e.stopPropagation(); };
+    onEvents(elm, eventnames, listener);
+}
+
+function onEvents(elm, eventnames, listener) {
+    if (isString(eventnames)) {
         eventnames = [eventnames];
+    } else if (!Array.isArray(eventnames)) {
+        throw new InvalidArgument();
     }
 
-    eventnames.forEach((n) => {
-        elm.addEventListener(n, cb);
-    });
+    for (let i = 0; i < eventnames.length; ++i) {
+        const e = eventnames[i];
+        elm.addEventListener(e, listener);
+    }
 }
 
 function addClass(elm, classname) {
-    if (!elm.classList.contains(classname))
-    {
-        elm.classList.add(classname);
-    }
+    elm.classList.add(classname);
 }
 
 function removeClass(elm, classname) {
-    if (elm.classList.contains(classname))
-    {
-        elm.classList.remove(classname);
+    elm.classList.remove(classname);
+}
+
+function createCssLinkElm(url) {
+    const link = document.createElement("link");
+
+    link.rel = "stylesheet";
+    link.type = "text/css";
+    link.href = url;
+
+    return link;
+}
+
+function injectThemeCss(cssList, themeName) {
+    const dir = chrome.runtime.getURL(CSS_DIR);
+
+    for (let i = 0; i < cssList.length; ++i) {
+        const css = cssList[i];
+        const url = `${dir}/${css}-theme-${themeName}.css`;
+
+        const link = createCssLinkElm(url);
+        document.head.appendChild(link);
     }
 }
 
-function show(elm) {
-    removeClass(elm, "noshow");
+function getURLSearchParams() {
+    return new URLSearchParams(window.location.search);
 }
 
-function hide(elm) {
-    addClass(elm, "noshow");
-}
+class WebApiError extends Error {}
 
-function injectCss(elm, url) {
-    let link  = document.createElement("link");
-    link.rel  = "stylesheet";
-    link.type = "text/css";
-    link.href = url;
-    elm.appendChild(link);
-}
-
-function injectThemeCss(elm, cssList, theme, dir) {
-    cssList.forEach((css) => {
-        let url = dir + "/" + css + "-theme-" + theme + ".css";
-        injectCss(elm, url);
-    });
-}
-
-function getParams() {
-    return new URLSearchParams(document.location.search.substring(1));
-}
-
-function makeRequest(request) {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage(request, (response) => {
+function asyncWebApiToPromise(apiCall) {
+    return new Promise((resolve, reject) => {
+        apiCall((response) => {
             const e = chrome.runtime.lastError;
             if (e) {
-                throw new Error(e.message);
+                reject(new WebApiError(e.message));
             } else {
                 resolve(response);
             }
@@ -193,28 +174,29 @@ function makeRequest(request) {
     });
 }
 
+function sendMessage(message) {
+    return asyncWebApiToPromise(
+        (cb) => chrome.runtime.sendMessage(message, cb)
+    );
+}
+
+function sendMessageToTab(tabId, message) {
+    return asyncWebApiToPromise(
+        (cb) => chrome.tabs.sendMessage(tabId, message, cb)
+    );
+}
+
 export {
-    NEW_TAB,
-    CSS_DIR,
-    noop,
-    isUdf,
-    isNumber,
+    NEW_TAB, CSS_DIR,
+    InvalidArgument, rethrowAs,
+    noop, isUdf, isNumber, isObject,
     minIfNumber,
-    bindAll,
-    extend,
-    joinCallbacks,
-    removeDuplicates,
-    getRandomDate,
+    initOptions, joinFunctions,
     parseFileName,
     getYoutubeEmbed,
-    preventBubble,
-    preventDefault,
-    addClass,
-    removeClass,
-    show,
-    hide,
-    injectCss,
-    injectThemeCss,
-    getParams,
-    makeRequest
+    preventDefault, preventBubble,
+    addClass, removeClass, injectThemeCss,
+    getURLSearchParams,
+    WebApiError, asyncWebApiToPromise,
+    sendMessage, sendMessageToTab
 };
