@@ -163,12 +163,12 @@ class WebApiError extends Error {}
 
 function asyncWebApiToPromise(apiCall) {
     return new Promise((resolve, reject) => {
-        apiCall((response) => {
+        apiCall((...args) => {
             const e = chrome.runtime.lastError;
             if (e) {
                 reject(new WebApiError(e.message));
             } else {
-                resolve(response);
+                resolve(...args);
             }
         });
     });

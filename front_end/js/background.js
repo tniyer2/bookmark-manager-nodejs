@@ -1,10 +1,20 @@
 
-import { NEW_TAB, WebApiError, isUdf, sendMessageToTab } from "./utility.js";
+import {
+    NEW_TAB, isUdf,
+    WebApiError, asyncWebApiToPromise, sendMessageToTab
+} from "./utility.js";
 import { DataManager, LocalStorageMemoryError, RequestManager } from "./data.js";
 
+const CUR_LOCATION = "background.js";
+
 const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
-const DEFAULT_SETTINGS = { theme: "light", tagRules: [] };
-const CONTEXT_OPTIONS = {
+
+const DEFAULT_EXTENSION_SETTINGS = {
+    theme: "light",
+    tagRules: []
+};
+
+const CONTEXT_MENU_OPTIONS = {
     title: "Bookmark",
     id: "Save",
     contexts: ["image", "video", "page"],
@@ -17,7 +27,7 @@ const CONTEXT_OPTIONS = {
 };
 
 let g_requester;
-const g_popupInfo = {};
+const g_popupInfo = Object.create(null);
 let g_settings;
 
 async function main() {
@@ -28,14 +38,14 @@ async function main() {
 
         g_settings = data.settings;
         if (isUdf(g_settings)) {
-            g_settings = DEFAULT_SETTINGS;
+            g_settings = DEFAULT_EXTENSION_SETTINGS;
         }
     } catch (err) {
         if (err instanceof LocalStorageMemoryError) {
             console.warn("Failed to retrieve settings from local storage.");
             console.warn(err);
 
-            g_settings = DEFAULT_SETTINGS;
+            g_settings = DEFAULT_EXTENSION_SETTINGS;
         } else {
             throw err;
         }
@@ -44,87 +54,82 @@ async function main() {
     chrome.runtime.onMessage.addListener(handleRequest);
 
     chrome.browserAction.onClicked.addListener(openGallery);
-    
+
     chrome.contextMenus.removeAll(() => {
-        chrome.contextMenus.create(CONTEXT_OPTIONS);
+        chrome.contextMenus.create(CONTEXT_MENU_OPTIONS);
         chrome.contextMenus.onClicked.addListener(onContextClicked);
     });
 }
 
-function handleRequest(msg, sender, sendResponse) {
-    if (msg.to !== "background.js") {
-        return;
-    }
+function handleRequest(message, sender, sendResponse) {
+    if (message.to !== CUR_LOCATION) return;
 
-    const onErr = sendResponse;
+    let p;
+    if (message.request === "get-popup-info") {
+        p = collectPopupInfo(message.popupId, sender.tab);
+    } else if (message.request === "get-tags") {
+        p = g_requester.getTags();
+    } else if (message.request === "get-meta") {
+        p = g_requester.getContent();
+    } else if (message.request === "add-content") {
+        const content = message.content;
 
-    if (msg.request === "get-popup-info") {
-        collectPopupInfo(msg.popupId, sender).then(sendResponse, onErr);
-    } else if (msg.request === "get-tags") {
-        g_requester.getTags().then(sendResponse, onErr);
-    } else if (msg.request === "get-meta") {
-        g_requester.getContent().then(sendResponse, onErr);
-    } else if (msg.request === "add-content") {
-        let info = g_popupInfo[msg.popupId];
-        fillInSource(msg.info, info);
-
-        replaceTags(msg.info);
-        g_requester.addContent(msg.info).then(sendResponse, onErr);
-    } else if (msg.request === "add-content-manually") {
-        replaceTags(msg.info);
-        g_requester.addContent(msg.info).then(sendResponse, onErr);
-    } else if (msg.request === "find-content") {
-        g_requester.findContent(msg.id).then(sendResponse, onErr);
-    } else if (msg.request === "delete-content") {
-        g_requester.deleteContent(msg.id).then(sendResponse, onErr);
-    } else if (msg.request === "update-content") {
-        replaceTags(msg.info);
-        g_requester.updateContent(msg.id, msg.info).then(sendResponse, onErr);
-    } else if (msg.request === "get-settings") {
-        sendResponse(g_settings);
-    } else if (msg.request === "update-settings") {
-        const updatedSettings = Object.assign({}, g_settings, msg.settings);
-        DataManager.setKey({settings: updatedSettings}).then(() => {
-            g_settings = updatedSettings;
-            sendResponse();
-        }).catch(onErr);
-    } else {
-        console.warn("Content script sent unknown message:", msg);
-    }
-
-    return true;
-}
-
-function collectPopupInfo(popupId, sender) {
-    const info = g_popupInfo[popupId];
-    info.docUrl = sender.tab.url;
-
-    const scanInfoPromise = requestScanInfo(sender.tab.id);
-    const tagsPromise = g_requester.getTags();
-
-    return Promise.all([scanInfoPromise, tagsPromise])
-    .then((results) => {
-        if (isUdf(results)) {
-            throw new Error("results is undefined.");
+        if (message.addPageDetails === true) {
+            const info = g_popupInfo[message.popupId];
+            fillInSource(content, info);
         }
 
-        info.scanInfo = results[0];
-        info.tags = results[1];
+        replaceTags(content);
+        p = g_requester.addContent(content);
+    } else if (message.request === "find-content") {
+        p = g_requester.findContent(message.id);
+    } else if (message.request === "delete-content") {
+        p = g_requester.deleteContent(message.id);
+    } else if (message.request === "update-content") {
+        replaceTags(message.info);
+        p = g_requester.updateContent(message.id, message.info);
+    } else if (message.request === "get-settings") {
+        sendResponse(g_settings);
+    } else if (message.request === "update-settings") {
+        const updated = Object.assign({}, g_settings, message.settings);
 
-        return info;
-    });
+        p = DataManager.setKey({ settings: updated })
+        .then(() => {
+            g_settings = updated;
+        });
+    } else {
+        console.warn("Content script sent unknown message:", message);
+    }
+
+    if (!isUdf(p)) {
+        p.then(sendResponse, sendResponse);
+        return true;
+    } else {
+        return false;
+    }
 }
 
-function fillInSource(content, info)
-{
+async function collectPopupInfo(popupId, tab) {
+    const info = g_popupInfo[popupId];
+
+    info.docUrl = tab.url;
+    info.tags = await g_requester.getTags();
+
+    const message = {
+        to: "scanner.js",
+        scan: true
+    };
+    info.scanInfo = await sendMessageToTab(tab.id, message);
+
+    return info;
+}
+
+function fillInSource(content, info) {
     content.docUrl = info.docUrl;
 
-    if (content.srcUrl === "srcUrl")
-    {
+    if (content.srcUrl === "srcUrl") {
         content.srcUrl = info.srcUrl;
-    }
-    else if (content.srcUrl === "docUrl")
-    {
+    } else if (content.srcUrl === "docUrl") {
         content.srcUrl = info.docUrl;
     }
 }
@@ -141,15 +146,6 @@ function replaceTags(content) {
             }
         });
     }
-}
-
-function requestScanInfo(tabId) {
-    const message = {
-        to: "scanner.js",
-        scan: true
-    };
-
-    return sendMessageToTab(tabId, message);
 }
 
 function openGallery(tab)

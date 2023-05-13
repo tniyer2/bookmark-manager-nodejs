@@ -38,6 +38,8 @@ const getTaggleInputFormatter = (function(){
     };
 })();
 
+const BACKGROUND_SCRIPT = "background.js";
+
 const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
 
 const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
@@ -49,7 +51,7 @@ const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
 const cl_scrollbar = "customScrollbar1";
 const cl_hide = "noshow";
 const show = e => removeClass(e, cl_hide);
-const hide = e => addClass(e, cl_hide);
+// const hide = e => addClass(e, cl_hide);
 
 const el_errorMessage = document.getElementById("error-message");
 
@@ -61,9 +63,7 @@ const el_saveMenu = document.getElementById("save-menu"),
       el_title = el_saveMenu.querySelector("#title-input"),
       el_tagContainer = el_saveMenu.querySelector("#tag-container"),
       el_saveBtn = el_saveMenu.querySelector("#save-btn"),
-      el_bookmarkBtn = el_saveMenu.querySelector("#bookmark-btn"),
-      el_fgStart = el_saveMenu.querySelector("#focus-guard-start"),
-      el_fgEnd = el_saveMenu.querySelector("#focus-guard-end");
+      el_bookmarkBtn = el_saveMenu.querySelector("#bookmark-btn");
 
 const el_sourceMenu = document.getElementById("source-menu");
 
@@ -86,10 +86,10 @@ let g_noSourceAlert,
     g_noUrlAlert,
     g_invalidUrlAlert;
 
-let g_source,
-    g_docUrl,
-    g_popupId,
-    g_tabId;
+let g_source = null;
+let g_docUrl;
+let g_popupId;
+let g_tabId;
 
 let onUrlChange = (function(){
     let lock = new Object();
@@ -135,12 +135,11 @@ function main()
     attachStyleEvents();
 }
 
-function load()
-{
+function load() {
     sendMessage({
+        to: BACKGROUND_SCRIPT,
         request: "get-popup-info",
-        popupId: g_popupId,
-        to: "background.js"
+        popupId: g_popupId
     }).then((response) => {
         g_docUrl = response.docUrl;
         show(el_bookmarkBtn);
@@ -158,7 +157,10 @@ function load()
 
 function load2()
 {
-    sendMessage({request: "get-tags", to: "background.js"})
+    sendMessage({
+        request: "get-tags",
+        to: BACKGROUND_SCRIPT
+    })
     .then((tags) => {
         show(el_radioBox);
         let radioInputs = el_radioBox.querySelectorAll("label input");
@@ -199,8 +201,10 @@ function attachSave()
 {
     attachClick(el_saveBtn, save);
     attachClick(el_bookmarkBtn, () => {
-        requestSave({ srcUrl: DEFAULT_BOOKMARK_ICON,
-                      category: "bookmark" });
+        requestSave({
+            srcUrl: DEFAULT_BOOKMARK_ICON,
+            category: "bookmark"
+        });
     });
 }
 
@@ -217,6 +221,7 @@ function attachManualSave()
         {
             category = g_radioManager.selected.value;
         }
+
         requestSaveManual({
             srcUrl: url,
             category
@@ -241,41 +246,31 @@ function attachHideRadio()
     });
 }
 
-function requestSave(source)
-{
-    let info = Object.assign({}, genContentInfo(), source);
+const requestSaveManual = s => _requestSave(s, false);
+const requestSave = s => _requestSave(s, true);
 
-    if (g_source)
-    {
-        info.duration = g_source.duration;
+function _requestSave(source, addPageDetails) {
+    const content = Object.assign({}, genContentInfo(), source);
+
+    if (addPageDetails) {
+        if (g_source !== null) {
+            content.duration = g_source.duration;
+        }
     }
 
-    let message = {
+    const message = {
+        to: BACKGROUND_SCRIPT,
         request: "add-content",
-        info,
-        popupId: g_popupId,
-        to: "background.js"
+        addPageDetails,
+        content
     };
 
-    requestSaveCommon(message);
-}
+    if (addPageDetails) {
+        message.popupId = g_popupId;
+    }
 
-function requestSaveManual(source)
-{
-    let info = Object.assign({}, genContentInfo(), source);
-
-    let message = {
-        request: "add-content-manually",
-        info,
-        to: "background.js"
-    };
-
-    requestSaveCommon(message);
-}
-
-function requestSaveCommon(message) {
-    sendMessage(message)
-    .then((response) => {        
+    return sendMessage(message)
+    .then((response) => {
         if (response instanceof LocalStorageMemoryError) {
             g_alerter.alert(MEMORY_ERROR_MESSAGE);
         } else if (response.success === true) {

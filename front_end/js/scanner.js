@@ -19,24 +19,16 @@
         };
     })();
 
-    function main()
-    {
+    function main() {
         document.documentElement.addEventListener("mouseup", (e) => {
-            if (e.button === 2)
-            {
+            if (e.button === 2) {
                 g_lastClickedElement = e.target;
             }
         });
-        chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-            if (msg.to !== "scanner.js")
-            {
-                return;
-            }
-
-            if (msg.scan)
-            {
-                let scanInfo = scanPage();
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            if (message.to === "scanner.js" && message.scan === true) {
+                const scanInfo = scanPage();
 
                 console.log("Page was scanned for videos:", scanInfo);
                 sendResponse(scanInfo);
