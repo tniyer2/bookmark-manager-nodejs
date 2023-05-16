@@ -127,14 +127,12 @@ const formatDate = (function(){
         let info = await requestContent().catch(noop);
         if (isUdf(info)) return;
 
-        console.log("info:", info);
         createContent(info);
         attachDelete();
         attachUpdate();
 
         let tags = await sendMessage({
-            request: "get-tags",
-            to: "background.js"
+            request: "get-tags"
         }).catch((err) => {
             console.warn("error loading tags:", err);
         });
@@ -153,8 +151,7 @@ const formatDate = (function(){
     {
         return sendMessage({
             request: "find-content",
-            id: g_contentId,
-            to: "background.js"
+            id: g_contentId
         }).catch((err) => {
             console.warn("error loading content:", err);
             setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
@@ -189,8 +186,7 @@ const formatDate = (function(){
 
         return sendMessage({
             request: "delete-content",
-            id: g_contentId,
-            to: "background.js"
+            id: g_contentId
         }).then((response) => {
             if (response.success)
             {
@@ -226,8 +222,7 @@ const formatDate = (function(){
         return sendMessage({
             request: "update-content",
             id: g_contentId,
-            info,
-            to: "background.js"
+            info
         }).then((response) => {
             if (response.success)
             {

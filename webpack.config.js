@@ -13,6 +13,8 @@ const OUTPUT_PATH = "./front_end/dist";
 
 const resolvePath = (p) => path.resolve(__dirname, p);
 
+COMMON_EXCLUDED_CHUNKS = ["content", "scanner"];
+
 const config = {
     devtool: "source-map",
     entry: {
@@ -20,14 +22,17 @@ const config = {
         popup: "./front_end/js/popup.js",
         gallery: "./front_end/js/gallery.js",
         singleView: "./front_end/js/singleView.js",
-        settings: "./front_end/js/settings.js"
+        settings: "./front_end/js/settings.js",
+        content: "./front_end/js/content.js",
+        scanner: "./front_end/js/scanner.js"
     },
 	optimization: {
 		splitChunks: {
 			cacheGroups: {
 				commons: {
 					name: "commons",
-					chunks: "initial",
+					chunks: (chunk) =>
+                        COMMON_EXCLUDED_CHUNKS.indexOf(chunk.name) === -1,
 					minChunks: 2,
 					minSize: 0
 				}
@@ -72,8 +77,6 @@ const config = {
         new CopyPlugin({
             patterns: [
                 { from: "./front_end/manifest.json", to: "./manifest.json" },
-                { from: "./front_end/js/content.js", to: "./content.js" },
-                { from: "./front_end/js/scanner.js", to: "./scanner.js" },
                 { from: "./front_end/taggle.js", to: "./taggle.js" },
                 { from: "./front_end/css", to: "./css" },
                 { from: "./front_end/icons", to: "./icons" }

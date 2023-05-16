@@ -256,8 +256,7 @@ function setSearch(query, cookie)
 async function loadContent(query)
 {
     let meta = await sendMessage({
-        request: "get-meta",
-        to: "background.js"
+        request: "get-meta"
     }).catch((err) => {
         console.warn("error loading content:", err);
         showMessage(NO_LOAD_MESSAGE);
@@ -277,10 +276,9 @@ async function loadContent(query)
     }
 
     let tags = await sendMessage({
-        request: "get-tags",
-        to: "background.js"
+        request: "get-tags"
     }).catch((err) => {
-        console.log("error loading tags:", err);
+        console.warn("error loading tags:", err);
     });
     if (!tags) return;
 

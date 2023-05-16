@@ -31,7 +31,6 @@ import { RadioManager } from "./widgets.js";
 
         el_downloadMetaBtn.addEventListener("click", () => {
             sendMessage({
-                to: "background.js",
                 request: "get-meta"
             }).then((meta) => {
                 const s = JSON.stringify(meta);
@@ -75,7 +74,7 @@ import { RadioManager } from "./widgets.js";
             info.tag = arr[0].trim();
             info.links = arr[1].split(",").map(a => a.trim());
             info.value = value;
-            console.log("info:", info, g_tagRules);
+
             updateTagRules();
         });
         valueInput.addEventListener("keydown", (evt) => {
@@ -115,16 +114,14 @@ import { RadioManager } from "./widgets.js";
 
     function getSettings() {
         return sendMessage({
-            to: "background.js",
             request: "get-settings"
         });
     }
 
-    function updateSettings(settings) {
+    function updateSettings(updates) {
         return sendMessage({
-            to: "background.js",
             request: "update-settings",
-            settings
+            updates
         });
     }
 

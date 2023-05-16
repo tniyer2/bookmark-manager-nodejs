@@ -1,10 +1,10 @@
 
-import { rethrowAs, isUdf, WebApiError, asyncWebApiToPromise } from "./utility.js";
+import { rethrowAs, isUdf, WebApiNoResponse, asyncWebApiToPromise } from "./utility.js";
 import {
     TagCounter, getRandomString, searchId
 } from "./metaUtility.js";
 
-class LocalStorageMemoryError extends WebApiError {}
+class LocalStorageMemoryError extends WebApiNoResponse {}
 
 const DataManager = new (function(){
     const TAG_KEY = "tags";
@@ -23,7 +23,7 @@ const DataManager = new (function(){
         return asyncWebApiToPromise(
             cb => chrome.storage.local.set(data, cb)
         ).catch((err) => {
-            if (err instanceof WebApiError) {
+            if (err instanceof WebApiNoResponse) {
                 rethrowAs(err, LocalStorageMemoryError);
             } else {
                 throw err;

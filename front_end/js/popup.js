@@ -38,8 +38,6 @@ const getTaggleInputFormatter = (function(){
     };
 })();
 
-const BACKGROUND_SCRIPT = "background.js";
-
 const DEFAULT_BOOKMARK_ICON = chrome.runtime.getURL("svgs/defaultIcon.svg");
 
 const NO_LOAD_MESSAGE = "Popup couldn't load. Try refreshing the page.",
@@ -137,10 +135,9 @@ function main()
 
 function load() {
     sendMessage({
-        to: BACKGROUND_SCRIPT,
         request: "get-popup-info",
         popupId: g_popupId
-    }).then((response) => {
+    }).then((response) => {        
         g_docUrl = response.docUrl;
         show(el_bookmarkBtn);
         show(el_saveMenu);
@@ -158,8 +155,7 @@ function load() {
 function load2()
 {
     sendMessage({
-        request: "get-tags",
-        to: BACKGROUND_SCRIPT
+        request: "get-tags"
     })
     .then((tags) => {
         show(el_radioBox);
@@ -186,15 +182,6 @@ function isYoutube(url)
     } catch (e) {
         return false;
     }
-}
-
-function genContentInfo()
-{
-    return {
-        title: el_title.value.trim(),
-        tags: g_taggle.getTags().values,
-        date: Date.now()
-    };
 }
 
 function attachSave()
@@ -250,7 +237,12 @@ const requestSaveManual = s => _requestSave(s, false);
 const requestSave = s => _requestSave(s, true);
 
 function _requestSave(source, addPageDetails) {
-    const content = Object.assign({}, genContentInfo(), source);
+    let content = {
+        title: el_title.value.trim(),
+        tags: g_taggle.getTags().values,
+        date: Date.now()
+    };
+    content = Object.assign(content, source);
 
     if (addPageDetails) {
         if (g_source !== null) {
@@ -259,7 +251,6 @@ function _requestSave(source, addPageDetails) {
     }
 
     const message = {
-        to: BACKGROUND_SCRIPT,
         request: "add-content",
         addPageDetails,
         content
@@ -287,7 +278,7 @@ function _requestSave(source, addPageDetails) {
 
 function onNoLoad(err)
 {
-    console.log("error loading popup:", err);
+    console.warn("error loading popup:", err);
     let textNode = document.createTextNode(NO_LOAD_MESSAGE);
     el_errorMessage.appendChild(textNode);
     show(el_errorMessage);
@@ -295,8 +286,7 @@ function onNoLoad(err)
 
 function closePopup1() {
     if (g_tabId) {
-        const message = { to: "content.js", close: true };
-        sendMessageToTab(g_tabId, message);
+        sendMessageToTab(g_tabId, { request: "close-popup" });
     }
 }
 

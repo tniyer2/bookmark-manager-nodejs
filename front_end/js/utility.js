@@ -159,31 +159,97 @@ function getURLSearchParams() {
     return new URLSearchParams(window.location.search);
 }
 
-class WebApiError extends Error {}
+class WebApiNoResponse extends Error {}
 
+/*
+Converts an asychronous web api into a Promise.
+apiCall - a function that takes the web api callback as an argument.
+*/
 function asyncWebApiToPromise(apiCall) {
     return new Promise((resolve, reject) => {
-        apiCall((...args) => {
+        apiCall((...responses) => {
             const e = chrome.runtime.lastError;
             if (e) {
-                reject(new WebApiError(e.message));
+                reject(new WebApiNoResponse(e.message));
             } else {
-                resolve(...args);
+                resolve(...responses);
             }
         });
     });
 }
 
+class SendMessageError extends Error {
+    constructor(type, ...args) {
+        super(...args);
+        this.type = type;
+    }
+}
+
 function sendMessage(message) {
     return asyncWebApiToPromise(
         (cb) => chrome.runtime.sendMessage(message, cb)
-    );
+    )
+    .then(handleErrorResponse);
 }
 
 function sendMessageToTab(tabId, message) {
     return asyncWebApiToPromise(
         (cb) => chrome.tabs.sendMessage(tabId, message, cb)
-    );
+    )
+    .then(handleErrorResponse);
+}
+
+const handleErrorResponse = (response) => {
+    if (response.isError === true) {
+        throw new SendMessageError(response.type, response.message);
+    } else {
+        return response.content;
+    }
+};
+
+function listenToOnMessage(handleRequest) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        let response;
+        try {
+            response = handleRequest(message, sender);
+        } catch (err) {
+            sendErrorResponse(err, sendResponse);
+            
+            return;
+        }
+
+        if (isUdf(response)) {
+            // ignore
+        } else if (response instanceof Promise) {
+            response
+            .then((content) => {
+                // not an error for content to be undefined here.
+                sendOkResponse(content, sendResponse);
+            })
+            .catch((err) => {
+                sendErrorResponse(err, sendResponse);
+            });
+
+            return true;
+        } else {
+            sendOkResponse(response, sendResponse);
+        }
+    });
+}
+
+function sendOkResponse(content, sendResponse) {
+    sendResponse({
+        isError: false,
+        content
+    });
+}
+
+function sendErrorResponse(error, sendResponse) {
+    sendResponse({
+        isError: true,
+        type: error.name,
+        message: error.message
+    });
 }
 
 export {
@@ -197,6 +263,7 @@ export {
     preventDefault, preventBubble,
     addClass, removeClass, injectThemeCss,
     getURLSearchParams,
-    WebApiError, asyncWebApiToPromise,
-    sendMessage, sendMessageToTab
+    WebApiNoResponse, asyncWebApiToPromise,
+    SendMessageError, sendMessage, sendMessageToTab,
+    listenToOnMessage
 };

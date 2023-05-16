@@ -1,11 +1,11 @@
 
 import {
     NEW_TAB, isUdf,
-    WebApiError, asyncWebApiToPromise, sendMessageToTab
+    WebApiNoResponse, asyncWebApiToPromise,
+    sendMessageToTab, listenToOnMessage,
+    rethrowAs
 } from "./utility.js";
 import { DataManager, LocalStorageMemoryError, RequestManager } from "./data.js";
-
-const CUR_LOCATION = "background.js";
 
 const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
 
@@ -28,7 +28,7 @@ const CONTEXT_MENU_OPTIONS = {
 
 let g_requester;
 const g_popupInfo = Object.create(null);
-let g_settings;
+let GLB_settings;
 
 async function main() {
     g_requester = new RequestManager();
@@ -36,22 +36,22 @@ async function main() {
     try {
         const data = await DataManager.getKey("settings");
 
-        g_settings = data.settings;
-        if (isUdf(g_settings)) {
-            g_settings = DEFAULT_EXTENSION_SETTINGS;
+        if (isUdf(data.settings)) {
+            GLB_settings = DEFAULT_EXTENSION_SETTINGS;
+        } else {
+            GLB_settings = data.settings;
         }
     } catch (err) {
         if (err instanceof LocalStorageMemoryError) {
-            console.warn("Failed to retrieve settings from local storage.");
-            console.warn(err);
+            GLB_settings = DEFAULT_EXTENSION_SETTINGS;
 
-            g_settings = DEFAULT_EXTENSION_SETTINGS;
+            rethrowAs(err, LoadSettingsError);
         } else {
             throw err;
         }
     }
 
-    chrome.runtime.onMessage.addListener(handleRequest);
+    listenToOnMessage(handleRequest);
 
     chrome.browserAction.onClicked.addListener(openGallery);
 
@@ -61,51 +61,45 @@ async function main() {
     });
 }
 
-function handleRequest(message, sender, sendResponse) {
-    if (message.to !== CUR_LOCATION) return;
+class LoadSettingsError extends Error {}
 
-    let p;
-    if (message.request === "get-popup-info") {
-        p = collectPopupInfo(message.popupId, sender.tab);
-    } else if (message.request === "get-tags") {
-        p = g_requester.getTags();
-    } else if (message.request === "get-meta") {
-        p = g_requester.getContent();
-    } else if (message.request === "add-content") {
-        const content = message.content;
+function handleRequest(message, sender) {
+    switch (message.request) {
+        case "get-popup-info":
+            return collectPopupInfo(message.popupId, sender.tab);
+        case "get-tags":
+            return g_requester.getTags();
+        case "get-meta":
+            return g_requester.getContent();
+        case "add-content": {
+            const content = message.content;
 
-        if (message.addPageDetails === true) {
-            const info = g_popupInfo[message.popupId];
-            fillInSource(content, info);
+            if (message.addPageDetails === true) {
+                fillInSource(content, g_popupInfo[message.popupId]);
+            }
+
+            applyTagRules(content);
+
+            return g_requester.addContent(content);
         }
+        case "find-content":
+            return g_requester.findContent(message.id);
+        case "delete-content":
+            return g_requester.deleteContent(message.id);
+        case "update-content":
+            return g_requester.updateContent(message.id, message.info);
+        case "get-settings":
+            return GLB_settings;
+        case "update-settings": {
+            const newSettings = Object.assign(GLB_settings, message.updates);
 
-        replaceTags(content);
-        p = g_requester.addContent(content);
-    } else if (message.request === "find-content") {
-        p = g_requester.findContent(message.id);
-    } else if (message.request === "delete-content") {
-        p = g_requester.deleteContent(message.id);
-    } else if (message.request === "update-content") {
-        replaceTags(message.info);
-        p = g_requester.updateContent(message.id, message.info);
-    } else if (message.request === "get-settings") {
-        sendResponse(g_settings);
-    } else if (message.request === "update-settings") {
-        const updated = Object.assign({}, g_settings, message.settings);
-
-        p = DataManager.setKey({ settings: updated })
-        .then(() => {
-            g_settings = updated;
-        });
-    } else {
-        console.warn("Content script sent unknown message:", message);
-    }
-
-    if (!isUdf(p)) {
-        p.then(sendResponse, sendResponse);
-        return true;
-    } else {
-        return false;
+            return DataManager.setKey({
+                settings: newSettings
+            })
+            .then(() => {
+                GLB_settings = newSettings;
+            });
+        }
     }
 }
 
@@ -115,11 +109,7 @@ async function collectPopupInfo(popupId, tab) {
     info.docUrl = tab.url;
     info.tags = await g_requester.getTags();
 
-    const message = {
-        to: "scanner.js",
-        scan: true
-    };
-    info.scanInfo = await sendMessageToTab(tab.id, message);
+    info.scanInfo = await sendMessageToTab(tab.id, { request: "scan" });
 
     return info;
 }
@@ -134,30 +124,36 @@ function fillInSource(content, info) {
     }
 }
 
-function replaceTags(content) {
-    const rules = g_settings.tagRules;
+/*
+Applies a tag rule by replacing a tag
+with its corresponding values.
+*/
+function applyTagRules(content) {
+    const rules = GLB_settings.tagRules;
     const tags = content.tags;
-    if (rules && rules.length) {
-        rules.forEach((r) => {
-            const i = tags.findIndex(t => t === r.tag);
-            if (i !== -1) {
-                tags.splice(i, 1);
-                tags.push.apply(tags, r.links);
-            }
-        });
+
+    if (!rules) return;
+
+    for (let i = 0; i < rules.length; ++i) {
+        const rule = rules[i];
+
+        const index = tags.indexOf(rule.tag);
+        if (index !== -1) {
+            tags.splice(index, 1);
+            tags.push(...rule.links);
+        }
     }
 }
 
-function openGallery(tab)
-{
+function openGallery(tab) {
     const tabUrl = new URL(tab.url);
-    const tabUrlWOQuery = tabUrl.origin + tabUrl.pathname;
-    const fullGalleryUrl = GALLERY_URL + "?" + "theme=" + g_settings.theme;
+    const tabUrlWithoutQuery = tabUrl.origin + tabUrl.pathname;
+    const fullGalleryUrl = `${GALLERY_URL}?theme=${GLB_settings.theme}`;
 
-    if (tab.url === NEW_TAB || tabUrlWOQuery === GALLERY_URL) {
-        chrome.tabs.update(tab.id, {url: fullGalleryUrl});
+    if (tab.url === NEW_TAB || tabUrlWithoutQuery === GALLERY_URL) {
+        chrome.tabs.update(tab.id, { url: fullGalleryUrl });
     } else {
-        chrome.tabs.create({url: fullGalleryUrl});
+        chrome.tabs.create({ url: fullGalleryUrl });
     }
 }
 
@@ -173,24 +169,22 @@ function onContextClicked(info, tab) {
         mediaType: info.mediaType
     };
 
-    const to = "content.js";
     const tabId = tab.id;
     const message = {
-        to,
-        open: true,
+        request: "open-popup",
         tabId,
         popupId,
-        theme: g_settings.theme
+        theme: GLB_settings.theme
     };
 
-    loadScript(tabId, to, "./content.js")
+    loadScript(tabId, "./content.js")
     .then(() => sendMessageToTab(tabId, message));
 }
 
-function loadScript(tabId, to, script) {
-    return sendMessageToTab(tabId, { to, check: true })
+function loadScript(tabId, script) {
+    return sendMessageToTab(tabId, { request: "check-content-script-loaded" })
     .catch((err) => {
-        if (err instanceof WebApiError) {
+        if (err instanceof WebApiNoResponse) {
             return false;
         } else {
             throw err;
