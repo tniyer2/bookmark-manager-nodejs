@@ -115,10 +115,10 @@ class DataManager {
 
 class TagCounter {
     constructor() {
-        this._tags = Object.create(null);
+        this._tags = new Map();
     }
     get tags() {
-        return Object.keys(this._tags);
+        return Array.from(this._tags.keys());
     }
     increment(keys) {
         for (let i = 0; i < keys.length; ++i) {
@@ -131,19 +131,21 @@ class TagCounter {
         }
     }
     _increment(key) {
-        if (key in this._tags) {
-            this._tags[key] += 1;
+        if (this._tags.has(key)) {
+            const v = this._tags.get(key);
+            this._tags.set(key, v + 1);
         } else {
-            this._tags[key] = 1;
+            this._tags.set(key, 1);
         }
     }
     _decrement(key) {
-        if (!(key in this._tags)) return;
+        if (!this._tags.has(key)) return;
 
-        if (this._tags[key] === 1) {
-            delete this._tags[key];
+        const v = this._tags.get(key);
+        if (v === 1) {
+            this._tags.delete(key);
         } else {
-            this._tags[key] -= 1;
+            this._tags.set(key, v - 1);
         }
     }
 }
