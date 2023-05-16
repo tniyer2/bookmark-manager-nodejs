@@ -3,7 +3,6 @@ import {
     rethrowAs, isUdf,
     WebApiError, asyncWebApiToPromise
 } from "./utility.js";
-import { TagCounter } from "./metaUtility.js";
 
 class DataManager {
     constructor(data) {
@@ -111,6 +110,41 @@ class DataManager {
 
             return true;
         });
+    }
+}
+
+class TagCounter {
+    constructor() {
+        this._tags = Object.create(null);
+    }
+    get tags() {
+        return Object.keys(this._tags);
+    }
+    increment(keys) {
+        for (let i = 0; i < keys.length; ++i) {
+            this._increment(keys[i]);
+        }
+    }
+    decrement(keys) {
+        for (let i = 0; i < keys.length; ++i) {
+            this._decrement(keys[i]);
+        }
+    }
+    _increment(key) {
+        if (key in this._tags) {
+            this._tags[key] += 1;
+        } else {
+            this._tags[key] = 1;
+        }
+    }
+    _decrement(key) {
+        if (!(key in this._tags)) return;
+
+        if (this._tags[key] === 1) {
+            delete this._tags[key];
+        } else {
+            this._tags[key] -= 1;
+        }
     }
 }
 
