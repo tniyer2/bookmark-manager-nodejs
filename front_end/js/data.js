@@ -6,11 +6,12 @@ import {
 
 class DataManager {
     constructor(data) {
-        this._data = data;
-        this._tagCounter = new TagCounter();
-
+        this._data = new Mutex(data);
+                
         this._lastContentId = null;
         this._sameIdCount = 0;
+
+        this._tagCounter = new TagCounter();
 
         for (let i = 0; i < data.length; ++i) {
             const content = data[i];
@@ -21,21 +22,24 @@ class DataManager {
         return this._tagCounter.tags;
     }
     get allContent() {
-        return this._data;
+        return this._data.get();
     }
-    _findContent(id) {
-        return this._data.findIndex(c => c.id === id);
+    _findContent(data, id) {
+        const index = data.findIndex(c => c.id === id);
+        if (index === -1) {
+            throw new ContentNotFoundError("Can not find content.");
+        }
+        
+        const content = data[index];
+
+        return { index, content };
     }
     findContent(contentId) {
-        const index = this._findContent(contentId);
-        if (index === -1) {
-            return Promise.reject(
-                new ContentNotFoundError("Can not find content.")
-            );
-        }
-        const content = this._data[index];
-
-        return Promise.resolve(content);
+        return this._data.acquire((getData) => {
+            const data = getData();
+            const { content } = this._findContent(data, contentId);
+            return content;
+        });
     }
     _createNewId() {
         const id = String(Date.now());
@@ -50,67 +54,102 @@ class DataManager {
         }
     }
     addContent(content) {
-        content.id = this._createNewId();
+        return this._data.acquire((getData) => {
+            const data = getData();
+            content.id = this._createNewId();
 
-        this._data.push(content);
-        const p = saveMetaData(this._data);
-        this._data.pop();
+            const mutate = () => data.push(content);
+            const undo = () => data.pop();
 
-        return p.then(() => {
-            this._data.push(content);
-            this._tagCounter.increment(content.tags);
+            mutate();
+            const p = saveMetaData(data);
+            undo();
 
-            return true;
+            return p.then(() => {
+                mutate();
+                this._tagCounter.increment(content.tags);
+
+                return true;
+            });
         });
     }
     updateContent(contentId, updates) {
-        const index = this._findContent(contentId);
-        if (index === -1) {
-            return Promise.reject(
-                new ContentNotFoundError("Not found, can not update content.")
-            );
-        }
-        const content = this._data[index];
+        return this._data.acquire((getData) => {
+            const data = getData();
+            const { index, content } = this._findContent(data, contentId);
 
-        // not allowed to update id
-        delete updates.id;
-        const updatedContent = Object.assign({}, content, updates);
+            // not allowed to update id
+            delete updates.id;
+            const updatedContent = Object.assign({}, content, updates);
 
-        this._data[index] = updatedContent;
-        const p = saveMetaData(this._data);
-        this._data[index] = content;
+            const mutate = () => { data[index] = updatedContent; };
+            const undo = () => { data[index] = content; };
 
-        return p.then(() => {
-            this._data[index] = updatedContent;
+            mutate();
+            const p = saveMetaData(data);
+            undo();
 
-            if (!isUdf(updates.tags)) {
-                this._tagCounter.decrement(content.tags);
-                this._tagCounter.increment(updates.tags);
-            }
+            return p.then(() => {
+                mutate();
 
-            return true;
+                if (!isUdf(updates.tags)) {
+                    this._tagCounter.decrement(content.tags);
+                    this._tagCounter.increment(updates.tags);
+                }
+
+                return true;
+            });
         });
     }
     deleteContent(contentId) {
-        const index = this._findContent(contentId);
-        if (index === -1) {
-            return Promise.reject(
-                new ContentNotFoundError("Not found, can not delete content.")
-            );
-        }
-        const content = this._data[index];
+        return this._data.acquire((getData) => {
+            const data = getData();
+            const { index, content } = this._findContent(data, contentId);
 
-        this._data.splice(index, 1);
-        const p = saveMetaData(this._data);
-        this._data.splice(index, 0, content);
+            const mutate = () => data.splice(index, 1);
+            const undo = () => data.splice(index, 0, content);
 
-        return p.then(() => {
-            this._data.splice(index, 1);
-            this._tagCounter.decrement(content.tags);
+            mutate();
+            const p = saveMetaData(data);
+            undo();
 
-            return true;
+            return p.then(() => {
+                mutate();
+                this._tagCounter.decrement(content.tags);
+
+                return true;
+            });
         });
     }
+}
+
+class Mutex {
+    constructor(initialValue) {
+        this._value = initialValue;
+
+        this._waitingOn = Promise.resolve();
+    }
+    get() {
+        return ignoreErrors(this._waitingOn)
+        .then(() => this._value);
+    }
+    acquire(callback) {
+        const p = this._waitingOn
+        .then(() => {
+            const getter = () => this._value;
+            const setter = (v) => { this._value = v; };
+
+            return callback(getter, setter);
+        });
+
+        this._waitingOn = ignoreErrors(p);
+
+        return p;
+    }
+}
+
+function ignoreErrors(p) {
+    return new Promise(resolve => p.finally(resolve));
 }
 
 class TagCounter {
@@ -159,27 +198,25 @@ function getDataManager() {
 
 function loadMetaData() {
     return getLocalStorageKeys("meta")
-    .then((keys) => {        
-        const serialized = keys.meta;
-        if (isUdf(serialized)) {
-            return [];
-        }
-        
-        const data = serialized
-            .split("\n")
-            .filter(s => s.length > 0)
-            .map(s => JSON.parse(s));
+    .then((keys) => {
+        const json = keys.meta;
 
-        return data;
+        if (isUdf(json)) {
+            return [];
+        } else {
+            try {
+                return JSON.parse(json);
+            } catch (err) {
+                console.warn("Unable to parse local storage metadata.");
+                return [];
+            }
+        }
     });
 }
 
 function saveMetaData(data) {
-    const serialized = data
-        .map(content => JSON.stringify(content))
-        .join("\n");
-    
-    return setLocalStorageKeys({ meta: serialized });
+    const meta = JSON.stringify(data);
+    return setLocalStorageKeys({ meta });
 }
 
 function getLocalStorageKeys(keys) {
