@@ -159,7 +159,7 @@ function getURLSearchParams() {
     return new URLSearchParams(window.location.search);
 }
 
-class WebApiNoResponse extends Error {}
+class WebApiError extends Error {}
 
 /*
 Converts an asychronous web api into a Promise.
@@ -170,7 +170,7 @@ function asyncWebApiToPromise(apiCall) {
         apiCall((...responses) => {
             const e = chrome.runtime.lastError;
             if (e) {
-                reject(new WebApiNoResponse(e.message));
+                reject(new WebApiError(e.message));
             } else {
                 resolve(...responses);
             }
@@ -263,7 +263,7 @@ export {
     preventDefault, preventBubble,
     addClass, removeClass, injectThemeCss,
     getURLSearchParams,
-    WebApiNoResponse, asyncWebApiToPromise,
+    WebApiError, asyncWebApiToPromise,
     SendMessageError, sendMessage, sendMessageToTab,
     listenToOnMessage
 };

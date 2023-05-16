@@ -1,200 +1,180 @@
 
-import { rethrowAs, isUdf, WebApiNoResponse, asyncWebApiToPromise } from "./utility.js";
 import {
-    TagCounter, getRandomString, searchId
-} from "./metaUtility.js";
+    rethrowAs, isUdf,
+    WebApiError, asyncWebApiToPromise
+} from "./utility.js";
+import { TagCounter } from "./metaUtility.js";
 
-class LocalStorageMemoryError extends WebApiNoResponse {}
+class DataManager {
+    constructor(data) {
+        this._data = data;
+        this._tagCounter = new TagCounter();
 
-const DataManager = new (function(){
-    const TAG_KEY = "tags";
-    const ID_LENGTH = 40;
+        this._lastContentId = null;
+        this._sameIdCount = 0;
 
-    let instance;
-    let self = this;
-
-    this.getKey = function(keys) {
-        return asyncWebApiToPromise(
-            cb => chrome.storage.local.get(keys, cb)
-        );
-    };
-
-    this.setKey = function(data) {
-        return asyncWebApiToPromise(
-            cb => chrome.storage.local.set(data, cb)
-        ).catch((err) => {
-            if (err instanceof WebApiNoResponse) {
-                rethrowAs(err, LocalStorageMemoryError);
-            } else {
-                throw err;
-            }
-        });
-    };
-
-    Object.defineProperty(this, "instance", { get: () => {
-        return new Promise((resolve, reject) => {
-            if (instance)
-            {
-                resolve(instance);
-            }
-            else
-            {
-                load().then((meta) => {
-                    instance = new Inner(meta);
-                    resolve(instance);
-                }).catch(reject);
-            }
-        });
-    }});
-
-    class Inner {
-        constructor(meta)
-        {
-            this._tagTracker = new TagCounter();
-
-            meta.forEach((content) => {
-                this._tagTracker.increment(content[TAG_KEY]);
-            });
-            this._meta = meta;
-        }
-
-        get tags()
-        {
-            return this._tagTracker.tags;
-        }
-
-        get meta()
-        {
-            return this._meta;
-        }
-
-        get _successResponse()
-        {
-            return {success: true};
-        }
-
-        get _notFoundError()
-        {
-            return {notFound: true};
-        }
-
-        addContent(content) {
-            content.id = getRandomString(ID_LENGTH);
-            this._meta.push(content);
-
-            return save(this._meta)
-            .then(() => {
-                this._tagTracker.increment(content[TAG_KEY]);
-                return this._successResponse;
-            }).catch((err) => {
-                this._meta.pop();
-                throw err;
-            });
-        }
-        deleteContent(contentId) {
-            const { content, index } = searchId(this._meta, contentId);
-
-            if (content) {
-                this._meta.splice(index, 1);
-
-                return save(this._meta).then(() => {
-                    this._tagTracker.decrement(content[TAG_KEY]);
-
-                    return this._successResponse;
-                }).catch((err) => {
-                    this._meta.splice(index, 0, content);
-                    
-                    throw err;
-                });
-            } else {
-                return Promise.reject(this._notFoundError);
-            }
-        }
-        findContent(contentId) {
-            const { content } = searchId(this._meta, contentId);
-
-            if (content) {
-                return Promise.resolve({ content });
-            } else {
-                return Promise.reject(this._notFoundError);
-            }
-        }
-        // @TODO find a way to undo update if save fails.
-        updateContent(contentId, info) {
-            const { content, index } = searchId(this._meta, contentId);
-
-            if (content) {
-                delete info.id;
-
-                this._meta[index] = Object.assign({}, content, info);
-
-                return save(this._meta).then(() => {
-                    if (info[TAG_KEY]) {
-                        this._tagTracker.decrement(content[TAG_KEY]);
-                        this._tagTracker.increment(info[TAG_KEY]);
-                    }
-
-                    return this._successResponse;
-                }).catch((err) => {
-                    this._meta[index] = content;
-                    throw err;
-                });
-            } else {
-                return Promise.reject(this._notFoundError);
-            }
+        for (let i = 0; i < data.length; ++i) {
+            const content = data[i];
+            this._tagCounter.increment(content.tags);
         }
     }
-
-    function load() {
-        return self.getKey("meta")
-        .then((data) => {
-            if (isUdf(data)) {
-                throw new Error("data is undefined.");
-            }
-            
-            const json = data.meta;
-            if (!json) {
-                return [];
-            }
-            
-            const meta = json.split("\n").filter(Boolean).map(s => JSON.parse(s));
-
-            return meta;
-        });
+    get allTags() {
+        return this._tagCounter.tags;
     }
-
-    function save(meta) {
-        const serialized = meta
-            .map(content => JSON.stringify(content))
-            .join("\n");
-        
-        return self.setKey({ meta: serialized });
+    get allContent() {
+        return this._data;
     }
-})();
-
-const RequestManager = (function(){
-    return class {
-        getContent() {
-            return DataManager.instance.then(dm => dm.meta);
-        }
-        getTags() {
-            return DataManager.instance.then(dm => dm.tags);
-        }
-        addContent(content) {
-            return DataManager.instance.then(dm => dm.addContent(content));
-        }
-        findContent(contentId) {
-            return DataManager.instance.then(dm => dm.findContent(contentId));
-        }
-        deleteContent(contentId) {
-            return DataManager.instance.then(dm => dm.deleteContent(contentId));
-        }
-        updateContent(contentId, info) {
-            return DataManager.instance.then(dm =>
-                dm.updateContent(contentId, info)
+    _findContent(id) {
+        return this._data.findIndex(c => c.id === id);
+    }
+    findContent(contentId) {
+        const index = this._findContent(contentId);
+        if (index === -1) {
+            return Promise.reject(
+                new ContentNotFoundError("Can not find content.")
             );
         }
-    };
-})();
+        const content = this._data[index];
 
-export { DataManager, LocalStorageMemoryError, RequestManager };
+        return Promise.resolve(content);
+    }
+    _createNewId() {
+        const id = String(Date.now());
+
+        if (id === this._lastContentId) {
+            this._sameIdCount += 1;
+            return id + String(this._sameIdCount);
+        } else {
+            this._lastContentId = id;
+            this._sameIdCount = 0;
+            return id;
+        }
+    }
+    addContent(content) {
+        content.id = this._createNewId();
+
+        this._data.push(content);
+        const p = saveMetaData(this._data);
+        this._data.pop();
+
+        return p.then(() => {
+            this._data.push(content);
+            this._tagCounter.increment(content.tags);
+
+            return true;
+        });
+    }
+    updateContent(contentId, updates) {
+        const index = this._findContent(contentId);
+        if (index === -1) {
+            return Promise.reject(
+                new ContentNotFoundError("Not found, can not update content.")
+            );
+        }
+        const content = this._data[index];
+
+        // not allowed to update id
+        delete updates.id;
+        const updatedContent = Object.assign({}, content, updates);
+
+        this._data[index] = updatedContent;
+        const p = saveMetaData(this._data);
+        this._data[index] = content;
+
+        return p.then(() => {
+            this._data[index] = updatedContent;
+
+            if (!isUdf(updates.tags)) {
+                this._tagCounter.decrement(content.tags);
+                this._tagCounter.increment(updates.tags);
+            }
+
+            return true;
+        });
+    }
+    deleteContent(contentId) {
+        const index = this._findContent(contentId);
+        if (index === -1) {
+            return Promise.reject(
+                new ContentNotFoundError("Not found, can not delete content.")
+            );
+        }
+        const content = this._data[index];
+
+        this._data.splice(index, 1);
+        const p = saveMetaData(this._data);
+        this._data.splice(index, 0, content);
+
+        return p.then(() => {
+            this._data.splice(index, 1);
+            this._tagCounter.decrement(content.tags);
+
+            return true;
+        });
+    }
+}
+
+class ContentNotFoundError extends Error {}
+
+function getDataManager() {
+    return loadMetaData()
+    .then(data => new DataManager(data));
+}
+
+function loadMetaData() {
+    return getLocalStorageKeys("meta")
+    .then((keys) => {        
+        const serialized = keys.meta;
+        if (isUdf(serialized)) {
+            return [];
+        }
+        
+        const data = serialized
+            .split("\n")
+            .filter(s => s.length > 0)
+            .map(s => JSON.parse(s));
+
+        return data;
+    });
+}
+
+function saveMetaData(data) {
+    const serialized = data
+        .map(content => JSON.stringify(content))
+        .join("\n");
+    
+    return setLocalStorageKeys({ meta: serialized });
+}
+
+function getLocalStorageKeys(keys) {
+    return getStorageKeys(chrome.storage.local, keys);
+}
+
+function setLocalStorageKeys(keys) {
+    return setStorageKeys(chrome.storage.local, keys);
+}
+
+function getStorageKeys(storage, keys) {
+    return asyncWebApiToPromise(
+        cb => storage.get(keys, cb)
+    );
+}
+
+function setStorageKeys(storage, keys) {
+    return asyncWebApiToPromise(
+        cb => storage.set(keys, cb)
+    ).catch((err) => {
+        if (err instanceof WebApiError) {
+            rethrowAs(err, LocalStorageMemoryError);
+        } else {
+            throw err;
+        }
+    });
+}
+
+class LocalStorageMemoryError extends WebApiError {}
+
+export {
+    getDataManager, LocalStorageMemoryError,
+    getLocalStorageKeys, setLocalStorageKeys
+};

@@ -1,33 +1,4 @@
 
-const getRandomString = (function(){
-    const all = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-    return function(len) {
-        let s = "";
-        let allLen = all.length;
-        for (let i = 0; i < len; i+=1)
-        {
-            let rand = Math.floor(Math.random() * allLen);
-            s += all.charAt(rand);
-        }
-        return s;
-    };
-})();
-
-const searchId = function(meta, id) {
-    let i = meta.findIndex(m => m.id === id);
-    let content = meta[i];
-
-    if (content)
-    {
-        return {index: i, content: content};
-    }
-    else
-    {
-        return {index: null, content: null};
-    }
-};
-
 const TagCounter = (function(){
     let proto = "__proto__";
 
@@ -106,4 +77,4 @@ const TagCounter = (function(){
     };
 })();
 
-export { getRandomString, searchId, TagCounter };
+export { TagCounter };

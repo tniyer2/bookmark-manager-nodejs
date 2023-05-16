@@ -1,13 +1,15 @@
 
 import {
     NEW_TAB, isUdf,
-    WebApiNoResponse, asyncWebApiToPromise,
-    sendMessageToTab, listenToOnMessage,
-    rethrowAs
+    WebApiError, asyncWebApiToPromise,
+    sendMessageToTab, listenToOnMessage
 } from "./utility.js";
-import { DataManager, LocalStorageMemoryError, RequestManager } from "./data.js";
+import {
+    getDataManager,
+    getLocalStorageKeys, setLocalStorageKeys
+} from "./data.js";
 
-const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
+const GALLERY_URL = chrome.runtime.getURL("gallery.html");
 
 const DEFAULT_EXTENSION_SETTINGS = {
     theme: "light",
@@ -26,34 +28,25 @@ const CONTEXT_MENU_OPTIONS = {
     ]
 };
 
-let g_requester;
-const g_popupInfo = Object.create(null);
+let GLB_instance;
 let GLB_settings;
+const GLB_popupInfo = Object.create(null);
 
 async function main() {
-    g_requester = new RequestManager();
+    GLB_instance = await getDataManager();
 
     try {
-        const data = await DataManager.getKey("settings");
-
-        if (isUdf(data.settings)) {
+        const { settings } = await getLocalStorageKeys("settings");
+        GLB_settings = settings;
+    } finally {
+        if (isUdf(GLB_settings)) {
             GLB_settings = DEFAULT_EXTENSION_SETTINGS;
-        } else {
-            GLB_settings = data.settings;
-        }
-    } catch (err) {
-        if (err instanceof LocalStorageMemoryError) {
-            GLB_settings = DEFAULT_EXTENSION_SETTINGS;
-
-            rethrowAs(err, LoadSettingsError);
-        } else {
-            throw err;
         }
     }
 
     listenToOnMessage(handleRequest);
 
-    chrome.browserAction.onClicked.addListener(openGallery);
+    chrome.browserAction.onClicked.addListener(openBookmarkGallery);
 
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create(CONTEXT_MENU_OPTIONS);
@@ -61,39 +54,37 @@ async function main() {
     });
 }
 
-class LoadSettingsError extends Error {}
-
 function handleRequest(message, sender) {
     switch (message.request) {
         case "get-popup-info":
-            return collectPopupInfo(message.popupId, sender.tab);
-        case "get-tags":
-            return g_requester.getTags();
-        case "get-meta":
-            return g_requester.getContent();
+            return collectPopupInfo(sender.tab);
+        case "get-all-tags":
+            return GLB_instance.allTags;
+        case "get-all-content":
+            return GLB_instance.allContent;
         case "add-content": {
             const content = message.content;
 
             if (message.addPageDetails === true) {
-                fillInSource(content, g_popupInfo[message.popupId]);
+                fillInSource(content, GLB_popupInfo[sender.tab.id]);
             }
 
             applyTagRules(content);
 
-            return g_requester.addContent(content);
+            return GLB_instance.addContent(content);
         }
         case "find-content":
-            return g_requester.findContent(message.id);
+            return GLB_instance.findContent(message.id);
         case "delete-content":
-            return g_requester.deleteContent(message.id);
+            return GLB_instance.deleteContent(message.id);
         case "update-content":
-            return g_requester.updateContent(message.id, message.info);
+            return GLB_instance.updateContent(message.id, message.updates);
         case "get-settings":
             return GLB_settings;
         case "update-settings": {
-            const newSettings = Object.assign(GLB_settings, message.updates);
+            const newSettings = Object.assign({}, GLB_settings, message.updates);
 
-            return DataManager.setKey({
+            return setLocalStorageKeys({
                 settings: newSettings
             })
             .then(() => {
@@ -103,11 +94,11 @@ function handleRequest(message, sender) {
     }
 }
 
-async function collectPopupInfo(popupId, tab) {
-    const info = g_popupInfo[popupId];
+async function collectPopupInfo(tab) {
+    const info = GLB_popupInfo[tab.id];
 
     info.docUrl = tab.url;
-    info.tags = await g_requester.getTags();
+    info.tags = GLB_instance.allTags;
 
     info.scanInfo = await sendMessageToTab(tab.id, { request: "scan" });
 
@@ -132,59 +123,48 @@ function applyTagRules(content) {
     const rules = GLB_settings.tagRules;
     const tags = content.tags;
 
-    if (!rules) return;
-
     for (let i = 0; i < rules.length; ++i) {
         const rule = rules[i];
 
-        const index = tags.indexOf(rule.tag);
+        const index = tags.indexOf(rule.inputTag);
         if (index !== -1) {
-            tags.splice(index, 1);
-            tags.push(...rule.links);
+            tags.splice(index, 1, ...rule.outputTags);
         }
     }
 }
 
-function openGallery(tab) {
-    const tabUrl = new URL(tab.url);
-    const tabUrlWithoutQuery = tabUrl.origin + tabUrl.pathname;
-    const fullGalleryUrl = `${GALLERY_URL}?theme=${GLB_settings.theme}`;
+function openBookmarkGallery(tab) {
+    const url = `${GALLERY_URL}?theme=${GLB_settings.theme}`;
 
-    if (tab.url === NEW_TAB || tabUrlWithoutQuery === GALLERY_URL) {
-        chrome.tabs.update(tab.id, { url: fullGalleryUrl });
+    if (tab.url === NEW_TAB) {
+        chrome.tabs.update(tab.id, { url });
     } else {
-        chrome.tabs.create({ url: fullGalleryUrl });
+        chrome.tabs.create({ url });
     }
 }
 
 function onContextClicked(info, tab) {
-    const popupId = [
-        tab.id,
-        "popupId",
-        Date.now()
-    ].join("-");
+    const tabId = tab.id;
 
-    g_popupInfo[popupId] = {
+    GLB_popupInfo[tabId] = {
         srcUrl: info.srcUrl,
         mediaType: info.mediaType
     };
 
-    const tabId = tab.id;
     const message = {
         request: "open-popup",
         tabId,
-        popupId,
         theme: GLB_settings.theme
     };
 
-    loadScript(tabId, "./content.js")
+    loadScript(tabId, "content.js")
     .then(() => sendMessageToTab(tabId, message));
 }
 
 function loadScript(tabId, script) {
     return sendMessageToTab(tabId, { request: "check-content-script-loaded" })
     .catch((err) => {
-        if (err instanceof WebApiNoResponse) {
+        if (err instanceof WebApiError) {
             return false;
         } else {
             throw err;

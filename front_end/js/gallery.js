@@ -91,7 +91,7 @@ const FeedBox = (function(){
 })();
 
 window.PopupManager = (function(){
-    const POPUP_LINK = chrome.runtime.getURL("./popup.html");
+    const POPUP_LINK = chrome.runtime.getURL("popup.html");
     const el_popup = document.getElementById("popup");
     const cl_hide = "noshow";
 
@@ -256,7 +256,7 @@ function setSearch(query, cookie)
 async function loadContent(query)
 {
     let meta = await sendMessage({
-        request: "get-meta"
+        request: "get-all-content"
     }).catch((err) => {
         console.warn("error loading content:", err);
         showMessage(NO_LOAD_MESSAGE);
@@ -276,7 +276,7 @@ async function loadContent(query)
     }
 
     let tags = await sendMessage({
-        request: "get-tags"
+        request: "get-all-tags"
     }).catch((err) => {
         console.warn("error loading tags:", err);
     });

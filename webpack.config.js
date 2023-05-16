@@ -80,7 +80,7 @@ const config = {
                 { from: "./front_end/taggle.js", to: "./taggle.js" },
                 { from: "./front_end/css", to: "./css" },
                 { from: "./front_end/icons", to: "./icons" }
-            ],
+            ]
         })
     ],
     module: {

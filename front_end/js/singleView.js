@@ -73,7 +73,7 @@ const formatDate = (function(){
           cl_active = "active",
           cl_noTags = "empty";
 
-    const GALLERY_URL = chrome.runtime.getURL("./gallery.html");
+    const GALLERY_URL = chrome.runtime.getURL("gallery.html");
 
     const el_errorMessage = document.getElementById("error-message");
 
@@ -122,20 +122,24 @@ const formatDate = (function(){
         load();
     }
 
-    async function load()
-    {
-        let info = await requestContent().catch(noop);
+    async function load() {
+        const info = await sendMessage({
+            request: "find-content",
+            id: g_contentId
+        })
+        .catch((err) => {
+            setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+
+            throw err;
+        });
+
         if (isUdf(info)) return;
 
         createContent(info);
         attachDelete();
         attachUpdate();
 
-        let tags = await sendMessage({
-            request: "get-tags"
-        }).catch((err) => {
-            console.warn("error loading tags:", err);
-        });
+        const tags = await sendMessage({ request: "get-all-tags" });
         if (!tags) return;
 
         createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
@@ -145,29 +149,6 @@ const formatDate = (function(){
     {
         el_errorMessage.innerText = message;
         removeClass(el_errorMessage, cl_hide);
-    }
-
-    function requestContent()
-    {
-        return sendMessage({
-            request: "find-content",
-            id: g_contentId
-        }).catch((err) => {
-            console.warn("error loading content:", err);
-            setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
-            throw new Error();
-        }).then((response) => {
-            if (response.content)
-            {
-                return response.content;
-            }
-            else
-            {
-                console.warn("could not handle response:", response);
-                setErrorMessage(NO_LOAD_MESSAGE + " " + CANT_HANDLE_MESSAGE);
-                throw new Error();
-            }
-        });
     }
 
     function attachDelete()
@@ -187,19 +168,12 @@ const formatDate = (function(){
         return sendMessage({
             request: "delete-content",
             id: g_contentId
-        }).then((response) => {
-            if (response.success)
-            {
-                window.history.back();
-            }
-            else
-            {
-                console.warn("could not handle response:", response);
-                alertWrapper(NO_DELETE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
-            }
+        }).then(() => {
+            window.history.back();
         }).catch((err) => {
-            console.warn("error deleting content:", err);
             alertWrapper(NO_DELETE_MESSAGE + " " + CANT_HANDLE_MESSAGE);
+
+            throw err;
         });
     }
 
@@ -218,24 +192,17 @@ const formatDate = (function(){
         el_updateBtn.disabled = false;
     }
 
-    function requestUpdate(info, successMessage, errMessage) {
+    function requestUpdate(updates, successMessage, errorMessage) {
         return sendMessage({
             request: "update-content",
             id: g_contentId,
-            info
-        }).then((response) => {
-            if (response.success)
-            {
-                g_alerter.alert(successMessage);
-            }
-            else
-            {
-                console.warn("could not handle response:", response);
-                g_alerter.alert(errMessage);
-            }
+            updates
+        }).then(() => {
+            g_alerter.alert(successMessage);
         }).catch((err) => {
-            console.warn("error updating content:", err);
-            g_alerter.alert(errMessage);
+            g_alerter.alert(errorMessage);
+
+            throw err;
         });
     }
 

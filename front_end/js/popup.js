@@ -2,12 +2,11 @@
 import {
     preventBubble, getYoutubeEmbed,
     removeClass, addClass, injectThemeCss,
-    getURLSearchParams, sendMessage, sendMessageToTab
+    getURLSearchParams, sendMessage, sendMessageToTab,
+    SendMessageError
 } from "./utility.js";
 import { RadioManager, ListManager, AwesomeAlerter, styleOnFocus } from "./widgets.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
-
-import { LocalStorageMemoryError } from "./data.js";
 
 const getTaggleInputFormatter = (function(){
     const RESERVED_KEYS = ['*', '!'];
@@ -76,8 +75,8 @@ const ALERTER_OPTIONS = {
 };
 
 let g_radioManager,
-    g_alerter,
-    g_taggle,
+    GLB_alerter,
+    GLB_taggle,
     closePopup;
 
 let g_noSourceAlert,
@@ -86,8 +85,7 @@ let g_noSourceAlert,
 
 let g_source = null;
 let g_docUrl;
-let g_popupId;
-let g_tabId;
+let GLB_tabId;
 
 let onUrlChange = (function(){
     let lock = new Object();
@@ -104,44 +102,44 @@ let onUrlChange = (function(){
     };
 })();
 
-function main()
-{
+function main() {
     const params = getURLSearchParams();
+
     const theme = params.get("theme") || "light";
     injectThemeCss(["scrollbar", "alerts", "taggle", "popup"], theme);
 
-    g_alerter = createAlerter();
-    document.body.appendChild(g_alerter.alertList);
+    GLB_alerter = createAlerter();
+    document.body.appendChild(GLB_alerter.alertList);
 
-    TAGGLE_OPTIONS.alerter = g_alerter;
-    TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(g_alerter);
-    g_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
+    TAGGLE_OPTIONS.alerter = GLB_alerter;
+    TAGGLE_OPTIONS.inputFormatter = getTaggleInputFormatter(GLB_alerter);
+    GLB_taggle = createTaggle(el_tagContainer, TAGGLE_OPTIONS);
 
-    const queryInfo = {
-        tabId: Number(params.get("tabId")),
-        popupId: params.get("popupId"),
-        manual: params.has("manual")
-    };
-    g_tabId = queryInfo.tabId;
-    g_popupId = queryInfo.popupId;
-    closePopup = queryInfo.manual ? closePopup2 : closePopup1;
+    GLB_tabId = Number(params.get("tabId"));
+
+    const manual = params.has("manual");
+    
+    closePopup = manual ? closePopup2 : closePopup1;
 
     attachMaskEvents();
 
-    if (queryInfo.manual) load2();
-    else load();
+    if (manual) {
+        load2();
+    } else {
+        load();
+    }
+
     attachStyleEvents();
 }
 
 function load() {
     sendMessage({
-        request: "get-popup-info",
-        popupId: g_popupId
+        request: "get-popup-info"
     }).then((response) => {        
         g_docUrl = response.docUrl;
         show(el_bookmarkBtn);
         show(el_saveMenu);
-        createAutoComplete(g_taggle, el_tagContainer.parentElement, response.tags);
+        createAutoComplete(GLB_taggle, el_tagContainer.parentElement, response.tags);
         createSourceList(
             response.srcUrl,
             g_docUrl,
@@ -155,7 +153,7 @@ function load() {
 function load2()
 {
     sendMessage({
-        request: "get-tags"
+        request: "get-all-tags"
     })
     .then((tags) => {
         show(el_radioBox);
@@ -169,7 +167,7 @@ function load2()
         attachHideRadio();
 
         show(el_saveMenu);
-        createAutoComplete(g_taggle, el_tagContainer.parentElement, tags);
+        createAutoComplete(GLB_taggle, el_tagContainer.parentElement, tags);
         attachManualSave();
     }).catch(onNoLoad);
 }
@@ -239,15 +237,13 @@ const requestSave = s => _requestSave(s, true);
 function _requestSave(source, addPageDetails) {
     let content = {
         title: el_title.value.trim(),
-        tags: g_taggle.getTags().values,
+        tags: GLB_taggle.getTags().values,
         date: Date.now()
     };
     content = Object.assign(content, source);
 
-    if (addPageDetails) {
-        if (g_source !== null) {
-            content.duration = g_source.duration;
-        }
+    if (addPageDetails && g_source !== null) {
+        content.duration = g_source.duration;
     }
 
     const message = {
@@ -256,22 +252,16 @@ function _requestSave(source, addPageDetails) {
         content
     };
 
-    if (addPageDetails) {
-        message.popupId = g_popupId;
-    }
-
     return sendMessage(message)
-    .then((response) => {
-        if (response instanceof LocalStorageMemoryError) {
-            g_alerter.alert(MEMORY_ERROR_MESSAGE);
-        } else if (response.success === true) {
-            closePopup();
+    .catch((err) => {
+        if (err instanceof SendMessageError
+            && err.type === "LocalStorageMemoryError") {
+            GLB_alerter.alert(MEMORY_ERROR_MESSAGE);
         } else {
-            console.warn("could not handle response:", response);
-            closePopup();
+            throw err;
         }
-    }).catch((err) => {
-        console.warn("error saving content:", err);
+    })
+    .finally(() => {
         closePopup();
     });
 }
@@ -285,8 +275,8 @@ function onNoLoad(err)
 }
 
 function closePopup1() {
-    if (g_tabId) {
-        sendMessageToTab(g_tabId, { request: "close-popup" });
+    if (GLB_tabId) {
+        sendMessageToTab(GLB_tabId, { request: "close-popup" });
     }
 }
 
@@ -435,7 +425,7 @@ function save()
     }
     else
     {
-        g_noSourceAlert = g_alerter.alert(NO_SOURCE_MESSAGE);
+        g_noSourceAlert = GLB_alerter.alert(NO_SOURCE_MESSAGE);
         return true;
     }
 }
@@ -449,14 +439,14 @@ function getManualSave(cb)
         let url = el_url.value.trim();
         if (!url)
         {
-            g_noUrlAlert = g_alerter.alert(NO_URL_MESSAGE);
+            g_noUrlAlert = GLB_alerter.alert(NO_URL_MESSAGE);
             return true;
         }
 
         try {
             new URL(url);
         } catch (e) {
-            g_invalidUrlAlert = g_alerter.alert(INVALID_URL_MESSAGE);
+            g_invalidUrlAlert = GLB_alerter.alert(INVALID_URL_MESSAGE);
             return true;
         }
 

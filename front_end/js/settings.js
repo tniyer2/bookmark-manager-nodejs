@@ -31,7 +31,7 @@ import { RadioManager } from "./widgets.js";
 
         el_downloadMetaBtn.addEventListener("click", () => {
             sendMessage({
-                request: "get-meta"
+                request: "get-all-content"
             }).then((meta) => {
                 const s = JSON.stringify(meta);
                 const b = new Blob([s]);
@@ -71,8 +71,8 @@ import { RadioManager } from "./widgets.js";
                 evt.target.value = "";
                 return;
             }
-            info.tag = arr[0].trim();
-            info.links = arr[1].split(",").map(a => a.trim());
+            info.inputTag = arr[0].trim();
+            info.outputTags = arr[1].split(",").map(a => a.trim());
             info.value = value;
 
             updateTagRules();
