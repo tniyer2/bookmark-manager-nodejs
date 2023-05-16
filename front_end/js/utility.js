@@ -159,6 +159,35 @@ function getURLSearchParams() {
     return new URLSearchParams(window.location.search);
 }
 
+class Mutex {
+    constructor(initialValue) {
+        this._value = initialValue;
+
+        this._waitingOn = Promise.resolve();
+    }
+    get() {
+        return this._waitingOn
+        .then(() => this._value);
+    }
+    acquire(callback) {
+        const p = this._waitingOn
+        .then(() => {
+            const getter = () => this._value;
+            const setter = (v) => { this._value = v; };
+
+            return callback(getter, setter);
+        });
+
+        this._waitingOn = onFinally(p);
+
+        return p;
+    }
+}
+
+function onFinally(promise) {
+    return new Promise(resolve => promise.finally(resolve));
+}
+
 class WebApiError extends Error {}
 
 /*
@@ -263,6 +292,7 @@ export {
     preventDefault, preventBubble,
     addClass, removeClass, injectThemeCss,
     getURLSearchParams,
+    Mutex,
     WebApiError, asyncWebApiToPromise,
     SendMessageError, sendMessage, sendMessageToTab,
     listenToOnMessage

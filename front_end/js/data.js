@@ -1,6 +1,7 @@
 
 import {
     rethrowAs, isUdf,
+    Mutex,
     WebApiError, asyncWebApiToPromise
 } from "./utility.js";
 
@@ -121,35 +122,6 @@ class DataManager {
             });
         });
     }
-}
-
-class Mutex {
-    constructor(initialValue) {
-        this._value = initialValue;
-
-        this._waitingOn = Promise.resolve();
-    }
-    get() {
-        return ignoreErrors(this._waitingOn)
-        .then(() => this._value);
-    }
-    acquire(callback) {
-        const p = this._waitingOn
-        .then(() => {
-            const getter = () => this._value;
-            const setter = (v) => { this._value = v; };
-
-            return callback(getter, setter);
-        });
-
-        this._waitingOn = ignoreErrors(p);
-
-        return p;
-    }
-}
-
-function ignoreErrors(p) {
-    return new Promise(resolve => p.finally(resolve));
 }
 
 class TagCounter {
