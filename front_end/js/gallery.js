@@ -7,7 +7,7 @@ import {
 } from "./utility.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
-import { searchContent, parseQueryString } from "./query.js";
+import { searchContent, parseQueryString } from "./searchContent.js";
 
 const FeedBox = (function(){
     const DEFAULTS = {
