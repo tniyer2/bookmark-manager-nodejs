@@ -141,9 +141,13 @@ function calcCost(charA, charB) {
     }
 }
 
-const SINGLE_VALUE_KEYS = ["title"];
 const STRING_KEYS = ["title", "id", "category", "srcUrl", "docUrl"];
 const NUMBER_KEYS = ["date", "bytes"];
+const ARRAY_KEYS = ["tags"];
+
+const ALL_KEYS = [].concat(STRING_KEYS, NUMBER_KEYS, ARRAY_KEYS);
+const SINGLE_VALUE_KEYS = ["title"];
+const MULTI_VALUE_KEYS = ALL_KEYS.filter(k => !SINGLE_VALUE_KEYS.includes(k));
 
 const NOT_MODIFIER = "!";
 const OR_MODIFIER = "*";
@@ -384,38 +388,4 @@ function combineSorters(sorters) {
     return (a, b) => recursiveSort(a, b, 0);
 }
 
-function parseQueryString(query) {
-    function split(arr, separator) {
-        return arr
-            .split(separator)
-            .filter(s => s.length > 0);
-    }
-
-    const map = Object.create(null);
-    if (isUdf(query)) return map;
-
-    const params = split(query, "&");
-
-    for (let i = 0; i < params.length; ++i) {
-        const param = params[i];
-
-        const pair = param.split("=");
-        if (pair.length !== 2) {
-            throw new Error(`'${param}' could not be parsed into a key-value pair.`);
-        }
-        let [key, values] = pair;
-
-        if (SINGLE_VALUE_KEYS.includes(key)) {
-            values = decodeURIComponent(values);
-        } else {
-            values = split(values, "+")
-                .map(s => decodeURIComponent(s));
-        }
-
-        map[key] = values;
-    }
-
-    return map;
-}
-
-export { searchContent, parseQueryString };
+export { searchContent, SINGLE_VALUE_KEYS, MULTI_VALUE_KEYS };
