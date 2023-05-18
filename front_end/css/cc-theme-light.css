@@ -1,0 +1,19 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.cc__bookmark img {
+  background: #e2e2e2;
+  border: 2.5px solid #595959;
+}
+
+.cc__bookmark img:hover {
+  border-color: #E71717;
+}
+
+/*# sourceMappingURL=cc-theme-light.css.map */

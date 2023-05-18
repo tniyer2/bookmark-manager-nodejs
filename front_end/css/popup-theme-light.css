@@ -1,0 +1,139 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+html {
+  background-color: hsla(0, 0%, 0%, 0.65);
+}
+
+.awesomeShadow {
+  border: 0.5px solid #b2b2b2;
+  box-shadow: 0px 1px 3px 0px #b2b2b2;
+}
+
+.awesomeShadow.focus {
+  box-shadow: 0px 1px 3px 1.25px #b2b2b2;
+}
+
+.error-message {
+  color: #ccc;
+}
+
+.save-menu {
+  border: 2.5px solid #595959;
+  background-color: white;
+}
+
+.save-menu__input-box {
+  background: white;
+}
+
+.save-menu__input {
+  color: black;
+}
+
+.save-menu__input::placeholder {
+  color: #9b9b9b;
+}
+
+.save-menu__category-image .shape {
+  background: #ff7f00;
+}
+
+.save-menu__category-image:hover .shape {
+  background: #d66a00;
+}
+
+.save-menu__category-video .shape {
+  background: #9700dd;
+}
+
+.save-menu__category-video:hover .shape {
+  background: #6f00a3;
+}
+
+.save-menu__category input:checked ~ .shape {
+  background: #5d9afc;
+}
+
+.save-menu__category .shape:after {
+  background: #1c59bc;
+}
+
+.save-menu__category input:disabled ~ .shape {
+  background: #e2e2e2;
+}
+
+.save-menu__category input:disabled ~ .shape:after {
+  background: #9b9b9b;
+}
+
+.save-menu__category .text {
+  color: black;
+}
+
+.save-menu__tag-container {
+  background: white;
+}
+
+.save-menu__save-svg {
+  fill: #b2b2b2;
+}
+
+.save-menu__save-svg:hover {
+  fill: #E71717;
+}
+
+.save-menu__bookmark-svg {
+  fill: #b2b2b2;
+}
+
+.save-menu__bookmark-svg:hover {
+  fill: #4286F4;
+}
+
+.source-menu__list {
+  border: 2.5px solid #595959;
+  background: white;
+}
+
+.source-menu__source {
+  background: inherit;
+}
+
+.source-menu__source:hover {
+  background: #ccc;
+}
+
+.source-menu__source.active {
+  background: #b2b2b2;
+}
+
+.source-menu__tag {
+  background: #E71717;
+  color: white;
+  font-family: "Helvetica";
+}
+
+.source-menu__link {
+  fill: #4286F4;
+}
+
+.source-menu__link:hover {
+  fill: #ffbe3a;
+}
+
+.source-menu__download {
+  fill: black;
+}
+
+.source-menu__download:hover {
+  fill: #4286F4;
+}
+
+/*# sourceMappingURL=popup-theme-light.css.map */

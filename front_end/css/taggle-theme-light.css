@@ -1,0 +1,54 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.taggle_input {
+  color: black;
+}
+
+.taggle_placeholder {
+  color: #9b9b9b;
+}
+
+.taggle {
+  background: #e2e2e2;
+}
+
+.taggle:hover {
+  background: #b2b2b2;
+}
+
+.taggle_hot {
+  background: #b2b2b2 !important;
+}
+
+.taggle_text {
+  color: black;
+}
+
+.taggle .close {
+  color: #d10000;
+}
+
+.auto-complete {
+  background: white;
+  border: 1px solid #b2b2b2;
+}
+
+.auto-complete-li {
+  background: inherit;
+  color: #9b9b9b;
+  font-weight: 400;
+}
+
+.auto-complete-li.active {
+  background: #b2b2b2;
+  color: #595959;
+}
+
+/*# sourceMappingURL=taggle-theme-light.css.map */

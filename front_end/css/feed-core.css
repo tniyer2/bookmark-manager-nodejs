@@ -1,0 +1,80 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.feed {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: 20px;
+  padding-bottom: 5px;
+  border-radius: 8px;
+}
+
+.feed.message {
+  justify-content: center;
+  padding: 5px;
+}
+
+.feed-message {
+  display: inline-block;
+  padding: 0 30px;
+  font: 300 16px arial, sans-serif;
+  font-size: 32px;
+  text-align: center;
+}
+
+.feed-message svg {
+  display: inline;
+  vertical-align: baseline;
+  width: 32px;
+  height: 32px;
+}
+
+.content-wrapper {
+  text-decoration: none;
+  cursor: default;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 15px;
+  padding-bottom: 0;
+  margin-right: 20px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.content__source-block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 100px;
+  height: 300px;
+}
+
+.content__info-block {
+  display: flex;
+  padding: 7.5px 0;
+}
+
+.content__title {
+  flex-grow: 1;
+  width: 0;
+  margin: 0;
+  font: 300 16px arial, sans-serif;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+/*# sourceMappingURL=feed-core.css.map */

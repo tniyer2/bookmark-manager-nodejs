@@ -1,0 +1,105 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.main {
+  background: #c6c6c6;
+  border: 3px solid #595959;
+}
+
+.error-message {
+  color: #595959;
+}
+
+.content-block__choose-image p {
+  color: #00b563;
+}
+
+.content-block__choose-image:hover p {
+  color: #006637;
+}
+
+.info-block {
+  color: black;
+}
+
+.info-block li {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.info-block__tag {
+  background: #ffbe3a;
+  border-color: #cc9424;
+  color: black;
+}
+
+.info-block__source-link {
+  background: #4286F4;
+  border-color: #1c59bc;
+}
+
+.info-block__source-link:hover {
+  background: #166af4;
+}
+
+.info-block__source-link a {
+  color: black;
+  text-decoration: none;
+}
+
+.info-block__update-btn {
+  background: #4286F4;
+  border-color: #1c59bc;
+}
+
+.info-block__update-btn:hover {
+  background: #166af4;
+}
+
+.info-block__delete-btn {
+  background: #E71717;
+  border-color: #9e0000;
+}
+
+.info-block__delete-btn:hover {
+  background: #d10000;
+}
+
+.title-input {
+  background: none;
+  color: black;
+  border: 0px solid #595959;
+}
+
+.title-input:focus {
+  background: white;
+}
+
+.title-input::placeholder {
+  color: #595959;
+}
+
+.title-input:focus::placeholder {
+  opacity: 0;
+}
+
+.tag-container {
+  background: none;
+  border: 0px solid #595959;
+}
+
+.tag-container.empty, .tag-container.active {
+  background: white;
+}
+
+.taggle_placeholder {
+  color: #595959;
+}
+
+/*# sourceMappingURL=single-view-theme-light.css.map */

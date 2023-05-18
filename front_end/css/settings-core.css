@@ -1,0 +1,95 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.tag-rules .rule .delete, .btn {
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px 10px;
+  margin: 0;
+}
+
+.root {
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 2 * 10px);
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.root > * {
+  margin-bottom: 10px;
+}
+
+.btn {
+  display: block;
+  padding: 5px;
+  border-radius: 5px;
+  font: 300 16px arial, sans-serif;
+  font-size: 20px;
+  user-select: none;
+}
+
+.tag-rules {
+  display: inline-block;
+  padding: 10px;
+  padding-bottom: 0;
+  border-radius: 5px;
+  font-size: 20px;
+}
+.tag-rules .rule {
+  padding-bottom: 10px;
+}
+.tag-rules .rule .value {
+  padding: 3px;
+  margin-right: 5px;
+  border-radius: 3px;
+  background: none;
+  font: 300 16px arial, sans-serif;
+  font-size: inherit;
+  outline: none;
+}
+.tag-rules .rule .value:focus {
+  padding: 4px;
+  border: none;
+}
+.tag-rules .rule .delete {
+  padding: 4px;
+  border-radius: 3px;
+  font: 300 16px arial, sans-serif;
+  font-size: inherit;
+  user-select: none;
+}
+
+.theme-radio {
+  padding: 5px;
+  font: 300 16px arial, sans-serif;
+  border-radius: 8px;
+  user-select: none;
+}
+.theme-radio .title {
+  display: block;
+  text-align: left;
+  font-size: 20px;
+}
+.theme-radio input {
+  outline: none;
+}
+
+/*# sourceMappingURL=settings-core.css.map */

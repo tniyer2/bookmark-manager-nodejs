@@ -1,0 +1,69 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+body {
+  background: white;
+}
+
+.menubar {
+  background: #e2e2e2;
+}
+
+.search__search-box-wrapper {
+  background: white;
+}
+
+.search__search-box {
+  border: 2px solid #b2b2b2;
+}
+
+.search__search-box.focus {
+  border: none;
+  box-shadow: 0 0 4px 1.25px #b2b2b2;
+}
+
+.search__title-input {
+  color: black;
+}
+
+.search__title-input::placeholder {
+  color: #9b9b9b;
+}
+
+.search__searchby {
+  background: #b2b2b2;
+}
+
+.search__searchby-btn:hover + .search__searchby {
+  background: #4286F4;
+}
+
+.search__searchby svg {
+  fill: #333;
+}
+
+.search__searchby-btn:hover + .search__searchby svg {
+  fill: #333;
+}
+
+.search__svg {
+  fill: #333;
+  stroke: #333;
+}
+
+.search__svg:hover {
+  fill: #4286F4;
+  stroke: #4286F4;
+}
+
+.search__dropdown {
+  color: black;
+}
+
+/*# sourceMappingURL=gallery-theme-light.css.map */

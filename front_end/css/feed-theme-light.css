@@ -1,0 +1,36 @@
+.noshow {
+  display: none !important;
+}
+
+/* Light Theme */
+/* Dark Theme */
+/* Colors */
+/* Text */
+/* Misc */
+.feed {
+  background: #e2e2e2;
+}
+
+.feed-message {
+  color: #595959;
+}
+
+.feed-message svg {
+  fill: #333;
+  stroke: #333;
+}
+
+.content {
+  background: #9b9b9b;
+  border: 2px solid #595959;
+}
+
+.content.hover {
+  border-color: #4286F4;
+}
+
+.content__title {
+  color: black;
+}
+
+/*# sourceMappingURL=feed-theme-light.css.map */
