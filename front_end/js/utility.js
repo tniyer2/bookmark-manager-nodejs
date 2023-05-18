@@ -30,6 +30,20 @@ function isNumber(x) {
     return typeof x === "number";
 }
 
+function swap(a, b) {
+    return [b, a];
+}
+
+function makeArray(length) {
+    return Array.from({ length });
+}
+
+function make2DArray(numCols, numRows) {
+    return Array.from({ length: numCols },
+        () => makeArray(numRows)
+    );
+}
+
 function minIfNumber(a, b) {
     let aIsNum = isNumber(a);
     let bIsNum = isNumber(b);
@@ -284,7 +298,9 @@ function sendErrorResponse(error, sendResponse) {
 export {
     NEW_TAB, CSS_DIR,
     InvalidArgument, rethrowAs,
-    noop, isUdf, isNumber, isObject,
+    noop, isUdf, isNumber, isString, isObject,
+    swap,
+    makeArray, make2DArray,
     minIfNumber,
     initOptions, joinFunctions,
     parseFileName,

@@ -7,7 +7,7 @@ import {
 } from "./utility.js";
 import { createTaggle, createAutoComplete } from "./myTaggle.js";
 import { DOMQueue, Toggle, ContentCreator, styleOnFocus } from "./widgets.js";
-import { Searcher } from "./query.js";
+import { searchContent, parseQueryString } from "./query.js";
 
 const FeedBox = (function(){
     const DEFAULTS = {
@@ -181,8 +181,7 @@ let submitSearch = (function(){
     };
 })();
 
-function main()
-{
+function main() {
     const params = getURLSearchParams();
     g_theme = params.get("theme") || "light";
     injectThemeCss(CSS_FILES, g_theme);
@@ -204,14 +203,13 @@ function main()
 
 function load()
 {
-    let {query, cookie} = parseQueryString();
+    let {query, cookie} = parseQueryString2();
     setSearch(query, cookie);
     addAwesomeFocusToSearchBox();
     loadContent(query);
 }
 
-function parseQueryString()
-{
+function parseQueryString2() {
     let queryString = location.search.substring(1);
     let i = queryString.lastIndexOf("&");
     let len = queryString.length;
@@ -219,9 +217,9 @@ function parseQueryString()
     let cookie  = queryString.substring(i + 1, len);
 
     let q = query ? query : DEFAULT_QUERY;
-    let map = Searcher.parse(q);
+    let map = parseQueryString(q);
 
-    return {cookie: cookie, query: map};
+    return { cookie, query: map };
 }
 
 function setSearch(query, cookie)
@@ -263,7 +261,7 @@ async function loadContent(query)
     });
     if (isUdf(meta)) return;
 
-    let results = Searcher.query(meta, query);
+    let results = searchContent(meta, query);
     g_feedBox = new FeedBox(results, el_feed, (info) => createContent(info), FEEDBOX_OPTIONS);
     if (!results.length)
     {
