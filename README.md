@@ -19,6 +19,8 @@ The extension can be installed into chrome by navigating to the extensions setti
 Build
 ===
 
+Prebuilt: [https://github.com/tniyer2/bookmark-manager-nodejs/releases/tag/2.0.0](https://github.com/tniyer2/bookmark-manager-nodejs/releases/tag/2.0.0)
+
 Run below to to build the extension. NPM must be installed.
 
 ```
