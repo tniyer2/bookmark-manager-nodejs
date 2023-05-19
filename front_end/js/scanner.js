@@ -32,7 +32,7 @@ function main() {
             case "scan": {
                 const scanInfo = scanPage();
 
-                console.log("Page was scanned for videos:", scanInfo);
+                // console.log("Page was scanned for videos:", scanInfo);
                 return scanInfo;
             }
         }

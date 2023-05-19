@@ -176,17 +176,22 @@ function makeSearchParams() {
     if (title.length > 0) {
         searchParams.set("title", title);
     } else if (tags.length > 0) {
-        searchParams.set("tags", tags);
+        for (const tag of tags) {
+            searchParams.append("tags", tag);
+        }
     }
 
     const sortby = el_sortBy.value;
     if (sortby.length > 0) {
-        searchParams.set("sort", sortby);
+        searchParams.append("sort", sortby);
     }
 
-    const category = el_category.value;
-    if (category) {
-        searchParams.set("category", category);
+    let categories = el_category.value;
+    if (categories.length > 0) {
+        categories = categories.split(" ");
+        for (const category of categories) {
+            searchParams.append("category", category);
+        }
     }
 
     const pastDays = el_date.value;
@@ -195,7 +200,7 @@ function makeSearchParams() {
         let date = Date.now() - pastMs;
         date = "x>" + String(date);
 
-        searchParams.set("date", date);
+        searchParams.append("date", date);
     }
 
     return searchParams;

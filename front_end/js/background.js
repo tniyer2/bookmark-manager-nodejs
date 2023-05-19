@@ -28,11 +28,24 @@ const CONTEXT_MENU_OPTIONS = {
     ]
 };
 
+let GLB;
 let GLB_instance;
 let GLB_settings;
-const GLB_popupInfo = Object.create(null);
 
 async function main() {
+    const { background_globals } = await chrome.storage.local.get(["background_globals"]);
+    GLB = background_globals;
+
+    if (isUdf(GLB)) {
+        GLB = {};
+    }
+
+    if (isUdf(GLB.popupInfo)) {
+        GLB.popupInfo = Object.create(null);
+    }
+
+    saveGlobals();
+
     GLB_instance = await getDataManager();
 
     try {
@@ -46,12 +59,16 @@ async function main() {
 
     listenToOnMessage(handleRequest);
 
-    chrome.browserAction.onClicked.addListener(openBookmarkGallery);
+    chrome.action.onClicked.addListener(openBookmarkGallery);
 
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create(CONTEXT_MENU_OPTIONS);
-        chrome.contextMenus.onClicked.addListener(onContextClicked);
     });
+    chrome.contextMenus.onClicked.addListener(onContextClicked);
+}
+
+function saveGlobals() {
+    chrome.storage.local.set({ "background_globals": GLB });
 }
 
 function handleRequest(message, sender) {
@@ -66,7 +83,7 @@ function handleRequest(message, sender) {
             const content = message.content;
 
             if (message.addPageDetails === true) {
-                fillInSource(content, GLB_popupInfo[sender.tab.id]);
+                fillInSource(content, GLB.popupInfo[sender.tab.id]);
             }
 
             applyTagRules(content);
@@ -95,12 +112,14 @@ function handleRequest(message, sender) {
 }
 
 async function collectPopupInfo(tab) {
-    const info = GLB_popupInfo[tab.id];
+    const info = GLB.popupInfo[tab.id];
 
     info.docUrl = tab.url;
     info.tags = GLB_instance.allTags;
 
     info.scanInfo = await sendMessageToTab(tab.id, { request: "scan" });
+
+    saveGlobals();
 
     return info;
 }
@@ -146,10 +165,12 @@ function openBookmarkGallery(tab) {
 function onContextClicked(info, tab) {
     const tabId = tab.id;
 
-    GLB_popupInfo[tabId] = {
+    GLB.popupInfo[tabId] = {
         srcUrl: info.srcUrl,
         mediaType: info.mediaType
     };
+
+    saveGlobals();
 
     const message = {
         request: "open-popup",
@@ -173,9 +194,12 @@ function loadScript(tabId, script) {
     .then((exists) => {
         if (exists !== true) {
             return asyncWebApiToPromise(
-                (cb) => chrome.tabs.executeScript(tabId, { file: script }, cb)
+                cb => chrome.scripting.executeScript({
+                    target : { tabId },
+                    files : [script]
+                }, cb)
             );
-        }
+        } 
     });
 }
 

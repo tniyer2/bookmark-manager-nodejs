@@ -143,7 +143,7 @@ function calcCost(charA, charB) {
 
 const STRING_KEYS = ["title", "id", "category", "srcUrl", "docUrl"];
 const NUMBER_KEYS = ["date", "bytes"];
-const ARRAY_KEYS = ["tags"];
+const ARRAY_KEYS = ["tags", "sort"];
 
 const ALL_KEYS = [].concat(STRING_KEYS, NUMBER_KEYS, ARRAY_KEYS);
 const SINGLE_VALUE_KEYS = ["title"];

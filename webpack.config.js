@@ -18,7 +18,6 @@ COMMON_EXCLUDED_CHUNKS = ["content", "scanner"];
 const config = {
     devtool: "source-map",
     entry: {
-        background: "./front_end/js/background.js",
         popup: "./front_end/js/popup.js",
         gallery: "./front_end/js/gallery.js",
         singleView: "./front_end/js/singleView.js",
@@ -49,11 +48,6 @@ const config = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./front_end/html/background.html",
-            filename: "background.html",
-            chunks: ["background"]
-        }),
-        new HtmlWebpackPlugin({
             template: "./front_end/html/popup.html",
             filename: "popup.html",
             chunks: ["popup"]
@@ -80,7 +74,10 @@ const config = {
                 { from: "./front_end/taggle.js", to: "./taggle.js" },
                 { from: "./front_end/css", to: "./css" },
                 { from: "./front_end/icons", to: "./icons" },
-                { from: "./front_end/svgs", to: "./svgs" }
+                { from: "./front_end/svgs", to: "./svgs" },
+                { from: "./front_end/js/background.js", to: "./background.js" },
+                { from: "./front_end/js/data.js", to: "./data.js" },
+                { from: "./front_end/js/utility.js", to: "./utility.js" }
             ]
         })
     ],
