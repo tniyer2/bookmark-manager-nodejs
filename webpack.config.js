@@ -79,7 +79,8 @@ const config = {
                 { from: "./front_end/manifest.json", to: "./manifest.json" },
                 { from: "./front_end/taggle.js", to: "./taggle.js" },
                 { from: "./front_end/css", to: "./css" },
-                { from: "./front_end/icons", to: "./icons" }
+                { from: "./front_end/icons", to: "./icons" },
+                { from: "./front_end/svgs", to: "./svgs" }
             ]
         })
     ],
