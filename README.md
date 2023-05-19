@@ -24,6 +24,10 @@ Prebuilt: [https://github.com/tniyer2/bookmark-manager-nodejs/releases/tag/2.0.0
 Run below to to build the extension. NPM must be installed.
 
 ```
+npm i
+```
+
+```
 npm build
 ```
 
