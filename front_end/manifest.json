@@ -3,7 +3,7 @@
     "short_name": "Bookmark Manager",
     "name": "Bookmark Manager",
     "version": "2.0.0",
-    "minimum_chrome_version": "63",
+    "minimum_chrome_version": "88",
 
     "description": "Bookmark sites, images, and videos to a gallery. Supports downloading videos from most sites.",
     "icons": {
