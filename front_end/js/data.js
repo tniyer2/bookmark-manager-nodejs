@@ -169,26 +169,42 @@ function getDataManager() {
 }
 
 function loadMetaData() {
-    return getLocalStorageKeys("meta")
+    return getLocalStorageKeys(["version", "meta"])
     .then((keys) => {
+        const version = keys.version;
         const json = keys.meta;
 
-        if (isUdf(json)) {
+        if (isUdf(json) || json === null) {
             return [];
-        } else {
-            try {
-                return JSON.parse(json);
-            } catch (err) {
-                console.warn("Unable to parse local storage metadata.");
-                return [];
+        }
+
+        try {
+            if (version === 2) {
+                return parseVersion2(json);
+            } else {
+                return parseVersion1(json);
             }
+        } catch (err) {
+            console.warn("Unable to parse local storage metadata.");
+            return [];
         }
     });
 }
 
+function parseVersion1(json) {
+    return json
+        .split("\n")
+        .filter(s => s.length > 0)
+        .map(s => JSON.parse(s));
+}
+
+function parseVersion2(json) {
+    return JSON.parse(json);
+}
+
 function saveMetaData(data) {
     const meta = JSON.stringify(data);
-    return setLocalStorageKeys({ meta });
+    return setLocalStorageKeys({ meta, version: 2 });
 }
 
 function getLocalStorageKeys(keys) {
